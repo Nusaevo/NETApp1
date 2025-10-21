@@ -107,15 +107,14 @@ class Index extends BaseComponent
                 params(start_date, end_date, wh_code, matl_code) AS (
                 VALUES (DATE '{$startDate}', DATE '{$endDate}', '{$whCode}', '{$matlCode}')
                 ),
-                -- Opening strictly from movements prior to start date
+                -- Opening from ivt_bal_periods for the period
                 opening AS (
-                SELECT COALESCE(SUM(il.qty), 0)::numeric AS opening_qty
-                FROM ivt_logs il
+                SELECT COALESCE(SUM(ibp.qty_00), 0)::numeric AS opening_qty
+                FROM ivt_bal_periods ibp
                 JOIN params p ON TRUE
-                WHERE il.wh_code = p.wh_code
-                  AND il.matl_code = p.matl_code
-                  AND il.tr_type IN ('PD','SD','TW','IA')
-                  AND il.tr_date < p.start_date
+                WHERE ibp.wh_code = p.wh_code
+                  AND ibp.matl_code = p.matl_code
+                  AND ibp.period_code = TO_CHAR(p.start_date, 'YYYYMM')
                 ),
                 -- Period transactions
                 tx AS (

@@ -7,6 +7,7 @@ use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
 use App\Models\Util\GenericExcelExport;
 use App\Enums\TrdTire1\Status;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 
 class Index extends BaseComponent
@@ -22,6 +23,12 @@ class Index extends BaseComponent
     protected function onPreRender()
     {
         $this->loadMasaOptions();
+    }
+
+    protected function onReset()
+    {
+        // Don't reset results data when component is reset
+        // This prevents data from being cleared when Livewire re-renders
     }
 
     public function loadMasaOptions()
@@ -106,6 +113,12 @@ class Index extends BaseComponent
             if (!is_object($this->results) || !method_exists($this->results, 'toArray')) {
                 $this->results = collect([]);
             }
+
+            // Store results in session for Excel export
+            $resultsArray = is_object($this->results) && method_exists($this->results, 'toArray')
+                ? $this->results->toArray()
+                : (array) $this->results;
+            Session::put('report_sales_period_results', $resultsArray);
         } catch (\Exception $e) {
             $this->results = collect([]);
             $this->dispatch('error', 'Terjadi kesalahan saat mengambil data: ' . $e->getMessage());
@@ -170,22 +183,36 @@ class Index extends BaseComponent
     {
         // Clear masa when date range is selected
         $this->selectedMasa = '';
+        $this->results = [];
+        // Don't auto-search, let user click View button
     }
 
     public function updatedDateTo()
     {
         // Clear masa when date range is selected
         $this->selectedMasa = '';
+        $this->results = [];
+        // Don't auto-search, let user click View button
     }
 
     public function downloadExcel()
     {
-        if (empty($this->results)) {
+        // Try to get data from session first, fallback to current results
+        $sessionResults = Session::get('report_sales_period_results', []);
+
+        if (empty($sessionResults) && empty($this->results)) {
             $this->dispatch('warning', __('Tidak ada data untuk diekspor. Silakan lakukan pencarian terlebih dahulu.'));
             return;
         }
 
         try {
+            // Use session data if available, otherwise use current results
+            if (!empty($sessionResults)) {
+                $this->results = collect($sessionResults)->map(function($item) {
+                    return (object) $item;
+                });
+            }
+
             // Prepare data for Excel export
             $excelData = $this->prepareExcelData();
 
@@ -207,8 +234,11 @@ class Index extends BaseComponent
         }
     }
 
-    private function prepareExcelData()
+    private function prepareExcelData(): array
     {
+        // Use current results
+        $results = $this->results;
+
         // Prepare headers
         $headers = [
             'No. Faktur',
@@ -241,7 +271,8 @@ class Index extends BaseComponent
         $previousTrCodeSubtotalPpn = 0;
         $previousTrCodeSubtotalAmount = 0;
 
-        foreach ($this->results as $index => $row) {
+        $subtotalRowIndices = []; // Track subtotal row indices for styling
+        foreach ($results as $index => $row) {
             // Safety check to ensure $row is an object
             if (!is_object($row)) {
                 continue;
@@ -277,12 +308,28 @@ class Index extends BaseComponent
                         '', // No. Faktur
                         '', // Tgl. Nota
                         '', // Nama WP
-                        'Subtotal', // Nama Barang
+                        '', // Nama Barang
                         $previousTrCodeSubtotalQty, // Qty
                         $previousTrCodeSubtotalPrice, // Harga
                         $previousTrCodeSubtotalDpp, // DPP
                         $previousTrCodeSubtotalPpn, // PPN
                         $previousTrCodeSubtotalAmount // Jumlah
+                    ];
+
+                    // Record subtotal row index for styling
+                    $subtotalRowIndices[] = count($data) - 1;
+
+                    // Add empty row after subtotal for spacing between notes
+                    $data[] = [
+                        '', // No. Faktur
+                        '', // Tgl. Nota
+                        '', // Nama WP
+                        '', // Nama Barang
+                        '', // Qty
+                        '', // Harga
+                        '', // DPP
+                        '', // PPN
+                        '' // Jumlah
                     ];
                 }
 
@@ -336,20 +383,37 @@ class Index extends BaseComponent
                 $trCodeSubtotalPpn, // PPN
                 $trCodeSubtotalAmount // Jumlah
             ];
+
+            // Record final subtotal row index for styling
+            $subtotalRowIndices[] = count($data) - 1;
+
+            // Add empty row after final subtotal for spacing
+            $data[] = [
+                '', // No. Faktur
+                '', // Tgl. Nota
+                '', // Nama WP
+                '', // Nama Barang
+                '', // Qty
+                '', // Harga
+                '', // DPP
+                '', // PPN
+                '' // Jumlah
+            ];
         }
 
-        // Add grand total row
-        $data[] = [
-            '', // No. Faktur
-            '', // Tgl. Nota
-            '', // Nama WP
-            'TOTAL', // Nama Barang
-            $grandTotalQty, // Qty
-            $grandTotalPrice, // Harga
-            $grandTotalDpp, // DPP
-            $grandTotalPpn, // PPN
-            $grandTotalAmount // Jumlah
-        ];
+        // Grand total row removed as requested
+
+        // Prepare row styles for subtotals
+        $rowStyles = [];
+        foreach ($subtotalRowIndices as $rowIndex) {
+            $rowStyles[] = [
+                'rowIndex' => $rowIndex,
+                'bold' => true,
+                'borderTop' => true,
+                // 'backgroundColor' => 'E6E6E6',
+                'specificCells' => ['E', 'F', 'G', 'H', 'I']
+            ];
+        }
 
         // Prepare title and subtitle
         $title = 'LAPORAN PENJUALAN MASA';
@@ -379,23 +443,7 @@ class Index extends BaseComponent
                     'H' => 15, // PPN
                     'I' => 15  // Jumlah
                 ],
-                'rowStyles' => [
-                    // Style for subtotal rows
-                    [
-                        'rowIndex' => -2, // Second to last row (subtotal)
-                        'bold' => true,
-                        'borderTop' => true,
-                        'specificCells' => ['E', 'F', 'G', 'H', 'I']
-                    ],
-                    // Style for grand total row
-                    [
-                        'rowIndex' => -1, // Last row (grand total)
-                        'bold' => true,
-                        'borderTop' => true,
-                        'backgroundColor' => 'E6E6E6',
-                        'specificCells' => ['E', 'F', 'G', 'H', 'I']
-                    ]
-                ],
+                'rowStyles' => $rowStyles,
                 'allowInsert' => false
             ]
         ];

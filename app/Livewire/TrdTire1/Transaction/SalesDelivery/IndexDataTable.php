@@ -185,7 +185,7 @@ class IndexDataTable extends BaseDataTableComponent
                     ''  => 'Semua',
                     '1' => 'Terkirim',
                     '0' => 'Belum Terkirim',
-                    '2' => 'Batal Nota',
+                    '2' => 'Nota Batal',
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     if ($value === '1') {
@@ -208,8 +208,8 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             'setDeliveryDate' => 'Kirim',
             'cancelDeliveryDate' => 'Batal Kirim',
-            'cancel' => 'Batal Nota',
-            'unCancel' => 'Pengemeblian nota Batal',
+            'cancel' => 'Cancel',
+            'unCancel' => 'UnCancel',
         ];
     }
 
@@ -299,7 +299,7 @@ class IndexDataTable extends BaseDataTableComponent
                     $delivId = $delivHdr->id;
 
                     // Audit log for BATAL KIRIM - dibuat SEBELUM penghapusan data
-                    // AuditLogService::createDeliveryBatalKirim([$delivId]);
+                    AuditLogService::createDeliveryBatalKirim([$delivId]);
 
                     $deliveryService->delDelivery($delivHdr->id);
                     $billingService->delBilling($delivHdr->billhdr_id);

@@ -7,6 +7,7 @@ use App\Models\TrdTire1\Transaction\BillingHdr;
 use App\Models\TrdTire1\Transaction\DelivHdr;
 use App\Models\TrdTire1\Transaction\DelivPacking;
 use App\Models\TrdTire1\Transaction\DelivPicking;
+use App\Models\TrdTire1\Master\Partner;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -18,20 +19,23 @@ class AuditLogService
         $auditLogs = [];
 
         foreach ($billingIds as $billingId) {
-            $billing = BillingHdr::find($billingId);
+            $billing = BillingHdr::with('Partner')->find($billingId);
 
             if (!$billing) {
                 continue; // Skip if billing not found
             }
 
+            // Get partner name
+            $partnerName = $billing->Partner ? $billing->Partner->name : 'Unknown Partner';
+
             // Prepare audit trail data sesuai dengan format di gambar
             $auditTrail = [
                 'print_date before' => $oldPrintDate ?? $billing->print_date,
                 'print_date after' => $newPrintDate,
-                'user_id' => Auth::id() ?? 'system',
+                'user_name' => Auth::user()?->name ?? 'system',
                 'billing_id' => $billingId,
                 'tr_code' => $billing->tr_code,
-                'partner_id' => $billing->partner_id,
+                'partner_name' => $partnerName,
                 'event_time' => Carbon::now(),
             ];
 
@@ -56,20 +60,23 @@ class AuditLogService
         $auditLogs = [];
 
         foreach ($billingIds as $billingId) {
-            $billing = BillingHdr::find($billingId);
+            $billing = BillingHdr::with('Partner')->find($billingId);
 
             if (!$billing) {
                 continue; // Skip if billing not found
             }
 
+            // Get partner name
+            $partnerName = $billing->Partner ? $billing->Partner->name : 'Unknown Partner';
+
             // Prepare audit trail data
             $auditTrail = [
                 'status before' => $billing->status_code,
                 'status after' => 'P', // PRINT status
-                'user_id' => Auth::id() ?? 'system',
+                'user_name' => Auth::user()?->name ?? 'system',
                 'billing_id' => $billingId,
                 'tr_code' => $billing->tr_code,
-                'partner_id' => $billing->partner_id,
+                'partner_name' => $partnerName,
                 'event_time' => Carbon::now(),
                 'action' => 'CETAK NOTA',
             ];
@@ -186,7 +193,7 @@ class AuditLogService
                 'nota' => $deliv->tr_code,
                 'gudang' => $whCode,
                 'tanggal kirim' => $deliv->tr_date ? Carbon::parse($deliv->tr_date)->format('Y-m-d') : null,
-                'user_id' => Auth::id() ?? 'system',
+                'user_name' => Auth::user()?->name ?? 'system',
                 'event_time' => Carbon::now(),
             ];
 
@@ -259,7 +266,7 @@ class AuditLogService
                 'nota' => $deliv->tr_code,
                 'gudang' => $whCode,
                 'tanggal kirim' => $deliv->tr_date ? Carbon::parse($deliv->tr_date)->format('Y-m-d') : null,
-                'user_id' => Auth::id() ?? 'system',
+                'user_name' => Auth::user()?->name ?? 'system',
                 'event_time' => Carbon::now(),
             ];
 
