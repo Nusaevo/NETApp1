@@ -140,7 +140,7 @@
                     </div>
                     <x-ui-footer>
                         <div>
-                            <x-ui-button clickEvent="deleteTransaction" button-name="Hapus" loading="true"
+                            <x-ui-button clickEvent="delete" button-name="Hapus" loading="true"
                                 :action="$actionValue" cssClass="btn-danger" iconPath="delete.svg" />
 
                             @include('layout.customs.buttons.save')

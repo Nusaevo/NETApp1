@@ -54,17 +54,15 @@ class Detail extends BaseComponent
     public $suratJalanCount = 0;
     public $partnerSearchText = '';
     public $partnerOptions = [];
-
     public $overPayment = 0;
     public $totalAmtSource = 0;
     public $totalAmtBilling = 0;
     public $totalAmtAdvance = 0;
-
+    public $totalPiutangCustomer = 0;
     public $advanceOptions = [];
     public $paytypeOptions = [];
     public $chequeDepositCode = null;
     public $cashDepositCode = null;
-
     public $codeBill;
     public $inputs = [];
     public $input_details = [];
@@ -126,6 +124,9 @@ class Detail extends BaseComponent
             // Load details
             $this->loadDetails();
             $this->loadPaymentDetails();
+
+            // Hitung total piutang customer untuk mode edit
+            $this->calculateTotalPiutangCustomer($this->object->partner_id);
 
             // Set flag bahwa data sudah dimuat untuk mode edit
             $this->isDataLoaded = true;
@@ -234,6 +235,7 @@ class Detail extends BaseComponent
         $this->inputs['curr_id'] = app(ConfigService::class)->getConstIdByStr1('BASE_CURRENCY', $this->inputs['curr_code']);
         $this->inputs['curr_rate'] = 1.00;
         $this->inputs['partner_id'] = 0;
+        $this->totalPiutangCustomer = 0;
         // dd($this->inputs);
     }
 
@@ -369,34 +371,34 @@ class Detail extends BaseComponent
         $this->input_payments = array_values($this->input_payments);
     }
 
+    // public function delete()
+    // {
+    //     try {
+    //         if ($this->object->isOrderCompleted()) {
+    //             $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+    //             return;
+    //         }
+
+    //         if (!$this->object->isOrderEnableToDelete()) {
+    //             $this->dispatch('warning', 'Nota ini tidak bisa delete, karena memiliki material yang sudah dijual.');
+    //             return;
+    //         }
+
+    //         if (isset($this->object->status_code)) {
+    //             $this->object->status_code =  Status::NONACTIVE;
+    //         }
+    //         $this->object->save();
+    //         $this->object->delete();
+    //         $messageKey = 'generic.string.delete';
+    //         $this->dispatch('success', __($messageKey));
+    //     } catch (Exception $e) {
+    //         $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+    //     }
+
+    //     return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+    // }
+
     public function delete()
-    {
-        try {
-            if ($this->object->isOrderCompleted()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
-                return;
-            }
-
-            if (!$this->object->isOrderEnableToDelete()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa delete, karena memiliki material yang sudah dijual.');
-                return;
-            }
-
-            if (isset($this->object->status_code)) {
-                $this->object->status_code =  Status::NONACTIVE;
-            }
-            $this->object->save();
-            $this->object->delete();
-            $messageKey = 'generic.string.delete';
-            $this->dispatch('success', __($messageKey));
-        } catch (Exception $e) {
-            $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
-        }
-
-        return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
-    }
-
-    public function deleteTransaction()
     {
         try {
             if (!isset($this->object->id) || empty($this->object->id)) {
@@ -907,6 +909,9 @@ class Detail extends BaseComponent
                 }
             }
 
+            // Hitung total piutang customer yang belum dibayar
+            $this->calculateTotalPiutangCustomer($partner->id);
+
             // Set flag bahwa data sudah dimuat
             $this->isDataLoaded = true;
 
@@ -984,6 +989,29 @@ class Detail extends BaseComponent
         $this->totalAmtBilling = array_sum(array_column($this->input_details, 'amt')) ?? 0;
         $this->totalAmtSource = array_sum(array_column($this->input_payments, 'amt')) ?? 0;
         $this->overPayment = $this->totalAmtAdvance + $this->totalAmtSource - $this->totalAmtBilling;
+    }
+
+    /**
+     * Hitung total piutang customer yang belum dibayar
+     */
+    private function calculateTotalPiutangCustomer($partnerId)
+    {
+        if (empty($partnerId)) {
+            $this->totalPiutangCustomer = 0;
+            return;
+        }
+
+        $billingService = app(BillingService::class);
+        $outstandingBills = $billingService->getOutstandingBillsByPartner($partnerId);
+
+        $basePiutang = $outstandingBills->sum('outstanding_amt');
+
+        // Jika mode Edit, tambahkan total pembayaran yang sudah ada
+        if ($this->isEditOrView()) {
+            $this->totalPiutangCustomer = $basePiutang + $this->totalAmtSource;
+        } else {
+            $this->totalPiutangCustomer = $basePiutang;
+        }
     }
 
     public function addAdvanceItem()

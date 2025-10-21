@@ -190,7 +190,7 @@
                                 enabled="true" />
                         @endif
 
-                        <x-ui-button clickEvent="deleteTransaction" :action="$actionValue" :enabled="$isDeliv ? 'false' : ($canUpdateAfterPrint ? 'true' : 'false')"
+                        <x-ui-button clickEvent="delete" :action="$actionValue" :enabled="$isDeliv ? 'false' : ($canUpdateAfterPrint ? 'true' : 'false')"
                             type="delete" enableConfirmationDialog="true" :permissions="$permissions" />
 
                         <x-ui-button clickEvent="Save" :action="$actionValue" type="save" :enabled="$canUpdateAfterPrint || $canSaveButtonEnabled ? 'true' : 'false'" />

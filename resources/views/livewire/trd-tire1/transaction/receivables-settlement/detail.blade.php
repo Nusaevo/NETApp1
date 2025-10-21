@@ -233,6 +233,10 @@
                         <x-ui-text-field model="overPayment" label="Lebih Bayar" :action="$actionValue" enabled="false"
                             type="number" />
                     </div>
+                    <div class="row">
+                        <x-ui-text-field model="totalPiutangCustomer" label="Total Piutang Customer Belum Bayar" :action="$actionValue"
+                            enabled="false" type="number" />
+                    </div>
                 </x-ui-padding>
             </x-ui-card>
         </x-ui-tab-view-content>
@@ -240,7 +244,7 @@
 
     <!-- Footer with Save button -->
     <x-ui-footer>
-        <x-ui-button clickEvent="deleteTransaction" button-name="Hapus" loading="true" :action="$actionValue"
+        <x-ui-button clickEvent="delete" button-name="Hapus" loading="true" :action="$actionValue"
             cssClass="btn-danger" iconPath="delete.svg" />
         <x-ui-button clickEvent="onValidateAndSave" button-name="Save" loading="true" :action="$actionValue"
             cssClass="btn-primary" iconPath="save.svg" />

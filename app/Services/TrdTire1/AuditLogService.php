@@ -32,14 +32,14 @@ class AuditLogService
                 'billing_id' => $billingId,
                 'tr_code' => $billing->tr_code,
                 'partner_id' => $billing->partner_id,
-                'event_time' => now()->toISOString(),
+                'event_time' => Carbon::now(),
             ];
 
             // Create audit log
             $auditLog = AuditLogs::create([
                 'group_code' => 'BILLING',
                 'event_code' => 'TAGIHAN',
-                'event_time' => now(),
+                'event_time' => Carbon::now(),
                 'key_value' => $billingId,
                 'audit_trail' => $auditTrail,
             ]);
@@ -70,7 +70,7 @@ class AuditLogService
                 'billing_id' => $billingId,
                 'tr_code' => $billing->tr_code,
                 'partner_id' => $billing->partner_id,
-                'event_time' => now()->toISOString(),
+                'event_time' => Carbon::now(),
                 'action' => 'CETAK NOTA',
             ];
 
@@ -78,7 +78,7 @@ class AuditLogService
             $auditLog = AuditLogs::create([
                 'group_code' => 'BILLING',
                 'event_code' => 'CETAK',
-                'event_time' => now(),
+                'event_time' => Carbon::now(),
                 'key_value' => $billingId,
                 'audit_trail' => $auditTrail,
             ]);
@@ -152,13 +152,13 @@ class AuditLogService
     //         'gudang' => $whCode,
     //         'tanggal kirim' => $deliv->tr_date ? Carbon::parse($deliv->tr_date)->format('Y-m-d') : null,
     //         'user_id' => Auth::id() ?? 'system',
-    //         'event_time' => now()->toISOString(),
+    //         'event_time' => Carbon::now(),
     //     ];
 
     //     return AuditLogs::create([
     //         'group_code' => 'DELIVERY',
     //         'event_code' => 'KIRIM',
-    //         'event_time' => now(),
+    //         'event_time' => Carbon::now(),
     //         'key_value' => $reffhdrId ?? $deliv->id,
     //         'audit_trail' => $auditTrail,
     //     ]);
@@ -187,14 +187,14 @@ class AuditLogService
                 'gudang' => $whCode,
                 'tanggal kirim' => $deliv->tr_date ? Carbon::parse($deliv->tr_date)->format('Y-m-d') : null,
                 'user_id' => Auth::id() ?? 'system',
-                'event_time' => now()->toISOString(),
+                'event_time' => Carbon::now(),
             ];
 
             // Create audit log
             $auditLog = AuditLogs::create([
                 'group_code' => 'DELIVERY',
                 'event_code' => 'KIRIM',
-                'event_time' => now(),
+                'event_time' => Carbon::now(),
                 'key_value' => $reffhdrId ?? $deliv->id,
                 'audit_trail' => $auditTrail,
             ]);
@@ -224,13 +224,13 @@ class AuditLogService
     //         'gudang' => $whCode,
     //         'tanggal kirim' => $deliv->tr_date ? Carbon::parse($deliv->tr_date)->format('Y-m-d') : null,
     //         'user_id' => Auth::id() ?? 'system',
-    //         'event_time' => now()->toISOString(),
+    //         'event_time' => Carbon::now(),
     //     ];
 
     //     return AuditLogs::create([
     //         'group_code' => 'DELIVERY',
     //         'event_code' => 'BATAL KIRIM',
-    //         'event_time' => now(),
+    //         'event_time' => Carbon::now(),
     //         'key_value' => $reffhdrId ?? $deliv->id,
     //         'audit_trail' => $auditTrail,
     //     ]);
@@ -260,14 +260,14 @@ class AuditLogService
                 'gudang' => $whCode,
                 'tanggal kirim' => $deliv->tr_date ? Carbon::parse($deliv->tr_date)->format('Y-m-d') : null,
                 'user_id' => Auth::id() ?? 'system',
-                'event_time' => now()->toISOString(),
+                'event_time' => Carbon::now(),
             ];
 
             // Create audit log
             $auditLog = AuditLogs::create([
                 'group_code' => 'DELIVERY',
                 'event_code' => 'BATAL KIRIM',
-                'event_time' => now(),
+                'event_time' => Carbon::now(),
                 'key_value' => $reffhdrId ?? $deliv->id,
                 'audit_trail' => $auditTrail,
             ]);

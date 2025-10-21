@@ -511,32 +511,32 @@ class Detail extends BaseComponent
     /**
      * Delete the purchase order
      */
+    // public function delete()
+    // {
+    //     try {
+    //         if ($this->object->isOrderCompleted()) {
+    //             $this->dispatch('warning', 'Nota ini tidak bisa dihapus karena status sudah Completed');
+    //             return;
+    //         }
+
+    //         if (!$this->object->isOrderEnableToDelete()) {
+    //             $this->dispatch('warning', 'Nota ini tidak bisa dihapus karena memiliki material yang sudah dijual.');
+    //             return;
+    //         }
+
+    //         $this->object->status_code = Status::CANCEL;
+    //         $this->object->save();
+    //         $this->object->delete();
+
+    //         $this->dispatch('success', __('generic.string.delete'));
+    //     } catch (Exception $e) {
+    //         $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+    //     }
+
+    //     return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+    // }
+
     public function delete()
-    {
-        try {
-            if ($this->object->isOrderCompleted()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa dihapus karena status sudah Completed');
-                return;
-            }
-
-            if (!$this->object->isOrderEnableToDelete()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa dihapus karena memiliki material yang sudah dijual.');
-                return;
-            }
-
-            $this->object->status_code = Status::CANCEL;
-            $this->object->save();
-            $this->object->delete();
-
-            $this->dispatch('success', __('generic.string.delete'));
-        } catch (Exception $e) {
-            $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
-        }
-
-        return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
-    }
-
-    public function deleteTransaction()
     {
         try {
             // 1) Pastikan object ada dan memang tercatat di DB

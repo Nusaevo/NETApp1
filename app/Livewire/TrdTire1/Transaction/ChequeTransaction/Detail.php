@@ -445,7 +445,7 @@ class Detail extends BaseComponent
         );
     }
 
-    public function deleteTransaction()
+    public function delete()
     {
         try {
             // 1) Pastikan object ada dan memang tercatat di DB

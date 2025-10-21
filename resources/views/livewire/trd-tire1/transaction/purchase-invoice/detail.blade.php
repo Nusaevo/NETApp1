@@ -172,7 +172,7 @@
                         </x-ui-card>
 
                         <x-ui-footer>
-                            <x-ui-button clickEvent="deleteTransaction"
+                            <x-ui-button clickEvent="delete"
                                 :action="$actionValue"
                                 :enabled="$isDeliv ? 'false' : 'true'"
                                 type="delete" enableConfirmationDialog="true" :permissions="$permissions"/>
