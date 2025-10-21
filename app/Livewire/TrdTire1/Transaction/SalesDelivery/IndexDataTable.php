@@ -41,7 +41,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return OrderHdr::with(['OrderDtl', 'Partner'])
             ->where('order_hdrs.tr_type', 'SO')
-            ->whereIn('order_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN, Status::PAID, Status::SHIP, Status::BILL])
+            ->whereIn('order_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN, Status::PAID, Status::SHIP, Status::BILL, Status::CANCEL])
             ->select('order_hdrs.*') // Pastikan semua field dari order_hdrs di-select
             ->orderBy('order_hdrs.tr_code', 'asc');
             // ->orderBy('order_hdrs.tr_date', 'desc');
@@ -120,6 +120,12 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make($this->trans("Status"), "status")
                 ->label(function ($row) {
+                    // Cek apakah order dibatalkan
+                    if ($row->status_code == Status::CANCEL) {
+                        return 'Batal';
+                    }
+
+                    // Cek apakah sudah ada delivery
                     $delivery = DelivHdr::where('tr_type', 'SD')
                         ->where('tr_code', $row->tr_code)
                         ->first();
@@ -179,6 +185,7 @@ class IndexDataTable extends BaseDataTableComponent
                     ''  => 'Semua',
                     '1' => 'Terkirim',
                     '0' => 'Belum Terkirim',
+                    '2' => 'Batal Nota',
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     if ($value === '1') {
@@ -188,7 +195,9 @@ class IndexDataTable extends BaseDataTableComponent
                     } elseif ($value === '0') {
                         $builder->whereDoesntHave('DelivHdr', function ($query) {
                             $query->where('tr_type', 'SD');
-                        });
+                        })->where('status_code', '!=', Status::CANCEL);
+                    } elseif ($value === '2') {
+                        $builder->where('status_code', Status::CANCEL);
                     }
                 }),
         ];
