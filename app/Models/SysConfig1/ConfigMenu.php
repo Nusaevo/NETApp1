@@ -152,7 +152,7 @@ public static function getFullPathLink($menuLink, $actionValue = null, $addition
 
         // 4) Build a filtered array without "table-filter"
         $filteredParams = array_filter($allParams, function($value, $key) {
-            return !in_array($key, ['table-filters', 'page', 'table-sorts'], true);
+            return !in_array($key, ['table-filters', 'page', 'table-sorts','tableperPage'], true);
         }, ARRAY_FILTER_USE_BOTH);
 
         // 5) Re‑append the remaining params, if any
