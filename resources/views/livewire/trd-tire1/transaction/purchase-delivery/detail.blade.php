@@ -70,7 +70,7 @@
                                                     query="SELECT id, code, name FROM materials WHERE status_code='A' AND deleted_at IS NULL"
                                                     optionValue="id" optionLabel="{code},{name}"
                                                     placeHolder="Search materials..." :selectedValue="$input_details[$key]['matl_id'] ?? ''" required="true"
-                                                    :action="$actionValue" enabled="true"
+                                                    :action="$actionValue" enabled="false"
                                                     onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
                                                     type="int" />
                                             </td>
