@@ -48,7 +48,7 @@
     document.addEventListener('DOMContentLoaded', (event) => {
         const descrElement = document.getElementById('label-descr');
         const originalText = descrElement.innerText;
-        descrElement.innerText = formatText(originalText, 16); // Reduced character limit for larger font
+        descrElement.innerText = formatText(originalText, 16); // Mengurangi karakter per baris untuk font yang lebih besar
     });
 
     function printInvoice() {
@@ -104,51 +104,37 @@
         font-size: 16px;
         font-weight: bold;
         margin-top: -6mm;
-        font-family: 'Courier New', monospace;
+        font-family: Arial;
         /* Geser sedikit ke atas */
     }
 
     .label-price {
         font-size: 12px;
-        font-family: 'Courier New', monospace;
+        font-family: Arial;
         font-weight: bold;
     }
 
     .label-name {
         margin-top: 5px;
-        font-size: 10px;
-        font-family: 'Courier New', monospace;
+        font-size: 10px; /* Ukuran font lebih besar */
+        font-family: Arial;
         font-weight: bold;
         padding-left: 5px; /* Adjust the value as needed */
-        letter-spacing: 0; /* Monospace fonts have consistent spacing */
+        text-shadow: 0.25px 0px 0px black, -0.25px 0px 0px black; /* Menambahkan shadow untuk efek lebih tebal */
+        -webkit-text-stroke: 0.2px black; /* Efek stroke tipis untuk ketebalan */
     }
 
     .label-descr {
-        font-family: 'Calibri', Arial, sans-serif;
-        font-family: 'Courier New', monospace; /* Best for dot matrix printers */
-        font-size: 10px; /* Ukuran font konsisten untuk monospace */
+        font-family: Arial, sans-serif;
+        font-size: 10px; /* Ukuran font yang sesuai */
         max-width: 100%;
-        word-break: normal; /* Tidak memecah kata secara agresif */
-        font-weight: bold; /* Bold standard untuk dot matrix */
+        word-break: break-all;
+        font-weight: bold; /* Menggunakan bold standar seperti label-code */
         white-space: pre-wrap; /* Preserve whitespace and wrap as necessary */
         padding-left: 5px; /* Adjust the value as needed */
-        letter-spacing: 0; /* Monospace sudah fixed width */
-        line-height: 1.2; /* Optimal spacing for dot matrix */
-        -webkit-font-smoothing: none; /* No smoothing for dot matrix style */
-        text-rendering: optimizeLegibility;
-    }
-
-    /* Font selector styling */
-    .font-selector {
-        margin-top: 10px;
-        margin-bottom: 10px;
-    }
-
-    .font-selector select {
-        padding: 5px;
-        border-radius: 3px;
-        border: 1px solid #ced4da;
-        margin-left: 5px;
+        letter-spacing: -0.1px; /* Sedikit mengurangi jarak antar huruf untuk keterbacaan lebih baik */
+        text-shadow: 0.25px 0px 0px black, -0.25px 0px 0px black; /* Menambahkan shadow untuk efek lebih tebal */
+        -webkit-text-stroke: 0.2px black; /* Memberikan outline tipis untuk menebalkan teks */
     }
 
 
