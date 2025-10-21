@@ -371,34 +371,34 @@ class Detail extends BaseComponent
         $this->input_payments = array_values($this->input_payments);
     }
 
+    // public function delete()
+    // {
+    //     try {
+    //         if ($this->object->isOrderCompleted()) {
+    //             $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+    //             return;
+    //         }
+
+    //         if (!$this->object->isOrderEnableToDelete()) {
+    //             $this->dispatch('warning', 'Nota ini tidak bisa delete, karena memiliki material yang sudah dijual.');
+    //             return;
+    //         }
+
+    //         if (isset($this->object->status_code)) {
+    //             $this->object->status_code =  Status::NONACTIVE;
+    //         }
+    //         $this->object->save();
+    //         $this->object->delete();
+    //         $messageKey = 'generic.string.delete';
+    //         $this->dispatch('success', __($messageKey));
+    //     } catch (Exception $e) {
+    //         $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+    //     }
+
+    //     return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+    // }
+
     public function delete()
-    {
-        try {
-            if ($this->object->isOrderCompleted()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
-                return;
-            }
-
-            if (!$this->object->isOrderEnableToDelete()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa delete, karena memiliki material yang sudah dijual.');
-                return;
-            }
-
-            if (isset($this->object->status_code)) {
-                $this->object->status_code =  Status::NONACTIVE;
-            }
-            $this->object->save();
-            $this->object->delete();
-            $messageKey = 'generic.string.delete';
-            $this->dispatch('success', __($messageKey));
-        } catch (Exception $e) {
-            $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
-        }
-
-        return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
-    }
-
-    public function deleteTransaction()
     {
         try {
             if (!isset($this->object->id) || empty($this->object->id)) {

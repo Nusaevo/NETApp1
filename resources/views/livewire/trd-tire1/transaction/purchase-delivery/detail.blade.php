@@ -104,7 +104,7 @@
 
                         <!-- Footer with Save button -->
                         <x-ui-footer>
-                            <x-ui-button clickEvent="deleteTransaction" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'"
+                            <x-ui-button clickEvent="delete" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'"
                                 type="delete" enableConfirmationDialog="true" :permissions="$permissions" />
                             <x-ui-button clickEvent="Save" :action="$actionValue" type="save" :enabled="true" />
 

@@ -81,7 +81,7 @@
                     </x-ui-card>
                     <br>
                     <x-ui-footer>
-                        <x-ui-button clickEvent="deleteTransaction" button-name="Hapus" loading="true"
+                        <x-ui-button clickEvent="delete" button-name="Hapus" loading="true"
                             :action="$actionValue" cssClass="btn-danger" iconPath="delete.svg" :enabled="$isDeliv ? 'false' : 'true'" />
                         {{-- @include('layout.customs.buttons.save') --}}
                         <x-ui-button clickEvent="Save" button-name="Simpan" loading="true" :action="$actionValue"

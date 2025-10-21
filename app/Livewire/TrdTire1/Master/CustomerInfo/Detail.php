@@ -558,34 +558,34 @@ class Detail extends BaseComponent
     /*
      * Hapus Sales Order (header dan berkaitan dengan detail-nya)
      */
+    // public function delete()
+    // {
+    //     try {
+    //         // Jika mode Create, object belum disimpan ke database
+    //         if ($this->actionValue === 'Create') {
+    //             $this->dispatch('warning', 'Tidak ada data untuk dihapus pada mode Create');
+    //             return;
+    //         }
+
+    //         if ($this->object->isOrderCompleted()) {
+    //             $this->dispatch('warning', 'Nota ini tidak bisa dihapus karena status sudah Completed');
+    //             return;
+    //         }
+    //         if (!$this->object->isOrderEnableToDelete()) {
+    //             $this->dispatch('warning', 'Nota ini tidak bisa dihapus karena memiliki material yang sudah dijual.');
+    //             return;
+    //         }
+    //         $this->object->status_code = Status::NONACTIVE;
+    //         $this->object->save();
+    //         $this->object->delete();
+    //         $this->dispatch('success', __('generic.string.disable'));
+    //     } catch (Exception $e) {
+    //         $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+    //     }
+    //     return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+    // }
+
     public function delete()
-    {
-        try {
-            // Jika mode Create, object belum disimpan ke database
-            if ($this->actionValue === 'Create') {
-                $this->dispatch('warning', 'Tidak ada data untuk dihapus pada mode Create');
-                return;
-            }
-
-            if ($this->object->isOrderCompleted()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa dihapus karena status sudah Completed');
-                return;
-            }
-            if (!$this->object->isOrderEnableToDelete()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa dihapus karena memiliki material yang sudah dijual.');
-                return;
-            }
-            $this->object->status_code = Status::NONACTIVE;
-            $this->object->save();
-            $this->object->delete();
-            $this->dispatch('success', __('generic.string.disable'));
-        } catch (Exception $e) {
-            $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
-        }
-        return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
-    }
-
-    public function deleteTransaction()
     {
         try {
             if (!$this->object || is_null($this->object->id) || !OrderHdr::where('id', $this->object->id)->exists()) {

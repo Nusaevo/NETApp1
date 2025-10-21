@@ -244,7 +244,7 @@
 
     <!-- Footer with Save button -->
     <x-ui-footer>
-        <x-ui-button clickEvent="deleteTransaction" button-name="Hapus" loading="true" :action="$actionValue"
+        <x-ui-button clickEvent="delete" button-name="Hapus" loading="true" :action="$actionValue"
             cssClass="btn-danger" iconPath="delete.svg" />
         <x-ui-button clickEvent="onValidateAndSave" button-name="Save" loading="true" :action="$actionValue"
             cssClass="btn-primary" iconPath="save.svg" />
