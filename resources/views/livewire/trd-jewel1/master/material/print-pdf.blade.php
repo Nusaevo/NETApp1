@@ -34,11 +34,25 @@
         let line = '';
 
         for (let i = 0; i < words.length; i++) {
-            if ((line + words[i]).length > maxLength) {
-                formattedText += line.trim() + '\n';
+            // For longer words, we may need to break them
+            if (words[i].length > maxLength) {
+                if (line.trim() !== '') {
+                    formattedText += line.trim() + '\n';
+                }
+                // Break long word into chunks
+                let longWord = words[i];
+                let j = 0;
+                while (j < longWord.length) {
+                    formattedText += longWord.substr(j, maxLength) + '\n';
+                    j += maxLength;
+                }
                 line = '';
+            } else if ((line + words[i]).length > maxLength) {
+                formattedText += line.trim() + '\n';
+                line = words[i] + ' ';
+            } else {
+                line += words[i] + ' ';
             }
-            line += words[i] + ' ';
         }
 
         formattedText += line.trim();
@@ -48,7 +62,7 @@
     document.addEventListener('DOMContentLoaded', (event) => {
         const descrElement = document.getElementById('label-descr');
         const originalText = descrElement.innerText;
-        descrElement.innerText = formatText(originalText, 18);
+        descrElement.innerText = formatText(originalText, 16); // Reduced character limit for larger font
     });
 
     function printInvoice() {
@@ -116,20 +130,23 @@
 
     .label-name {
         margin-top: 5px;
-        font-size: 8px;
-        font-family: Arial;
+        font-size: 10px;
+        font-family: 'Calibri', Arial, sans-serif;
         font-weight: bold;
         padding-left: 5px; /* Adjust the value as needed */
+        letter-spacing: -0.2px; /* Slightly tighter kerning for better print quality */
     }
 
     .label-descr {
-        font-family: Arial;
-        font-size: 7px;
+        font-family: 'Calibri', Arial, sans-serif;
+        font-size: 8px;
         max-width: 100%;
         word-break: break-all;
         font-weight: bold;
         white-space: pre-wrap; /* Preserve whitespace and wrap as necessary */
         padding-left: 5px; /* Adjust the value as needed */
+        letter-spacing: -0.1px; /* Slightly tighter kerning for better print quality */
+        line-height: 1.2; /* Better line spacing for readability */
     }
 
 
@@ -157,6 +174,16 @@
             flex-direction: column;
             justify-content: flex-start;
             align-items: flex-start;
+            print-color-adjust: exact; /* Ensures colors print accurately */
+            -webkit-print-color-adjust: exact;
+        }
+
+        /* Enhance print quality */
+        .label-name, .label-descr {
+            text-rendering: geometricPrecision; /* Better text rendering for print */
+            font-smooth: always;
+            -webkit-font-smoothing: antialiased;
+            color: #000000 !important; /* Force black color for better print contrast */
         }
     }
 

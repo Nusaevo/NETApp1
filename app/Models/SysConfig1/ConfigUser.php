@@ -27,7 +27,6 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
     protected static function boot()
     {
         parent::boot();
-        self::bootBaseTrait();
     }
     /**
      * The attributes that are mass assignable.

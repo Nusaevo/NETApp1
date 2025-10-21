@@ -7,6 +7,8 @@ use App\Enums\Status;
 use Illuminate\Support\Facades\Schema;
 use App\Models\SysConfig1\ConfigSnum;
 use Illuminate\Support\Facades\Session;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 trait BaseTrait
 {
@@ -21,9 +23,10 @@ trait BaseTrait
                 if (!$model->exists) {
                     // This is CREATE operation
                     $model->created_by = $userId;
-                    $model->created_at = now();
+                    // Use Carbon for standard timestamps (microseconds will be added later)
+                    $model->created_at = Carbon::now();
                     $model->updated_by = $userId;
-                    $model->updated_at = now();
+                    $model->updated_at = Carbon::now();
                     $model->setStatus(Status::ACTIVE);
 
                     // Initialize version number for new records
@@ -33,7 +36,7 @@ trait BaseTrait
                 } else {
                     // This is UPDATE operation
                     $model->updated_by = $userId;
-                    $model->updated_at = now();
+                    $model->updated_at = Carbon::now();
                     $model->setStatus(Status::ACTIVE);
 
                     // Increment version number for updates
@@ -54,6 +57,52 @@ trait BaseTrait
                     $value = json_decode($value, true);
                 }
                 $model->{$attribute} = $value;
+            }
+        });
+
+        // After the model is saved, update the timestamps with microseconds directly in DB
+        // This ensures that Eloquent won't strip the microseconds
+        static::saved(function ($model) {
+            if ($model->timestamps !== false && isset($model->id)) {
+                try {
+                    // Direct DB query to ensure microsecond precision is maintained
+                    $driver = DB::connection()->getDriverName();
+                    $table = $model->getTable();
+                    $id = $model->id;
+                    $primaryKey = $model->getKeyName();
+
+                    if ($driver === 'pgsql') {
+                        // PostgreSQL timestamp microsecond update
+                        DB::statement(
+                            "UPDATE \"{$table}\" SET \"updated_at\" = NOW() WHERE \"{$primaryKey}\" = ?",
+                            [$id]
+                        );
+
+                        if ($model->wasRecentlyCreated) {
+                            // For newly created models, also update created_at
+                            DB::statement(
+                                "UPDATE \"{$table}\" SET \"created_at\" = NOW() WHERE \"{$primaryKey}\" = ?",
+                                [$id]
+                            );
+                        }
+                    } else if ($driver === 'mysql') {
+                        // MySQL timestamp microsecond update
+                        DB::statement(
+                            "UPDATE `{$table}` SET `updated_at` = NOW(6) WHERE `{$primaryKey}` = ?",
+                            [$id]
+                        );
+
+                        if ($model->wasRecentlyCreated) {
+                            DB::statement(
+                                "UPDATE `{$table}` SET `created_at` = NOW(6) WHERE `{$primaryKey}` = ?",
+                                [$id]
+                            );
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Log the error but don't interrupt the save process
+                    \Log::error("Error updating timestamps with microseconds: " . $e->getMessage());
+                }
             }
         });
     }
