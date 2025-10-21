@@ -48,7 +48,7 @@
     document.addEventListener('DOMContentLoaded', (event) => {
         const descrElement = document.getElementById('label-descr');
         const originalText = descrElement.innerText;
-        descrElement.innerText = formatText(originalText, 16); // Mengurangi karakter per baris untuk font yang lebih besar
+        descrElement.innerText = formatText(originalText, 14); // Mengurangi karakter per baris untuk font yang lebih besar
     });
 
     function printInvoice() {
@@ -162,6 +162,15 @@
             flex-direction: column;
             justify-content: flex-start;
             align-items: flex-start;
+        }
+
+        /* Memastikan ketebalan font saat dicetak */
+        .label-name, .label-descr, .label-code {
+            font-weight: bold !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            -webkit-text-stroke: 0.3px black !important;
+            text-shadow: 0.25px 0px 0px black, -0.25px 0px 0px black !important;
         }
     }
 
