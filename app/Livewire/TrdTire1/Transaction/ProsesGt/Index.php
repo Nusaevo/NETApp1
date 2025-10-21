@@ -185,7 +185,7 @@ class Index extends BaseComponent
                 $this->appCode,     // app code
                 $this->sr_code,     // SR code (from dropdown)
                 $this->start_date,  // begin date
-                now()->toDateString()    // ← ganti end_date jadi today
+                $this->end_date     // end date dari form
             );
 
             if ($result >= 0) {
