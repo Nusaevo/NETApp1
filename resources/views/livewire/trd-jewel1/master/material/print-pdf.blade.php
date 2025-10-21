@@ -1,29 +1,4 @@
 <div>
-<head>
-    <style>
-        /* Import monospace fonts for dot matrix printer compatibility */
-        @font-face {
-            font-family: 'Courier New';
-            src: local('Courier New');
-            font-weight: normal;
-            font-style: normal;
-        }
-
-        @font-face {
-            font-family: 'Lucida Console';
-            src: local('Lucida Console');
-            font-weight: normal;
-            font-style: normal;
-        }
-
-        @font-face {
-            font-family: 'Consolas';
-            src: local('Consolas');
-            font-weight: normal;
-            font-style: normal;
-        }
-    </style>
-</head>
 <div>
     <x-ui-button clickEvent="" type="Back" button-name="Back" />
 </div>
@@ -53,94 +28,27 @@
     </div>
 </div>
 <script type="text/javascript">
-    // Fungsi untuk mengganti font
-    function switchFont(fontName) {
-        document.querySelectorAll('.label-code, .label-price, .label-name, .label-descr').forEach(element => {
-            element.style.fontFamily = fontName + ', monospace';
-        });
-        // Simpan preferensi di local storage
-        localStorage.setItem('preferredPrintFont', fontName);
-    }
-
-    // Tambahkan opsi font
-    function addFontSelector() {
-        const fontSelector = document.createElement('div');
-        fontSelector.className = 'font-selector';
-        fontSelector.style.marginTop = '10px';
-        fontSelector.innerHTML = `
-            <label>Font Printer: </label>
-            <select id="fontSelect" onchange="switchFont(this.value)">
-                <option value="Courier New">Courier New (Default)</option>
-                <option value="Lucida Console">Lucida Console (Lebih bersih)</option>
-                <option value="Consolas">Consolas (Modern)</option>
-                <option value="MS Sans Serif">MS Sans Serif (Non-monospace)</option>
-                <option value="Draft 10cpi">Draft 10cpi/12cpi (Printer)</option>
-            </select>
-        `;
-        document.querySelector('.col-xl-3').appendChild(fontSelector);
-
-        // Load saved preference
-        const savedFont = localStorage.getItem('preferredPrintFont');
-        if (savedFont) {
-            document.getElementById('fontSelect').value = savedFont;
-            switchFont(savedFont);
-        }
-    }
-
     function formatText(text, maxLength) {
-        // Handle empty text
-        if (!text || text.trim() === '') {
-            return '';
-        }
-
-        // Normalize whitespace and clean the text
-        text = text.trim().replace(/\s+/g, ' ');
-
         let formattedText = '';
         let words = text.split(' ');
         let line = '';
 
         for (let i = 0; i < words.length; i++) {
-            // For longer words, we may need to break them
-            if (words[i].length > maxLength) {
-                if (line.trim() !== '') {
-                    formattedText += line.trim() + '\n';
-                }
-                // Break long word into chunks
-                let longWord = words[i];
-                let j = 0;
-                while (j < longWord.length) {
-                    let chunk = longWord.substr(j, maxLength);
-                    formattedText += chunk;
-                    j += maxLength;
-                    // Only add newline if not at end
-                    if (j < longWord.length) {
-                        formattedText += '-\n';
-                    }
-                }
-                line = ' '; // Add space after long word
-            } else if ((line + words[i]).length > maxLength) {
+            if ((line + words[i]).length > maxLength) {
                 formattedText += line.trim() + '\n';
-                line = words[i] + ' ';
-            } else {
-                line += words[i] + ' ';
+                line = '';
             }
+            line += words[i] + ' ';
         }
 
-        if (line.trim() !== '') {
-            formattedText += line.trim();
-        }
-
+        formattedText += line.trim();
         return formattedText;
     }
 
     document.addEventListener('DOMContentLoaded', (event) => {
         const descrElement = document.getElementById('label-descr');
         const originalText = descrElement.innerText;
-        descrElement.innerText = formatText(originalText, 12); // Lebih sedikit karakter per baris untuk monospace font
-
-        // Add font selector
-        addFontSelector();
+        descrElement.innerText = formatText(originalText, 16); // Reduced character limit for larger font
     });
 
     function printInvoice() {
@@ -216,6 +124,7 @@
     }
 
     .label-descr {
+        font-family: 'Calibri', Arial, sans-serif;
         font-family: 'Courier New', monospace; /* Best for dot matrix printers */
         font-size: 10px; /* Ukuran font konsisten untuk monospace */
         max-width: 100%;
@@ -267,23 +176,6 @@
             flex-direction: column;
             justify-content: flex-start;
             align-items: flex-start;
-            print-color-adjust: exact; /* Ensures colors print accurately */
-            -webkit-print-color-adjust: exact;
-        }
-
-        /* Enhance print quality for dot matrix printers */
-        .label-name, .label-descr {
-            text-rendering: optimizeSpeed; /* Speed over quality for dot matrix */
-            font-smooth: never;
-            -webkit-font-smoothing: none;
-            color: #000000 !important; /* Force black color for better print contrast */
-        }
-
-        /* Special optimization for description text */
-        .label-descr {
-            font-family: 'Courier New', monospace !important; /* Ideal for dot matrix */
-            font-weight: bold !important; /* Standard bold works best with dot matrix */
-            letter-spacing: 0 !important; /* Monospace has fixed spacing */
         }
     }
 
