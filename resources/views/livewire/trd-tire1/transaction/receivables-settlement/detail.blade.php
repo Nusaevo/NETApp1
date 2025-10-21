@@ -233,6 +233,10 @@
                         <x-ui-text-field model="overPayment" label="Lebih Bayar" :action="$actionValue" enabled="false"
                             type="number" />
                     </div>
+                    <div class="row">
+                        <x-ui-text-field model="totalPiutangCustomer" label="Total Piutang Customer Belum Bayar" :action="$actionValue"
+                            enabled="false" type="number" />
+                    </div>
                 </x-ui-padding>
             </x-ui-card>
         </x-ui-tab-view-content>

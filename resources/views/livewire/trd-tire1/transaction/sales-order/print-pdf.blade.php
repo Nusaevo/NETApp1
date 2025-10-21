@@ -19,7 +19,7 @@
             <!-- Header -->
             <table width="100%" style="margin-bottom: 10px; border: none;">
                 <!-- Counter untuk array nota -->
-                <div class="me-3" style="text-align: end; margin-bottom: -15px;">
+                <div class="mt-1" style="text-align: end; margin-bottom: -30px; z-index: 100; margin-right: 10px;">
                     {{ $this->notaCounter['nota'] }}
                 </div>
                 <tr style="border: none;">
@@ -121,7 +121,7 @@
                             @if ($this->object->sales_type != 'O')
                                 <td
                                     style="text-align: center; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
-                                    {{ number_format($OrderDtl->disc_pct, 1, ',', '.') }}%
+                                    {{ $OrderDtl->disc_pct == (int)$OrderDtl->disc_pct ? (int)$OrderDtl->disc_pct : number_format($OrderDtl->disc_pct, 1, ',', '.') }}%
                                 </td>
                             @endif
                             <td
@@ -196,7 +196,7 @@
                     @endif
                 </tbody>
             </table>
-            <table style="margin-top: -18px; width: 65.8%;">
+            <table style="margin-top: -18px; width: 62%;">
                 <tr>
                     <td style="border: 1px solid #000; padding: 5px;">
                         <p style="margin: 0; text-align: start; font-size: 16px;">
@@ -225,7 +225,7 @@
                     <!-- Header per page -->
                     <table width="100%" style="margin-bottom: 10px; border: none;">
                         <!-- Counter untuk array nota -->
-                        <div class="me-3" style="text-align: end; margin-bottom: -15px;">
+                        <div class="mt-1" style="text-align: end; margin-bottom: -30px; z-index: 100; margin-right: 10px;">
                             {{ $this->notaCounter['nota'] }}
                         </div>
                         <tr style="border: none;">
@@ -313,7 +313,7 @@
                                     @if ($this->object->sales_type != 'O')
                                         <td
                                             style="text-align: center; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
-                                            {{ number_format($OrderDtl->disc_pct, 1, ',', '.') }}%</td>
+                                            {{ $OrderDtl->disc_pct == (int)$OrderDtl->disc_pct ? (int)$OrderDtl->disc_pct : number_format($OrderDtl->disc_pct, 1, ',', '.') }}%</td>
                                     @endif
                                     <td
                                         style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
@@ -397,7 +397,7 @@
                     </table>
 
                     <!-- Footer -->
-                    <table style="margin-top: -18px; width: 65.8%;">
+                    <table style="margin-top: -18px; width: 62%;">
                         <tr>
                             <td style="border: 1px solid #000; padding: 5px;">
                                 <p style="margin: 0; text-align: start; font-size: 16px;">
