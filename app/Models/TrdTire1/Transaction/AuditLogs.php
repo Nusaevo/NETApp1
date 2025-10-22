@@ -11,7 +11,7 @@ use App\Models\TrdTire1\Master\PartnerBal;
 
 class AuditLogs extends BaseModel
 {
-    use SoftDeletes;
+    public $timestamps = false;
 
     protected $fillable = [
         'group_code',
@@ -22,10 +22,7 @@ class AuditLogs extends BaseModel
     ];
 
     protected $casts = [
-        'event_time' => 'datetime',
         'audit_trail' => 'array',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
     ];
 
 }

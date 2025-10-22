@@ -248,6 +248,7 @@ class Index extends BaseComponent
             'Qty',
             'Harga',
             'DPP',
+            'DPP Lain2',
             'PPN',
             'Jumlah'
         ];
@@ -257,17 +258,20 @@ class Index extends BaseComponent
         $grandTotalQty = 0;
         $grandTotalPrice = 0;
         $grandTotalDpp = 0;
+        $grandTotalDppLain2 = 0;
         $grandTotalPpn = 0;
         $grandTotalAmount = 0;
         $currentTrCode = null;
         $trCodeSubtotalQty = 0;
         $trCodeSubtotalPrice = 0;
         $trCodeSubtotalDpp = 0;
+        $trCodeSubtotalDppLain2 = 0;
         $trCodeSubtotalPpn = 0;
         $trCodeSubtotalAmount = 0;
         $previousTrCodeSubtotalQty = 0;
         $previousTrCodeSubtotalPrice = 0;
         $previousTrCodeSubtotalDpp = 0;
+        $previousTrCodeSubtotalDppLain2 = 0;
         $previousTrCodeSubtotalPpn = 0;
         $previousTrCodeSubtotalAmount = 0;
 
@@ -288,6 +292,7 @@ class Index extends BaseComponent
             $qty = $row->qty ?? 0;
             $price = $row->price ?? 0;
             $dpp = $row->dpp ?? 0;
+            $dppLain2 = $price * 11 / 12;
             $ppn = $row->ppn ?? 0;
             $totalAmount = $row->total_amount ?? 0;
 
@@ -300,6 +305,7 @@ class Index extends BaseComponent
                     $previousTrCodeSubtotalQty = $trCodeSubtotalQty;
                     $previousTrCodeSubtotalPrice = $trCodeSubtotalPrice;
                     $previousTrCodeSubtotalDpp = $trCodeSubtotalDpp;
+                    $previousTrCodeSubtotalDppLain2 = $trCodeSubtotalDppLain2;
                     $previousTrCodeSubtotalPpn = $trCodeSubtotalPpn;
                     $previousTrCodeSubtotalAmount = $trCodeSubtotalAmount;
 
@@ -312,6 +318,7 @@ class Index extends BaseComponent
                         $previousTrCodeSubtotalQty, // Qty
                         $previousTrCodeSubtotalPrice, // Harga
                         $previousTrCodeSubtotalDpp, // DPP
+                        $previousTrCodeSubtotalDppLain2, // DPP Lain2
                         $previousTrCodeSubtotalPpn, // PPN
                         $previousTrCodeSubtotalAmount // Jumlah
                     ];
@@ -328,6 +335,7 @@ class Index extends BaseComponent
                         '', // Qty
                         '', // Harga
                         '', // DPP
+                        '', // DPP Lain2
                         '', // PPN
                         '' // Jumlah
                     ];
@@ -338,6 +346,7 @@ class Index extends BaseComponent
                 $trCodeSubtotalQty = 0;
                 $trCodeSubtotalPrice = 0;
                 $trCodeSubtotalDpp = 0;
+                $trCodeSubtotalDppLain2 = 0;
                 $trCodeSubtotalPpn = 0;
                 $trCodeSubtotalAmount = 0;
             }
@@ -346,6 +355,7 @@ class Index extends BaseComponent
             $trCodeSubtotalQty += $qty;
             $trCodeSubtotalPrice += $price;
             $trCodeSubtotalDpp += $dpp;
+            $trCodeSubtotalDppLain2 += $dppLain2;
             $trCodeSubtotalPpn += $ppn;
             $trCodeSubtotalAmount += $totalAmount;
 
@@ -353,6 +363,7 @@ class Index extends BaseComponent
             $grandTotalQty += $qty;
             $grandTotalPrice += $price;
             $grandTotalDpp += $dpp;
+            $grandTotalDppLain2 += $dppLain2;
             $grandTotalPpn += $ppn;
             $grandTotalAmount += $totalAmount;
 
@@ -365,6 +376,7 @@ class Index extends BaseComponent
                 $qty, // Qty
                 $price, // Harga
                 $dpp, // DPP
+                $dppLain2, // DPP Lain2
                 $ppn, // PPN
                 $totalAmount // Jumlah
             ];
@@ -380,6 +392,7 @@ class Index extends BaseComponent
                 $trCodeSubtotalQty, // Qty
                 $trCodeSubtotalPrice, // Harga
                 $trCodeSubtotalDpp, // DPP
+                $trCodeSubtotalDppLain2, // DPP Lain2
                 $trCodeSubtotalPpn, // PPN
                 $trCodeSubtotalAmount // Jumlah
             ];
@@ -396,6 +409,7 @@ class Index extends BaseComponent
                 '', // Qty
                 '', // Harga
                 '', // DPP
+                '', // DPP Lain2
                 '', // PPN
                 '' // Jumlah
             ];
@@ -411,7 +425,7 @@ class Index extends BaseComponent
                 'bold' => true,
                 'borderTop' => true,
                 // 'backgroundColor' => 'E6E6E6',
-                'specificCells' => ['E', 'F', 'G', 'H', 'I']
+                'specificCells' => ['E', 'F', 'G', 'H', 'I', 'J']
             ];
         }
 
@@ -440,8 +454,9 @@ class Index extends BaseComponent
                     'E' => 10, // Qty
                     'F' => 15, // Harga
                     'G' => 15, // DPP
-                    'H' => 15, // PPN
-                    'I' => 15  // Jumlah
+                    'H' => 15, // DPP Lain2
+                    'I' => 15, // PPN
+                    'J' => 15  // Jumlah
                 ],
                 'rowStyles' => $rowStyles,
                 'allowInsert' => false
