@@ -180,6 +180,9 @@
                                                 DPP</th>
                                             <th
                                                 style="text-align: center; padding:4px 8px; font-weight:bold; border-bottom: 1px solid #000;">
+                                                DPP Lain2</th>
+                                            <th
+                                                style="text-align: center; padding:4px 8px; font-weight:bold; border-bottom: 1px solid #000;">
                                                 PPN</th>
                                             <th
                                                 style="text-align: center; padding:4px 8px; font-weight:bold; border-bottom: 1px solid #000;">
@@ -191,17 +194,20 @@
                                             $grandTotalQty = 0;
                                             $grandTotalPrice = 0;
                                             $grandTotalDpp = 0;
+                                            $grandTotalDppLain2 = 0;
                                             $grandTotalPpn = 0;
                                             $grandTotalAmount = 0;
                                             $currentTrCode = null;
                                             $trCodeSubtotalQty = 0;
                                             $trCodeSubtotalPrice = 0;
                                             $trCodeSubtotalDpp = 0;
+                                            $trCodeSubtotalDppLain2 = 0;
                                             $trCodeSubtotalPpn = 0;
                                             $trCodeSubtotalAmount = 0;
                                             $previousTrCodeSubtotalQty = 0;
                                             $previousTrCodeSubtotalPrice = 0;
                                             $previousTrCodeSubtotalDpp = 0;
+                                            $previousTrCodeSubtotalDppLain2 = 0;
                                             $previousTrCodeSubtotalPpn = 0;
                                             $previousTrCodeSubtotalAmount = 0;
                                         @endphp
@@ -222,6 +228,7 @@
                                                 $qty = $row->qty ?? 0;
                                                 $price = $row->price ?? 0;
                                                 $dpp = $row->dpp ?? 0;
+                                                $dppLain2 = $price * 11 / 12;
                                                 $ppn = $row->ppn ?? 0;
                                                 $totalAmount = $row->total_amount ?? 0;
 
@@ -234,6 +241,7 @@
                                                         $previousTrCodeSubtotalQty = $trCodeSubtotalQty;
                                                         $previousTrCodeSubtotalPrice = $trCodeSubtotalPrice;
                                                         $previousTrCodeSubtotalDpp = $trCodeSubtotalDpp;
+                                                        $previousTrCodeSubtotalDppLain2 = $trCodeSubtotalDppLain2;
                                                         $previousTrCodeSubtotalPpn = $trCodeSubtotalPpn;
                                                         $previousTrCodeSubtotalAmount = $trCodeSubtotalAmount;
                                                     }
@@ -243,6 +251,7 @@
                                                     $trCodeSubtotalQty = 0;
                                                     $trCodeSubtotalPrice = 0;
                                                     $trCodeSubtotalDpp = 0;
+                                                    $trCodeSubtotalDppLain2 = 0;
                                                     $trCodeSubtotalPpn = 0;
                                                     $trCodeSubtotalAmount = 0;
                                                 }
@@ -251,6 +260,7 @@
                                                 $trCodeSubtotalQty += $qty;
                                                 $trCodeSubtotalPrice += $price;
                                                 $trCodeSubtotalDpp += $dpp;
+                                                $trCodeSubtotalDppLain2 += $dppLain2;
                                                 $trCodeSubtotalPpn += $ppn;
                                                 $trCodeSubtotalAmount += $totalAmount;
 
@@ -258,6 +268,7 @@
                                                 $grandTotalQty += $qty;
                                                 $grandTotalPrice += $price;
                                                 $grandTotalDpp += $dpp;
+                                                $grandTotalDppLain2 += $dppLain2;
                                                 $grandTotalPpn += $ppn;
                                                 $grandTotalAmount += $totalAmount;
                                             @endphp
@@ -278,6 +289,10 @@
                                                     <td
                                                         style="padding:4px 8px; border-top: 1px solid #000; font-size: 16px; text-align: right;">
                                                         {{ number_format($previousTrCodeSubtotalDpp, 0, ',', '.') }}
+                                                    </td>
+                                                    <td
+                                                        style="padding:4px 8px; border-top: 1px solid #000; font-size: 16px; text-align: right;">
+                                                        {{ number_format($previousTrCodeSubtotalDppLain2, 0, ',', '.') }}
                                                     </td>
                                                     <td
                                                         style="padding:4px 8px; border-top: 1px solid #000; font-size: 16px; text-align: right;">
@@ -306,6 +321,8 @@
                                                 <td style="padding:4px 8px; font-size: 16px; text-align: right;">
                                                     {{ number_format($dpp, 0, ',', '.') }}</td>
                                                 <td style="padding:4px 8px; font-size: 16px; text-align: right;">
+                                                    {{ number_format($dppLain2, 0, ',', '.') }}</td>
+                                                <td style="padding:4px 8px; font-size: 16px; text-align: right;">
                                                     {{ number_format($ppn, 0, ',', '.') }}</td>
                                                 <td style="padding:4px 8px; font-size: 16px; text-align: right;">
                                                     {{ number_format($totalAmount, 0, ',', '.') }}</td>
@@ -327,6 +344,9 @@
                                                 <td
                                                     style="padding:4px 8px; border-top: 1px solid #000; font-size: 16px; text-align: right;">
                                                     {{ number_format($trCodeSubtotalDpp, 0, ',', '.') }}</td>
+                                                <td
+                                                    style="padding:4px 8px; border-top: 1px solid #000; font-size: 16px; text-align: right;">
+                                                    {{ number_format($trCodeSubtotalDppLain2, 0, ',', '.') }}</td>
                                                 <td
                                                     style="padding:4px 8px; border-top: 1px solid #000; font-size: 16px; text-align: right;">
                                                     {{ number_format($trCodeSubtotalPpn, 0, ',', '.') }}</td>

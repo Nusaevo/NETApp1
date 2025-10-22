@@ -977,7 +977,6 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['amt_adjustment'] = 0;
             }
         }
-
         $this->updateTotalAmt();
     }
 
