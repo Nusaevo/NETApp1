@@ -11,7 +11,6 @@ use App\Models\TrdTire1\Master\PartnerBal;
 
 class AuditLogs extends BaseModel
 {
-    use SoftDeletes;
     public $timestamps = false;
 
     protected $fillable = [
