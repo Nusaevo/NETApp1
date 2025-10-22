@@ -192,7 +192,7 @@ class Index extends BaseComponent
                     $billingResult = $billingService->saveBilling($billingHeaderData, $deliveryDetails);
 
                     if (!empty($result['header'])) {
-                        // AuditLogService::createDeliveryKirim([$result['header']->id]);
+                        AuditLogService::createDeliveryKirim([$result['header']->id]);
                         // Audit log for Sales Delivery KIRIM
 
                         // Cek hasil billing
