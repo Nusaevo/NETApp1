@@ -301,11 +301,11 @@ class IndexDataTable extends BaseDataTableComponent
             BillingHdr::whereIn('id', $selectedOrderIds)->update(['status_code' => \App\Enums\TrdTire1\Status::PRINT]);
 
             // Create audit logs for print action
-            try {
-                AuditLogService::createPrintAuditLogs($selectedOrderIds);
-            } catch (\Exception $e) {
-                Log::error('Failed to create print audit logs: ' . $e->getMessage());
-            }
+            // try {
+            //     AuditLogService::createPrintAuditLogs($selectedOrderIds);
+            // } catch (\Exception $e) {
+            //     Log::error('Failed to create print audit logs: ' . $e->getMessage());
+            // }
 
             // Clear selected items
             $this->clearSelected();

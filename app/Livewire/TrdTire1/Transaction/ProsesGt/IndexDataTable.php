@@ -19,10 +19,8 @@ class IndexDataTable extends BaseDataTableComponent
     public $selectedItems = [];
     public $deletedRemarks = [];
     public $filters = [];
-    public $materialBrand = [];
     public array $appliedFilters = [
         'gt_process_date' => null,
-        'merk' => null,
         'sr_code' => null,
     ];
     protected $listeners = [
@@ -35,14 +33,6 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setSearchDisabled();
         $this->setDefaultSort('orderHdr.tr_code', 'desc');
 
-        // Set specific brands from sales_rewards table
-        $this->materialBrand = [
-            '' => 'Pilih Merk ...',
-            'GT RADIAL' => 'GT RADIAL',
-            'GAJAH TUNGGAL' => ' GAJAH TUNGGAL',
-            'IRC' => 'IRC',
-            'ZENEOS' => 'ZENEOS'
-        ];
         // dd(request()->query('table-filters'));
 
     }
@@ -137,8 +127,6 @@ class IndexDataTable extends BaseDataTableComponent
         // Add "Not Selected" option for print_date
         $processDates = ['' => 'Not Selected'] + $processDates;
 
-        // Data brand sudah diambil dari MasterService di mount()
-        $brandOptions = $this->materialBrand;
 
         // Get SR code options from sales_rewards table
         $srCodeOptions = SalesReward::select('code', 'descrs')
@@ -165,20 +153,6 @@ class IndexDataTable extends BaseDataTableComponent
                         $builder->whereDate('order_dtls.gt_process_date', $value); // Gunakan whereDate untuk mencocokkan hanya tanggal
                     } else {
                         $this->appliedFilters['gt_process_date'] = null;
-                    }
-                }),
-            SelectFilter::make('Merk')
-                ->options($brandOptions)
-                ->filter(function (Builder $builder, $value) {
-                    if (!empty($value)) {
-                        $this->appliedFilters['merk'] = $value;
-                        // Cek apakah semua filter sudah dipilih sebelum menampilkan data
-                        $this->checkAllFiltersApplied($builder);
-                        $builder->whereHas('Material', function ($query) use ($value) {
-                            $query->where('brand', $value);
-                        });
-                    } else {
-                        $this->appliedFilters['merk'] = null;
                     }
                 }),
             SelectFilter::make('SR Code')
@@ -236,13 +210,12 @@ class IndexDataTable extends BaseDataTableComponent
      */
     private function checkAllFiltersApplied(Builder $builder): void
     {
-        // Check if all three filters are applied (Tanggal Proses, Merk, SR Code)
+        // Check if all required filters are applied (Tanggal Proses, SR Code)
         $hasProcessDate = !empty($this->appliedFilters['gt_process_date']);
-        $hasBrand = !empty($this->appliedFilters['merk']);
         $hasSrCode = !empty($this->appliedFilters['sr_code']);
 
         // Only remove the default no-data condition if all filters are applied
-        if ($hasProcessDate && $hasBrand && $hasSrCode) {
+        if ($hasProcessDate && $hasSrCode) {
             $this->removeDefaultNoDataCondition($builder);
         }
     }

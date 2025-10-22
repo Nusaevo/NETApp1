@@ -294,7 +294,13 @@ class GenericExcelExport
     private function applyRowStyles($sheet, array $rowStyles, int $dataStartRow)
     {
         foreach ($rowStyles as $rowStyle) {
-            $rowNumber = $dataStartRow + $rowStyle['rowIndex'];
+            // Handle negative row indices (relative to end of data)
+            if ($rowStyle['rowIndex'] < 0) {
+                $highestRow = $sheet->getHighestRow();
+                $rowNumber = $highestRow + $rowStyle['rowIndex'] + 1;
+            } else {
+                $rowNumber = $dataStartRow + $rowStyle['rowIndex'];
+            }
 
             $style = [];
 
