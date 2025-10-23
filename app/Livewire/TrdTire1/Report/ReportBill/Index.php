@@ -26,10 +26,6 @@ class Index extends BaseComponent
         // $this->resetFilters();
     }
 
-    // public function onSrCodeChanged() {
-    //     // Method ini sudah tidak dipakai karena dropdown diganti menjadi tanggal tagih
-    // }
-
     public function onDateChanged()
     {
         // Clear data lama saat tanggal berubah
@@ -39,14 +35,15 @@ class Index extends BaseComponent
 
     public function search()
     {
-        // Validasi tanggal tagih wajib diisi
+        // Reset data terlebih dahulu sebelum melakukan search
+        $this->results = [];
+        $this->resetErrorBag();
+
         if (isNullOrEmptyNumber($this->selectedPrintDate)) {
             $this->dispatch('warning', __('generic.error.field_required', ['field' => "Tanggal Tagih"]));
-            $this->addError('selectedPrintDate', "Mohon lengkapi");
+            // $this->addError('selectedPrintDate', "Mohon lengkapi");
             return;
         }
-
-        // $this->resetErrorBag();
 
         $printDate = addslashes($this->selectedPrintDate);
         $query = "

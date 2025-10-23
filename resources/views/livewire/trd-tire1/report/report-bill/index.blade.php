@@ -11,7 +11,7 @@
                     <div class="row align-items-end justify-content-between">
                         <div class="col-md-4 d-flex justify-content-start">
                             <x-ui-text-field label="Tanggal Tagih" model="selectedPrintDate" type="date" action="Edit"
-                                wire:change="onDateChanged" />
+                               onChanged="onDateChanged" />
                         </div>
                         <div class="col-md-2 d-flex justify-content-end">
                             <div class="row">
