@@ -60,6 +60,7 @@ class OrderHdr extends BaseModel
         'print_remarks',
         'print_date',
         'note',
+        'status_code',
     ];
 
     protected $casts = [

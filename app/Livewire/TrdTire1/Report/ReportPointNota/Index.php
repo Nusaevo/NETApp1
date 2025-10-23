@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\{DB, Session};
 use App\Services\TrdTire1\Master\MasterService;
 use App\Enums\Constant;
 use App\Models\TrdTire1\Master\SalesReward;
+use App\Models\Util\GenericExcelExport;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use Carbon\Carbon;
 
 class Index extends BaseComponent
 {
@@ -124,7 +127,7 @@ class Index extends BaseComponent
             WHERE od.tr_type = 'SO'
                 $whereDate
                 $whereSalesReward
-            ORDER BY p.name, oh.tr_code, od.matl_code
+            ORDER BY oh.tr_date ASC, p.name, oh.tr_code, od.matl_code
         ";
         // dd($query);
 
@@ -168,5 +171,147 @@ class Index extends BaseComponent
     public function resetResult()
     {
         $this->results = [];
+    }
+
+    public function downloadExcel()
+    {
+        try {
+            if (empty($this->results)) {
+                $this->dispatch('warning', 'Tidak ada data untuk di-export. Silakan lakukan pencarian terlebih dahulu.');
+                return;
+            }
+
+            // Prepare Excel data with custom header structure
+            $excelData = [];
+            $rowStyles = [];
+            $mergeCells = [];
+            $currentRowIndex = 0;
+
+            // Add custom header rows to match the screen layout
+            // First header row - "Nama / Alamat Pelanggan" spanning 4 columns
+            $excelData[] = [
+                'Nama / Alamat Pelanggan',
+                '',
+                '',
+                '',
+                '',
+                '',
+                ''
+            ];
+            $rowStyles[] = [
+                'rowIndex' => $currentRowIndex,
+                'bold' => true,
+                'borderTop' => true,
+                'borderBottom' => true,
+                'borderLeft' => true,
+                'borderRight' => true
+            ];
+            $mergeCells[] = 'A' . ($currentRowIndex + 1) . ':D' . ($currentRowIndex + 1); // Merge A to D for first header
+            $currentRowIndex++;
+
+            // Second header row - column headers
+            $excelData[] = [
+                'Tgl. Nota',
+                'No. Nota',
+                'Kode Brg.',
+                'Nama Barang',
+                'Total Ban',
+                'Point',
+                'Total Point'
+            ];
+            $rowStyles[] = [
+                'rowIndex' => $currentRowIndex,
+                'bold' => true,
+                'borderBottom' => true,
+                'borderLeft' => true,
+                'borderRight' => true
+            ];
+            $currentRowIndex++;
+
+            foreach ($this->results as $groupIndex => $group) {
+                // Add detail rows for this customer (no customer header row)
+                foreach ($group['details'] as $detail) {
+                    $excelData[] = [
+                        $detail->tgl_nota ? Carbon::parse($detail->tgl_nota)->format('d-M-Y') : '-',
+                        $detail->no_nota,
+                        $detail->kode_brg,
+                        $detail->nama_barang,
+                        fmod($detail->total_ban, 1) == 0 ? number_format($detail->total_ban, 0) : number_format($detail->total_ban, 2),
+                        fmod($detail->point, 1) == 0 ? number_format($detail->point, 0) : number_format($detail->point, 2),
+                        fmod($detail->total_point, 1) == 0 ? number_format($detail->total_point, 0) : number_format($detail->total_point, 2)
+                    ];
+                    // Add styling to remove borders from detail rows
+                    $rowStyles[] = [
+                        'rowIndex' => $currentRowIndex,
+                        'removeBorders' => true
+                    ];
+                    $currentRowIndex++;
+                }
+
+                // Add summary row for this customer with customer name
+                $excelData[] = [
+                    $group['customer'], // Customer name for total row
+                    '',
+                    '',
+                    '',
+                    fmod($group['total_ban'], 1) == 0 ? number_format($group['total_ban'], 0) : number_format($group['total_ban'], 2),
+                    '',
+                    fmod($group['total_point'], 1) == 0 ? number_format($group['total_point'], 0) : number_format($group['total_point'], 2)
+                ];
+                $rowStyles[] = [
+                    'rowIndex' => $currentRowIndex,
+                    'bold' => true,
+                    'backgroundColor' => 'F0F8FF',
+                    'removeBorders' => true
+                ];
+                $mergeCells[] = 'A' . ($currentRowIndex + 1) . ':D' . ($currentRowIndex + 1); // Merge A to D for customer total
+                $currentRowIndex++;
+
+                // Add empty row between customers (except for the last one)
+                if ($groupIndex < count($this->results) - 1) {
+                    $excelData[] = ['', '', '', '', '', '', ''];
+                    $currentRowIndex++;
+                }
+            }
+
+            // Create title and subtitle
+            $title = 'LAPORAN POINT NOTA';
+            $subtitle = 'Kode Program: ' . $this->category . ' | Periode: ' .
+                ($this->startCode ? Carbon::parse($this->startCode)->format('d-M-Y') : '-') .
+                ' s/d ' .
+                ($this->endCode ? Carbon::parse($this->endCode)->format('d-M-Y') : '-');
+
+            // Configure Excel sheet
+            $sheets = [[
+                'name' => 'Laporan_Point_Nota',
+                'headers' => [], // Empty headers since we create custom headers in data
+                'data' => $excelData,
+                'protectedColumns' => [],
+                'allowInsert' => false,
+                'title' => $title,
+                'subtitle' => $subtitle,
+                'titleAlignment' => Alignment::HORIZONTAL_LEFT,
+                'subtitleAlignment' => Alignment::HORIZONTAL_LEFT,
+                'rowStyles' => $rowStyles,
+                'mergeCells' => $mergeCells,
+                'columnWidths' => [
+                    'A' => 15,  // Tgl. Nota
+                    'B' => 20,  // No. Nota
+                    'C' => 15,  // Kode Brg.
+                    'D' => 40,  // Nama Barang
+                    'E' => 12,  // Total Ban
+                    'F' => 12,  // Point
+                    'G' => 15   // Total Point
+                ],
+            ]];
+
+            $filename = 'Laporan_Point_Nota_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+
+            return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
+
+        } catch (\Exception $e) {
+            $this->dispatch('error', 'Error generating Excel: ' . $e->getMessage());
+            return;
+        }
     }
 }
