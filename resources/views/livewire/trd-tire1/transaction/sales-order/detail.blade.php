@@ -189,7 +189,6 @@
                                 loading="true" button-name="Cetak Surat Jalan" iconPath="print.svg"
                                 enabled="true" />
                         @endif
-
                         <x-ui-button clickEvent="delete" :action="$actionValue" :enabled="$isDeliv ? 'false' : ($canUpdateAfterPrint ? 'true' : 'false')"
                             type="delete" enableConfirmationDialog="true" :permissions="$permissions" />
 

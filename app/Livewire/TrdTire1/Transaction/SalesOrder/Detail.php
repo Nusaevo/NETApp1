@@ -764,7 +764,6 @@ class Detail extends BaseComponent
             // Default limit jika tidak ada konfigurasi
             return 10;
         } catch (Exception $e) {
-            Log::error('Error getting MAX_SO_ITEM from ConfigConst: ' . $e->getMessage());
             return 10; // Default limit
         }
     }

@@ -86,8 +86,8 @@
                         }
                         /* Hilangkan margin/padding default print */
                         @page {
-                            margin: 0.5cm 1cm 0.5cm 1cm;
-                            size: A4 portrait;
+                            margin: 0.5cm 0.5cm 0.5cm 0.5cm;
+                            size: A4 landscape;
                         }
                         /* Sembunyikan elemen yang tidak perlu di print */
                         .btn, .card-header, .card-footer, .page-info {
