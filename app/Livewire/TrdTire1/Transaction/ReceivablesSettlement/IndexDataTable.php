@@ -216,7 +216,7 @@ class IndexDataTable extends BaseDataTableComponent
             //     });
             // }),
             // New filters
-            DateFilter::make('Tanggal Nota')->filter(function (Builder $builder, string $value) {
+            DateFilter::make('Tanggal Pelunasan')->filter(function (Builder $builder, string $value) {
                 $builder->where('payment_hdrs.tr_date', '=', $value);
             }),
             TextFilter::make('Nomor Pelunasan')->filter(function (Builder $builder, string $value) {
