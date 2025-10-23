@@ -31,7 +31,7 @@ class TransferService
             DB::beginTransaction();
 
 
-            // Ambil data order headers dengan relasi lengkap termasuk delivery (billing disabled sementara)
+            // Ambil data order headers dengan relasi lengkap termasuk delivery dan billing
             $orderHeaders = OrderHdr::whereIn('id', $orderHdrIds)
                 ->with([
                     'Partner',
@@ -43,10 +43,10 @@ class TransferService
                     'DelivHdr',
                     'DelivHdr.DelivPacking',
                     'DelivHdr.DelivPacking.DelivPickings',
-                    // Relasi billing (DISABLED SEMENTARA)
-                    // 'BillingHdr',
-                    // 'BillingHdr.BillingOrder',
-                    // 'BillingHdr.BillingDeliv'
+                    // Relasi billing
+                    'BillingHdr',
+                    'BillingHdr.BillingOrder',
+                    'BillingHdr.BillingDeliv'
                 ])
                 ->get();
 
@@ -75,14 +75,13 @@ class TransferService
                     // 5. Transfer Delivery Data jika ada
                     $deliveryTransferred = $this->transferDeliveryData($orderHdr, $orderHdr2Id, $partner2Id, $materials2Ids);
 
-                    // 6. Transfer Billing Data jika ada (DISABLED SEMENTARA)
-                    $billingTransferred = false; // Disabled sementara
-                    // $billingTransferred = $this->transferBillingData($orderHdr, $orderHdr2Id, $partner2Id, $materials2Ids);
+                    // 6. Transfer Billing Data jika ada
+                    $billingTransferred = $this->transferBillingData($orderHdr, $orderHdr2Id, $partner2Id, $materials2Ids);
 
                     $results['transferred_orders'][] = [
-                        'original_tr_code' => $orderHdr->tr_code ?? 'N/A',
-                        'new_tr_code' => $orderHdr->tr_code ?? 'N/A', // Sama karena menggunakan tr_code yang sama
-                        'partner_name' => $orderHdr->Partner->name ?? 'N/A',
+                        'original_tr_code' => $orderHdr->tr_code,
+                        'new_tr_code' => $orderHdr->tr_code,
+                        'partner_name' => $orderHdr->Partner->name,
                         'delivery_transferred' => $deliveryTransferred,
                         'billing_transferred' => $billingTransferred
                     ];
