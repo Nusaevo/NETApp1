@@ -222,6 +222,11 @@ class IndexDataTable extends BaseDataTableComponent
             TextFilter::make('Nomor Pelunasan')->filter(function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(payment_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }),
+            TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
+                $builder->whereHas('PaymentDtl', function ($query) use ($value) {
+                    $query->where(DB::raw('UPPER(billhdrtr_code)'), 'like', '%' . strtoupper($value) . '%');
+                });
+            }),
             TextFilter::make('Custommer')->filter(function (Builder $builder, string $value) {
                 $builder->whereHas('Partner', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
