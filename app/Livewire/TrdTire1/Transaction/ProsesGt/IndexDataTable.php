@@ -178,8 +178,8 @@ class IndexDataTable extends BaseDataTableComponent
     public function bulkActions(): array
     {
         return [
-            'prosesNotadanPoint' => 'No Nota dan Point',
             'prosesNota' => 'Proses Nota',
+            'prosesNotadanPoint' => 'No Nota dan Point',
             'cetakNota' => 'Cetak Nota',
         ];
     }

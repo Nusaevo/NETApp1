@@ -26,10 +26,10 @@
                                 onclick="printReport()">
                                 <i class="fas fa-print text-primary"></i> Print
                             </button>
-                            <button type="button" class="btn btn-success text-capitalize border-0 w-100 mt-2"
+                            {{-- <button type="button" class="btn btn-success text-capitalize border-0 w-100 mt-2"
                                 wire:click="downloadExcel">
                                 <i class="fas fa-file-excel"></i> Excel
-                            </button>
+                            </button> --}}
                         </div>
                     </div>
                 </div>
@@ -86,7 +86,7 @@
                         }
                         /* Hilangkan margin/padding default print */
                         @page {
-                            margin: 0.5cm 0.5cm 0.5cm 0.5cm;
+                            margin: 1cm 0.5cm 1cm 0.5cm;
                             size: A4 landscape;
                         }
                         /* Sembunyikan elemen yang tidak perlu di print */
