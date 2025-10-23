@@ -118,22 +118,22 @@ class Index extends BaseComponent
                 }
             }
 
-            // Determine gt_process_date based on the presence of gt_tr_code and gt_partner_code
-            $gtProcessDate = ($this->gt_tr_code || $this->gt_partner_code) ? now() : null;
+            // Prepare update data without gt_process_date
+            $updateData = [
+                'gt_tr_code' => $this->gt_tr_code ?: '', // Set null if empty
+                'gt_partner_code' => $partner ? $partner->name : '', // Set null if no partner
+                'gt_partner_id' => $partner ? $partner->id : 0, // Set null if no partner
+            ];
 
-            // Update OrderDtl
+            // Update OrderDtl without updating gt_process_date
             OrderDtl::whereIn('id', $this->selectedOrderIds)
-                ->update([
-                    'gt_tr_code' => $this->gt_tr_code ?: '', // Set null if empty
-                    'gt_partner_code' => $partner ? $partner->name : '', // Set null if no partner
-                    'gt_partner_id' => $partner ? $partner->id : 0, // Set null if no partner
-                    'gt_process_date' => $gtProcessDate, // Set null if both fields are null
-                ]);
+                ->update($updateData);
 
             DB::commit();
             $this->dispatch('close-modal-proses-gt');
             $this->dispatch('success', ['Proses GT berhasil disimpan']);
             $this->dispatch('refreshTable');
+            $this->dispatch('clearSelections'); // Clear selection after successful process
         } catch (\Exception $e) {
             DB::rollBack();
             $this->dispatch('error', ['Terjadi kesalahan saat menyimpan data: ' . $e->getMessage()]);

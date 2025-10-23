@@ -74,6 +74,11 @@ class BillingHdr extends BaseModel
         return $this->hasMany(BillingOrder::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type)->orderBy('tr_seq');
     }
 
+    public function BillingDeliv()
+    {
+        return $this->hasMany(BillingDeliv::class, 'trhdr_id', 'id');
+    }
+
     public function PartnerBal()
     {
         return $this->belongsTo(PartnerBal::class, 'partnerbal_id', 'id');

@@ -26,6 +26,7 @@ class IndexDataTable extends BaseDataTableComponent
     protected $listeners = [
         'refreshTable' => 'render',
         'onSrCodeChanged',
+        'clearSelections',
     ];
     protected $model = OrderDtl::class;
     public function mount(): void
@@ -44,6 +45,8 @@ class IndexDataTable extends BaseDataTableComponent
             ->where('order_dtls.tr_type', 'SO')
             ->select('order_dtls.*')
             ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
+            ->join('partners', 'order_hdrs.partner_id', '=', 'partners.id')
+            ->orderBy('partners.name')
             ->whereRaw('1=0'); // Default: Tidak menampilkan data
 
         return $query;
@@ -301,6 +304,10 @@ class IndexDataTable extends BaseDataTableComponent
         $this->dispatch('error', 'Tanggal proses belum dipilih.');
     }
 
+    public function clearSelections()
+    {
+        $this->clearSelected();
+    }
 
     // protected function isFirstFilterApplied(Builder $query): bool
     // {

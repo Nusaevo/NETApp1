@@ -146,6 +146,11 @@ class GenericExcelExport
                 $this->applyRowStyles($sheet, $sheetData['rowStyles'], $dataStartRow);
             }
 
+            // Apply cell merging if provided
+            if (!empty($sheetData['mergeCells'])) {
+                $this->applyMergeCells($sheet, $sheetData['mergeCells'], $dataStartRow);
+            }
+
             // Protect specific columns
             if($sheetData['allowInsert'] == false)
             {
@@ -358,6 +363,13 @@ class GenericExcelExport
                 $style['numberFormat']['formatCode'] = $rowStyle['numberFormat'];
             }
 
+            // Remove borders if specified
+            if (!empty($rowStyle['removeBorders'])) {
+                $style['borders']['allBorders'] = [
+                    'borderStyle' => Border::BORDER_NONE
+                ];
+            }
+
             if (!empty($style)) {
                 // Check if specific cells are defined
                 if (!empty($rowStyle['specificCells'])) {
@@ -377,6 +389,28 @@ class GenericExcelExport
                     $range = $rowStyle['range'] ?? 'A' . $rowNumber . ':' . $sheet->getHighestColumn() . $rowNumber;
                     $sheet->getStyle($range)->applyFromArray($style);
                 }
+            }
+        }
+    }
+
+    /**
+     * Apply cell merging to specific ranges.
+     *
+     * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet The worksheet object.
+     * @param array $mergeCells Array of cell ranges to merge.
+     * @param int $dataStartRow The starting row number for data.
+     */
+    private function applyMergeCells($sheet, array $mergeCells, int $dataStartRow)
+    {
+        foreach ($mergeCells as $mergeRange) {
+            if (is_array($mergeRange)) {
+                // Handle array format: ['A1:D1']
+                foreach ($mergeRange as $range) {
+                    $sheet->mergeCells($range);
+                }
+            } else {
+                // Handle string format: 'A1:D1'
+                $sheet->mergeCells($mergeRange);
             }
         }
     }

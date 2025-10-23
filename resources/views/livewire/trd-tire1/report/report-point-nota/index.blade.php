@@ -22,10 +22,12 @@
                         <div class="col-md-2">
                             <x-ui-button clickEvent="search" button-name="View" loading="true" action="Edit"
                                 cssClass="btn-primary w-100 mb-2" />
-                            <button type="button" class="btn btn-light text-capitalize border-0 w-100"
+                            <button type="button" class="btn btn-light text-capitalize border-0 w-100 mb-2"
                                 onclick="printReport()">
                                 <i class="fas fa-print text-primary"></i> Print
                             </button>
+                            <x-ui-button clickEvent="downloadExcel" button-name="Excel" loading="true" action="Edit"
+                                cssClass="btn-success w-100" />
                         </div>
                     </div>
                     <div class="row mt-2">
