@@ -65,6 +65,9 @@ class Detail extends BaseComponent
                 $this->defaultPartnerChars,
                 $this->object->partner_chars ?? []
             );
+
+            // Set partnerCharsDisabled berdasarkan kategori yang sudah ada saat mode edit
+            $this->partnerCharsDisabled = ($this->inputs['grp'] === 'V') ? 'false' : 'true';
         }
     }
 
@@ -89,7 +92,11 @@ class Detail extends BaseComponent
     public function onGrpChanged($value)
     {
         $this->inputs['grp'] = $value;
-        $this->partnerCharsDisabled = ($value === 'S') ? 'false' : 'true';
+        $this->partnerCharsDisabled = ($value === 'V') ? 'false' : 'true';
+        $this->inputs['partner_chars'] = array_replace(
+            $this->defaultPartnerChars,
+            $this->object->partner_chars ?? []
+        );
 
     }
     public function onValidateAndSave()
