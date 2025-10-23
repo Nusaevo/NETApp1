@@ -24,7 +24,6 @@ class Index extends BaseComponent
     public $end_date;
     public $sr_code;
     public $sr_codes = [];
-
     protected $listeners = [
         'openProsesDateModal',
         'refreshTable' => 'render',

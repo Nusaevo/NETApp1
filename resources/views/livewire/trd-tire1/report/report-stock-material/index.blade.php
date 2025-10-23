@@ -137,7 +137,7 @@
                                             <th>G04</th>
                                             <th>Total</th>
                                             <th>FGI</th>
-                                            <th>Point</th>
+                                            <th>Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>

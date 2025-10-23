@@ -39,14 +39,16 @@ class Index extends BaseComponent
 
     public function search()
     {
+        // Reset data terlebih dahulu sebelum melakukan search
+        $this->results = [];
+        $this->resetErrorBag();
+
         // Validasi tanggal tagih wajib diisi
         if (isNullOrEmptyNumber($this->selectedPrintDate)) {
             $this->dispatch('warning', __('generic.error.field_required', ['field' => "Tanggal Tagih"]));
             $this->addError('selectedPrintDate', "Mohon lengkapi");
             return;
         }
-
-        // $this->resetErrorBag();
 
         $printDate = addslashes($this->selectedPrintDate);
         $query = "
