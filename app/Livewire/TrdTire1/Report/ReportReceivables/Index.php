@@ -28,7 +28,7 @@ class Index extends BaseComponent
     {
         $this->masterService = new MasterService();
         $this->customers = $this->masterService->getCustomers();
-        $this->resetFilters();
+        // $this->resetFilters();
     }
 
     public function resetFilters()
@@ -90,19 +90,10 @@ class Index extends BaseComponent
             AND bh.tr_date >= '{$startDate}'
             AND bh.tr_date <= '{$endDate}'
             AND bh.partner_code = '{$customerCode}'
-            ORDER BY bh.tr_date DESC
+            ORDER BY bh.tr_date asc
         ";
 
-        // Debug: Log the SQL query
-        \Log::info('Receivables Query: ' . $sql);
-
         $this->results = DB::connection(Session::get('app_code'))->select($sql);
-
-        // Debug: Log the count and all results
-        \Log::info('Receivables Results Count: ' . count($this->results));
-        foreach ($this->results as $index => $result) {
-            \Log::info("Result {$index}: {$result->tr_code} - {$result->customer_name} - {$result->amt}");
-        }
     }
 
     public function render()

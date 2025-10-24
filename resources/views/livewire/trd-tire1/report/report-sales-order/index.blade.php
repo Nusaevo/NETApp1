@@ -63,25 +63,8 @@
                                     } else {
                                         $groupColumns = [];
                                     }
-                                    // Hitung total per kolom
-                                    // $totals = [];
-                                    // foreach ($groupColumns as $col) {
-                                    //     $totals[$col] = array_sum(array_map(fn($row) => (int)($row->$col ?? 0), $results));
-                                    // }
-                                    // $grandTotal = array_sum($totals);
-
-                                    // Pisahkan nama dan kota customer
                                     function splitCustomer($customer) {
-                                        // Jika customer kosong, return kosong
-                                        // if (!$customer) return ['name' => '', 'city' => ''];
-                                        // // Jika customer diawali dengan '_CUSTOMER', tampilkan di kolom nama saja
-                                        // if (strpos($customer, '_CUSTOMER') === 0) {
-                                        //     return ['name' => $customer, 'city' => ''];
-                                        // }
-                                        // // Debug: jika customer tidak ada ' - ', tampilkan semua di name
-                                        // if (strpos($customer, ' - ') === false) {
-                                        //     return ['name' => $customer, 'city' => ''];
-                                        // }
+
                                         $parts = explode(' - ', $customer, 2);
                                         return [
                                             'name' => $parts[0] ?? $customer,
@@ -89,12 +72,6 @@
                                         ];
                                     }
                                 @endphp
-                                {{-- Debug: tampilkan isi customer --}}
-                                {{-- <pre>
-                                    @foreach ($results as $row)
-                                        {{ $row->customer ?? '' }}
-                                    @endforeach
-                                </pre> --}}
                                 <table style="width:100%;">
                                     <thead>
                                         <tr>

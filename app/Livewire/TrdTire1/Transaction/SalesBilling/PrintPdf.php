@@ -80,8 +80,15 @@ class PrintPdf extends BaseComponent
                 }
             }
 
-            // Sort grouped orders by print_date descending (terbaru ke terlama)
+            // Sort grouped orders by partner name first, then by print_date descending
             usort($this->groupedOrders, function($a, $b) {
+                // First sort by partner name
+                $partnerCompare = strcmp($a['partner']->name, $b['partner']->name);
+                if ($partnerCompare !== 0) {
+                    return $partnerCompare;
+                }
+
+                // If partner names are the same, sort by print_date descending
                 $dateA = $a['print_date'] ? \Carbon\Carbon::parse($a['print_date']) : \Carbon\Carbon::minValue();
                 $dateB = $b['print_date'] ? \Carbon\Carbon::parse($b['print_date']) : \Carbon\Carbon::minValue();
                 return $dateB->timestamp - $dateA->timestamp; // Descending order

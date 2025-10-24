@@ -7,10 +7,12 @@
                         <div class="col-md-10">
                             <div class="row align-items-end">
                                 <div class="col-md-3">
-                                    <x-ui-text-field label="Tanggal Awal" model="start_date" type="date" required="false" />
+                                    <x-ui-text-field label="Tanggal Awal" model="start_date" type="date"
+                                        required="false" />
                                 </div>
                                 <div class="col-md-3">
-                                    <x-ui-text-field label="Tanggal Akhir" model="end_date" type="date" required="false" />
+                                    <x-ui-text-field label="Tanggal Akhir" model="end_date" type="date"
+                                        required="false" />
                                 </div>
                                 <div class="col-md-6">
                                     <x-ui-dropdown-search label="Customer" model="customer_id" optionValue="id"
@@ -138,20 +140,9 @@
                         <div class="container mb-3 mt-4">
                             <div style="max-width:2480px; margin:auto; padding:20px 20px 10px 20px;">
                                 <div style="text-align: left; margin-bottom: 20px;">
-                                    <h3 style="font-weight:bold; margin:0; text-decoration: underline;">Laporan Piutang</h3>
+                                    <h3 style="font-weight:bold; margin:0; text-decoration: underline;">Laporan Piutang
+                                    </h3>
                                 </div>
-
-
-                                @php
-                                    function fmtDate($d)
-                                    {
-                                        return $d ? \Carbon\Carbon::parse($d)->format('d-m-Y') : '';
-                                    }
-                                    function nfmt($n)
-                                    {
-                                        return number_format($n ?? 0, 0, ',', '.');
-                                    }
-                                @endphp
 
                                 <table
                                     style="width:100%; border-collapse:collapse; font-family: 'Calibri', Arial, sans-serif; border: 1px solid #000;">
@@ -168,7 +159,7 @@
                                                 Customer</th>
                                             <th
                                                 style="text-align:right; padding:5px 8px; font-weight:bold; font-size:15px; width:15%; border:1px solid #000;">
-                                                Amount</th>
+                                                Piutang</th>
                                             <th
                                                 style="text-align:right; padding:5px 8px; font-weight:bold; font-size:15px; width:15%; border:1px solid #000;">
                                                 Pelunasan</th>
@@ -181,15 +172,12 @@
                                         @php
                                             $totalAmount = 0;
                                             $totalPayment = 0;
-                                            // Debug: Log the count of results in view
-                                            \Log::info('View Results Count: ' . count($results));
-                                            \Log::info('View Results: ' . json_encode($results));
                                         @endphp
                                         @foreach ($results as $index => $row)
                                             <tr>
                                                 <td
                                                     style="text-align:left; padding:4px 6px; font-size:14px; border:1px solid #000;">
-                                                    {{ fmtDate($row->tr_date) }}</td>
+                                                    {{ $row->tr_date ? \Carbon\Carbon::parse($row->tr_date)->format('d-m-Y') : '' }}</td>
                                                 <td
                                                     style="text-align:left; padding:4px 6px; font-size:14px; border:1px solid #000;">
                                                     {{ $row->tr_code ?? '' }}</td>
@@ -198,35 +186,36 @@
                                                     {{ $row->customer_name ?? '' }}</td>
                                                 <td
                                                     style="text-align:right; padding:4px 6px; font-size:14px; border:1px solid #000;">
-                                                    {{ nfmt($row->amt) }}</td>
+                                                    {{ number_format($row->amt ?? 0, 0, ',', '.') }}</td>
                                                 <td
                                                     style="text-align:right; padding:4px 6px; font-size:14px; border:1px solid #000;">
-                                                    {{ nfmt($row->amt_reff) }}</td>
+                                                    {{ number_format($row->amt_reff ?? 0, 0, ',', '.') }}</td>
                                                 <td
                                                     style="text-align:left; padding:4px 6px; font-size:14px; border:1px solid #000;">
-                                                    {{ fmtDate($row->print_date) }}</td>
+                                                    {{ $row->print_date ? \Carbon\Carbon::parse($row->print_date)->format('d-m-Y') : '' }}
+                                                </td>
                                             </tr>
                                             @php
                                                 $totalAmount += $row->amt;
                                                 $totalPayment += $row->amt_reff;
                                             @endphp
                                         @endforeach
-
                                         {{-- Total row --}}
                                         @if (count($results) > 0)
                                             <tr style="background-color: #f0f0f0;">
-                                                <td colspan="3" style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
+                                                <td colspan="3"
+                                                    style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
                                                     <strong>Total:</strong>
                                                 </td>
-                                                <td style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
-                                                    <strong>{{ nfmt($totalAmount) }}</strong>
+                                                <td
+                                                    style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
+                                                    <strong>{{ number_format($totalAmount, 0, ',', '.') }}</strong>
                                                 </td>
-                                                <td style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
-                                                    <strong>{{ nfmt($totalPayment) }}</strong>
+                                                <td
+                                                    style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
+                                                    <strong>{{ number_format($totalPayment, 0, ',', '.') }}</strong>
                                                 </td>
-                                                <td style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
-                                                    <strong>{{ nfmt($totalAmount - $totalPayment) }}</strong>
-                                                </td>
+                                                <td></td>
                                             </tr>
                                         @endif
                                     </tbody>
