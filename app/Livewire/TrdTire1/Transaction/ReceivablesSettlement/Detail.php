@@ -57,6 +57,7 @@ class Detail extends BaseComponent
     public $overPayment = 0;
     public $totalAmtSource = 0;
     public $totalAmtBilling = 0;
+    public $totalAmtBillingNota = 0;
     public $totalAmtAdvance = 0;
     public $totalPiutangCustomer = 0;
     public $advanceOptions = [];
@@ -985,7 +986,8 @@ class Detail extends BaseComponent
     {
         // Total advance yang digunakan
         $this->totalAmtAdvance = array_sum(array_column($this->input_advance, 'amt')) ?? 0;
-        $this->totalAmtBilling = array_sum(array_column($this->input_details, 'outstanding_amt')) ?? 0;
+        $this->totalAmtBillingNota = array_sum(array_column($this->input_details, 'outstanding_amt')) ?? 0;
+        $this->totalAmtBilling = array_sum(array_column($this->input_details, 'amt')) ?? 0;
         $this->totalAmtSource = array_sum(array_column($this->input_payments, 'amt')) ?? 0;
         $this->overPayment = $this->totalAmtAdvance + $this->totalAmtSource - $this->totalAmtBilling;
     }
