@@ -1,5 +1,12 @@
 <div>
     <x-ui-page-card title="{!! $menuName !!}" status="{{ $status }}">
+        {{-- Bug notification --}}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert" style="margin-bottom: 1rem;">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Peringatan:</strong> Halaman ini masih memiliki bug yang sedang diperbaiki
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
         <div class="card mb-4">
             <div class="card-body">
                 <div class="container mb-2 mt-2">
