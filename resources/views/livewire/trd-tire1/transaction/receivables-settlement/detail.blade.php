@@ -226,8 +226,10 @@
                     <div class="row">
                         <x-ui-text-field model="totalAmtAdvance" label="Total Saldo Dipakai" :action="$actionValue"
                             enabled="false" type="number" />
-                        <x-ui-text-field model="totalAmtBilling" label="Total Piutang" :action="$actionValue"
+                        <x-ui-text-field model="totalAmtBillingNota" label="Total Piutang" :action="$actionValue"
                             enabled="false" type="number" />
+                        {{-- <x-ui-text-field model="totalAmtBilling" label="Total Piutang" :action="$actionValue"
+                            enabled="false" type="number" /> --}}
                         <x-ui-text-field model="totalAmtSource" label="Total Pembayaran" :action="$actionValue"
                             enabled="false" type="number" />
                         <x-ui-text-field model="overPayment" label="Lebih Bayar" :action="$actionValue" enabled="false"
