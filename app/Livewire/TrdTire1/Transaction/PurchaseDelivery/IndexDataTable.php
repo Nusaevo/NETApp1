@@ -70,11 +70,22 @@ class IndexDataTable extends BaseDataTableComponent
                 ->html(),
             Column::make($this->trans('Kode Barang'), 'kode_barang')
                 ->label(function ($row) {
-                    // Ambil semua kode barang dari DelivPicking melalui relasi DelivPacking
-                    $matlCodes = DelivPicking::whereHas('DelivPacking', function($query) use ($row) {
-                        $query->where('trhdr_id', $row->id);
-                    })->pluck('matl_code');
-                    return $matlCodes->isNotEmpty() ? $matlCodes->implode(', ') : '-';
+                    // Ambil semua kode barang dan nama dari DelivPicking melalui relasi DelivPacking
+                    $matlData = DelivPicking::with('Material')
+                        ->whereHas('DelivPacking', function($query) use ($row) {
+                            $query->where('trhdr_id', $row->id);
+                        })
+                        ->get();
+
+                    if ($matlData->isNotEmpty()) {
+                        $formattedData = $matlData->map(function($item) {
+                            $code = $item->matl_code;
+                            $name = $item->Material ? $item->Material->name : '-';
+                            return $code . ' - ' . $name;
+                        });
+                        return $formattedData->implode('| ');
+                    }
+                    return '-';
                 })
                 ->sortable(),
             Column::make($this->trans('Total Barang'), 'total_qty')
@@ -113,8 +124,11 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            DateFilter::make('Tanggal Terima Barang')->filter(function (Builder $builder, string $value) {
-                $builder->where('deliv_hdrs.tr_date', '=', $value);
+            DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
+                $builder->where('deliv_hdrs.tr_date', '>=', $value);
+            }),
+            DateFilter::make('Tanggal Akhir')->filter(function (Builder $builder, string $value) {
+                $builder->where('deliv_hdrs.tr_date', '<=', $value);
             }),
             $this->createTextFilter('Nomor Surat Jalan', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');

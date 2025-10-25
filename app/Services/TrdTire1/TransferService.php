@@ -362,6 +362,18 @@ class TransferService
                 'billing_id' => $billingHdr->id
             ]);
 
+            // Check BillingOrder data directly from database
+            $billingOrderCount = \App\Models\TrdTire1\Transaction\BillingOrder::where('trhdr_id', $billingHdr->id)->count();
+            $billingOrderWithTrTypeCount = \App\Models\TrdTire1\Transaction\BillingOrder::where('trhdr_id', $billingHdr->id)
+                ->where('tr_type', $billingHdr->tr_type)->count();
+            Log::info('Direct BillingOrder count from database', [
+                'order_code' => $orderHdr->tr_code,
+                'billing_hdr_id' => $billingHdr->id,
+                'billing_hdr_tr_type' => $billingHdr->tr_type,
+                'billing_order_count_total' => $billingOrderCount,
+                'billing_order_count_with_tr_type' => $billingOrderWithTrTypeCount
+            ]);
+
             // Cek apakah billing header sudah ada di TrdTire2
             $existingBillingHdr2 = BillingHdr2::on('TrdTire2')->where('tr_code', $billingHdr->tr_code)->first();
 
@@ -393,8 +405,35 @@ class TransferService
             // Transfer Billing Order
             Log::info('Transferring billing order data', [
                 'order_code' => $orderHdr->tr_code,
-                'billing_order_count' => $billingHdr->BillingOrder->count()
+                'billing_order_count' => $billingHdr->BillingOrder->count(),
+                'billing_hdr_id' => $billingHdr->id,
+                'billing_tr_type' => $billingHdr->tr_type
             ]);
+
+            // Check if BillingOrder collection is empty
+            if ($billingHdr->BillingOrder->isEmpty()) {
+                Log::warning('No BillingOrder data found for billing header', [
+                    'order_code' => $orderHdr->tr_code,
+                    'billing_hdr_id' => $billingHdr->id,
+                    'billing_tr_type' => $billingHdr->tr_type
+                ]);
+
+                // Try to load BillingOrder without tr_type filter for debugging
+                $allBillingOrders = \App\Models\TrdTire1\Transaction\BillingOrder::where('trhdr_id', $billingHdr->id)->get();
+                Log::info('All BillingOrder records for this billing header', [
+                    'order_code' => $orderHdr->tr_code,
+                    'billing_hdr_id' => $billingHdr->id,
+                    'all_billing_orders' => $allBillingOrders->map(function($bo) {
+                        return [
+                            'id' => $bo->id,
+                            'tr_type' => $bo->tr_type,
+                            'tr_code' => $bo->tr_code,
+                            'tr_seq' => $bo->tr_seq
+                        ];
+                    })->toArray()
+                ]);
+            }
+
             foreach ($billingHdr->BillingOrder as $billingOrder) {
                 $existingBillingOrder2 = BillingOrder2::on('TrdTire2')
                     ->where('tr_code', $billingOrder->tr_code)
