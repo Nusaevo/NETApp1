@@ -305,7 +305,11 @@ class IndexDataTable extends BaseDataTableComponent
                     $billingService->delBilling($delivHdr->billhdr_id);
 
                     $successOrders[] = $delivHdr->tr_code;
-                    $successOrderIds[] = $delivHdr->order_id;
+                    // Get OrderHdr ID from tr_code relationship since order_id field doesn't exist
+                    $orderHdr = OrderHdr::where('tr_code', $delivHdr->tr_code)->where('tr_type', 'SO')->first();
+                    if ($orderHdr) {
+                        $successOrderIds[] = $orderHdr->id;
+                    }
                     $deletedCount++;
                 } catch (Exception $e) {
                     $failedOrders[] = [

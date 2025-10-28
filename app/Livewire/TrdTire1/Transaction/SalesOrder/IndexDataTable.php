@@ -161,9 +161,9 @@ class IndexDataTable extends BaseDataTableComponent
                 ->options([
                     '' => 'All', // Tambahkan opsi "All" dengan nilai kosong
                     Status::OPEN => 'Open',
-                    Status::PRINT => 'Print',
-                    Status::SHIP => 'Ship',
-                    Status::CANCEL => 'Cancel',
+                    Status::PRINT => 'Tercetak',
+                    Status::SHIP => 'Terkirim',
+                    Status::CANCEL => 'Batal Nota',
                     Status::BILL => 'Lunas',
                 ])
                 ->filter(function ($builder, $value) {
