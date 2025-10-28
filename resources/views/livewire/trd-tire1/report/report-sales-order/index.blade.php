@@ -32,7 +32,6 @@
             </div>
         </div>
         {{-- End Filter Frame --}}
-
         <div id="print">
             <div>
                 <br>

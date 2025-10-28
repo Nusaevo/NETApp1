@@ -1,7 +1,7 @@
 <div>
     <!-- Tombol Back -->
     <div>
-        <x-ui-button clickEvent="back" type="Back" button-name="Back" />
+        {{-- <x-ui-button clickEvent="back" type="Back" button-name="Back" /> --}}
     </div>
 
     <!-- Include CSS Invoice -->

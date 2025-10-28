@@ -22,7 +22,7 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return OrderHdr::with(['OrderDtl', 'Partner'])
+        return OrderHdr::with(['OrderDtl.Material', 'Partner'])
             ->where('order_hdrs.tr_type', 'PO')
             ->orderBy('order_hdrs.tr_date', 'desc');
     }
@@ -62,14 +62,20 @@ class IndexDataTable extends BaseDataTableComponent
                     : ''
                 )
                 ->html(),
-            Column::make('Kode Barang', 'orderdtl_codes')
+            Column::make('Kode/Nama Barang', 'orderdtl_codes')
                 ->label(function ($row) {
-                    // Ambil semua kode barang dari OrderDtl, pisahkan dengan koma
+                    // Ambil semua kode barang dan nama dari OrderDtl
                     if ($row->OrderDtl && $row->OrderDtl->count() > 0) {
-                        return $row->OrderDtl->pluck('matl_code')->implode(', ');
+                        $formattedData = $row->OrderDtl->map(function($item) {
+                            $code = $item->matl_code;
+                            $name = $item->Material ? $item->Material->name : '-';
+                            return $code . ' - ' . $name;
+                        });
+                        return $formattedData->implode('<br>');
                     }
                     return '-';
-                }),
+                })
+                ->html(),
             Column::make($this->trans('Qty Barang'), 'total_qty')
                 ->label(function ($row) {
                     return $row->total_qty;
@@ -86,21 +92,20 @@ class IndexDataTable extends BaseDataTableComponent
                     return rupiah($row->total_amt , false);
                 })
                 ->sortable(),
-            Column::make($this->trans("Status"), "status_code")
-                ->format(function ($value, $row) {
-                    $statusMap = [
-                        Status::OPEN => 'Open',
-                        Status::PRINT => 'Print',
-                        Status::SHIP => 'Ship',
-                        Status::CANCEL => 'Cancel',
-                        Status::ACTIVE => 'Active',
-                    ];
-                    return $statusMap[$value] ?? 'Unknown';
-                }),
+            // Column::make($this->trans("Status"), "status_code")
+            //     ->format(function ($value, $row) {
+            //         $statusMap = [
+            //             Status::OPEN => 'Open',
+            //             Status::PRINT => 'Print',
+            //             Status::SHIP => 'Ship',
+            //             Status::CANCEL => 'Cancel',
+            //             Status::ACTIVE => 'Active',
+            //         ];
+            //         return $statusMap[$value] ?? 'Unknown';
+            //     }),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
-                        'row' => $row,
                         'row' => $row,
                         'custom_actions' => [
                             // [
@@ -147,20 +152,31 @@ class IndexDataTable extends BaseDataTableComponent
                     $query->where(DB::raw('UPPER(matl_code)'), 'like', '%' . strtoupper($value) . '%');
                 });
             }),
-            SelectFilter::make('Status', 'status_code')
+            SelectFilter::make('Tipe Kendaraan', 'sales_type')
                 ->options([
-                    '' => 'All', // Tambahkan opsi "All" dengan nilai kosong
-                    Status::ACTIVE => 'Active',
-                    Status::OPEN => 'Open',
-                    Status::PRINT => 'Print',
-                    Status::SHIP => 'Ship',
-                    Status::CANCEL => 'Cancel',
+                    '' => 'Semua',
+                    'O' => 'Mobil',
+                    'I' => 'Motor',
                 ])
-                ->filter(function ($builder, $value) {
-                    if ($value !== '') { // Jika nilai tidak kosong, filter berdasarkan status_code
-                        $builder->where('order_hdrs.status_code', $value);
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value !== '') {
+                        $builder->where('order_hdrs.sales_type', $value);
                     }
                 }),
+            // SelectFilter::make('Status', 'status_code')
+            //     ->options([
+            //         '' => 'All', // Tambahkan opsi "All" dengan nilai kosong
+            //         Status::ACTIVE => 'Active',
+            //         Status::OPEN => 'Open',
+            //         Status::PRINT => 'Print',
+            //         Status::SHIP => 'Ship',
+            //         Status::CANCEL => 'Cancel',
+            //     ])
+            //     ->filter(function ($builder, $value) {
+            //         if ($value !== '') { // Jika nilai tidak kosong, filter berdasarkan status_code
+            //             $builder->where('order_hdrs.status_code', $value);
+            //         }
+            //     }),
         ];
     }
 }

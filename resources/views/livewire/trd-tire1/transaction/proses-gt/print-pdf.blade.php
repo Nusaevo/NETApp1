@@ -2,7 +2,7 @@
     <!-- Tombol Back dan Print -->
     <div class="row d-flex align-items-baseline">
         <div class="col-xl-9">
-            <x-ui-button clickEvent="" type="Back" button-name="Back" />
+            {{-- <x-ui-button clickEvent="" type="Back" button-name="Back" /> --}}
         </div>
         <div class="col-xl-3 float-end">
             <a class="btn btn-light text-capitalize border-0" data-mdb-ripple-color="dark" onclick="printInvoice()">

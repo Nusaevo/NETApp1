@@ -124,7 +124,6 @@ class Detail extends BaseComponent
             // dd($this->objectIdValue);
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
             $this->inputs = $this->object->toArray();
-            $this->inputs['status_code_text'] = $this->object->status_Code_text;
             // $this->inputs['tax_invoice'] = $this->object->tax_invoice;
             $this->inputs['tr_code'] = $this->object->tr_code;
             // $this->inputs['partner_name'] = $this->object->partner->code;

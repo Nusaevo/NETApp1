@@ -391,6 +391,7 @@ class TransferService
                 'order_code' => $orderHdr->tr_code,
                 'billing_code' => $billingHdr->tr_code
             ]);
+
             $billingHdr2 = new BillingHdr2();
             $billingHdr2->setConnection('TrdTire2');
             $billingHdr2->fill($billingHdr->toArray());

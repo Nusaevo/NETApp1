@@ -2,7 +2,7 @@
 <div>
 <div>
     <div>
-        <x-ui-button clickEvent="" type="Back" button-name="Back"/>
+        {{-- <x-ui-button clickEvent="" type="Back" button-name="Back"/> --}}
     </div>
 </div>
 

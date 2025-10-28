@@ -21,7 +21,6 @@ class Index extends BaseComponent
     public $beg_date; // tanggal awal dari sales reward
     public $end_date; // tanggal akhir dari sales reward
     protected $masterService;
-
     public $results = [];
 
     protected $listeners = [
@@ -67,7 +66,7 @@ class Index extends BaseComponent
                 FROM ivt_bals b
                 join materials m on m.id = b.matl_id
                 " . ($brand ? "and m.brand = '{$brand}'" : "") . "
-                where (b.qty_oh != 0 or b.qty_fgi != 0)
+                // where (b.qty_oh != 0 or b.qty_fgi != 0)
                 and m.deleted_at IS NULL
             ) a
             group by code, name
@@ -127,7 +126,6 @@ class Index extends BaseComponent
                     isset($row->point) && is_numeric($row->point) ? (string)$row->point : '0',
                 ];
             }
-
 
             // Buat title dan subtitle
             $title = 'LAPORAN STOK BARANG';

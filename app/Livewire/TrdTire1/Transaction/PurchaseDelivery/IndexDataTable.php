@@ -68,7 +68,7 @@ class IndexDataTable extends BaseDataTableComponent
                         '<span class="text-muted">Nama tidak tersedia</span>';
                 })
                 ->html(),
-            Column::make($this->trans('Kode Barang'), 'kode_barang')
+            Column::make($this->trans('Kode/Nama Barang'), 'kode_barang')
                 ->label(function ($row) {
                     // Ambil semua kode barang dan nama dari DelivPicking melalui relasi DelivPacking
                     $matlData = DelivPicking::with('Material')
@@ -83,10 +83,11 @@ class IndexDataTable extends BaseDataTableComponent
                             $name = $item->Material ? $item->Material->name : '-';
                             return $code . ' - ' . $name;
                         });
-                        return $formattedData->implode('| ');
+                        return $formattedData->implode('<br>');
                     }
                     return '-';
                 })
+                ->html()
                 ->sortable(),
             Column::make($this->trans('Total Barang'), 'total_qty')
                 ->label(function ($row) {
@@ -138,6 +139,23 @@ class IndexDataTable extends BaseDataTableComponent
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });
             }),
+            SelectFilter::make('Tipe Kendaraan', 'vehicle_type')
+                ->options([
+                    '' => 'Semua',
+                    'O' => 'Mobil',
+                    'I' => 'Motor',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value !== '') {
+                        $builder->whereExists(function ($query) use ($value) {
+                            $query->select(DB::raw(1))
+                                ->from('deliv_packings')
+                                ->join('order_hdrs', 'order_hdrs.tr_code', '=', 'deliv_packings.reffhdrtr_code')
+                                ->whereRaw('deliv_packings.trhdr_id = deliv_hdrs.id')
+                                ->where('order_hdrs.sales_type', $value);
+                        });
+                    }
+                }),
         ];
     }
 }
