@@ -2,7 +2,7 @@
     <!-- UI Controls - Hidden saat print -->
     <div class="container mb-5 mt-3 no-print">
         <div>
-            <x-ui-button clickEvent="" type="Back" button-name="Back" />
+            {{-- <x-ui-button clickEvent="" type="Back" button-name="Back" /> --}}
         </div>
 
         <div class="card">

@@ -73,7 +73,7 @@ class Index extends BaseComponent
         $startDate = $this->start_date ? addslashes($this->start_date) : null;
         $endDate = $this->end_date ? addslashes($this->end_date) : null;
 
-        // Build query with all filters included
+        // Build base query
         $sql = "
             SELECT
                 bh.tr_date,
@@ -87,11 +87,23 @@ class Index extends BaseComponent
             WHERE (bh.amt - bh.amt_reff) > 0
             AND bh.status_code != 'X'
             AND bh.deleted_at IS NULL
-            AND bh.tr_date >= '{$startDate}'
-            AND bh.tr_date <= '{$endDate}'
-            AND bh.partner_code = '{$customerCode}'
-            ORDER BY bh.tr_date asc
         ";
+
+        // Add date filters only if dates are provided
+        if ($startDate) {
+            $sql .= " AND bh.tr_date >= '{$startDate}'";
+        }
+
+        if ($endDate) {
+            $sql .= " AND bh.tr_date <= '{$endDate}'";
+        }
+
+        // Add customer filter only if customer is selected
+        if ($customerCode) {
+            $sql .= " AND bh.partner_code = '{$customerCode}'";
+        }
+
+        $sql .= " ORDER BY bh.tr_date asc";
 
         $this->results = DB::connection(Session::get('app_code'))->select($sql);
     }

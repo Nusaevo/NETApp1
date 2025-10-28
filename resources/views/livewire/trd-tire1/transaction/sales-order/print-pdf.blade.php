@@ -1,7 +1,7 @@
 <div>
     <div class="row d-flex align-items-baseline">
         <div class="col-xl-9">
-            <x-ui-button clickEvent="" type="Back" button-name="Back" />
+            {{-- <x-ui-button clickEvent="" type="Back" button-name="Back" /> --}}
         </div>
         <div class="col-xl-3 float-end d-flex align-items-center">
             <a class="btn btn-light text-capitalize border-0" data-mdb-ripple-color="dark" onclick="printInvoice()">
@@ -10,7 +10,7 @@
         </div>
         <hr>
     </div>
-    <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/invoice.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/trdtire1/salesorder.css') }}">
 
     <!-- Card hanya tampil di layar, tidak saat print -->
     <div class="card d-print-none"
