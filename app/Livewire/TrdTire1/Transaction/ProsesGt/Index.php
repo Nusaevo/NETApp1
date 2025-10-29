@@ -151,17 +151,9 @@ class Index extends BaseComponent
             }
 
             // Prepare update data without gt_process_date
-            $partnerNameWithCity = '';
-            if ($partner) {
-                $partnerNameWithCity = $partner->name;
-                if ($partner->city) {
-                    $partnerNameWithCity .= ' - ' . $partner->city;
-                }
-            }
-
             $updateData = [
                 'gt_tr_code' => $this->gt_tr_code ?: '', // Set null if empty
-                'gt_partner_code' => $partnerNameWithCity, // Set nama - kota if partner exists
+                'gt_partner_code' => $partner ? $partner->name : '', // Set null if no partner
                 'gt_partner_id' => $partner ? $partner->id : 0, // Set null if no partner
             ];
 
