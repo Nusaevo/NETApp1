@@ -17,6 +17,7 @@ class Index extends BaseComponent
 {
     public $selectedOrderIds = [];
     public $selectedItems = [];
+    public $selectedItemsForDisplay = [];
     public $gt_tr_code = '';
     public $gt_partner_code = '';
     public $partners = [];
@@ -77,6 +78,38 @@ class Index extends BaseComponent
     {
         $this->selectedOrderIds = $orderIds;
         $this->selectedItems = $selectedItems;
+
+        // Load selected items with relationships for display
+        // Use join to ensure relationships are loaded properly
+        $this->selectedItemsForDisplay = OrderDtl::whereIn('order_dtls.id', $orderIds)
+            ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
+            ->leftJoin('partners', 'order_hdrs.partner_id', '=', 'partners.id')
+            ->select(
+                'order_dtls.id',
+                'order_dtls.matl_code',
+                'order_hdrs.tr_code',
+                'partners.name as partner_name',
+                'partners.city as partner_city'
+            )
+            ->get()
+            ->map(function ($item) {
+                $namaPembeli = '';
+                if ($item->partner_name) {
+                    $namaPembeli = $item->partner_name;
+                    if ($item->partner_city) {
+                        $namaPembeli .= ' - ' . $item->partner_city;
+                    }
+                }
+
+                return [
+                    'id' => $item->id,
+                    'nama_pembeli' => $namaPembeli,
+                    'no_nota' => $item->tr_code ?? '',
+                    'kode_barang' => $item->matl_code ?? '',
+                ];
+            })
+            ->toArray();
+
         $this->dispatch('open-modal-proses-gt');
     }
 
@@ -118,9 +151,17 @@ class Index extends BaseComponent
             }
 
             // Prepare update data without gt_process_date
+            $partnerNameWithCity = '';
+            if ($partner) {
+                $partnerNameWithCity = $partner->name;
+                if ($partner->city) {
+                    $partnerNameWithCity .= ' - ' . $partner->city;
+                }
+            }
+
             $updateData = [
                 'gt_tr_code' => $this->gt_tr_code ?: '', // Set null if empty
-                'gt_partner_code' => $partner ? $partner->name : '', // Set null if no partner
+                'gt_partner_code' => $partnerNameWithCity, // Set nama - kota if partner exists
                 'gt_partner_id' => $partner ? $partner->id : 0, // Set null if no partner
             ];
 
