@@ -77,6 +77,10 @@
                             <!-- Define table rows -->
                             <x-slot name="rows">
                                 @foreach ($input_details ?? [] as $key => $input_detail)
+                                    @php
+                                        // Check editable status per item (qty_reff < qty = editable)
+                                        $isItemEditable = $itemEditableStatus[$key] ?? true;
+                                    @endphp
                                     <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                                         <td>
@@ -86,22 +90,22 @@
                                                 placeHolder="Select material..." :selectedValue="$input_details[$key]['matl_id'] ?? ''" required="true"
                                                 :action="$actionValue" enabled="true"
                                                 onChanged="matlIdOnChanged({{ $key }}, $event.target.value)"
-                                                type="int" :enabled="$isDeliv ? 'false' : 'true'" />
+                                                type="int" :enabled="$isItemEditable ? 'true' : 'false'" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.price"
-                                                label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'" type="number"
+                                                label="" :action="$actionValue" :enabled="$isItemEditable ? 'true' : 'false'" type="number"
                                                 onChanged="priceOnChanged({{ $key }})" decimalPlaces="2" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.qty"
-                                                label="" :enabled="$isDeliv ? 'false' : 'true'" :action="$actionValue"
+                                                label="" :enabled="$isItemEditable ? 'true' : 'false'" :action="$actionValue"
                                                 onChanged="qtyOnChanged({{ $key }})" type="number"
                                                 required="true" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
-                                                label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'"
+                                                label="" :action="$actionValue" :enabled="$isItemEditable ? 'true' : 'false'"
                                                 onChanged="discPctOnChanged({{ $key }})" type="number" />
                                         </td>
                                         <td style="text-align: center;">
@@ -112,14 +116,14 @@
                                         <td style="text-align: center;">
                                             <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true"
                                                 :action="$actionValue" cssClass="btn-danger text-danger"
-                                                iconPath="delete.svg" :enabled="$isDeliv ? 'false' : 'true'" />
+                                                iconPath="delete.svg" :enabled="$isItemEditable ? 'true' : 'false'" />
                                         </td>
                                     </tr>
                                 @endforeach
                             </x-slot>
                             <x-slot name="button">
                                 <x-ui-button clickEvent="addItemOnClick" cssClass="btn btn-primary"
-                                    iconPath="add.svg" button-name="Tambah" :enabled="$isDeliv ? 'false' : 'true'" />
+                                    iconPath="add.svg" button-name="Tambah" enabled="true" />
                             </x-slot>
                         </x-ui-table>
                     </x-ui-card>

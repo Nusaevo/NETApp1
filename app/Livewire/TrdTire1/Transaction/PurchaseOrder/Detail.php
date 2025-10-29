@@ -51,6 +51,8 @@ class Detail extends BaseComponent
 
     // Delivery status property - simplified
     public $isDeliv = false;
+    // Array untuk track editable status per item (key = index item di input_details)
+    public $itemEditableStatus = [];
     public $materialCategory = null; // Tambahan: untuk menyimpan category hasil mapping sales_type
     public $materialQuery = "";
 
@@ -176,25 +178,8 @@ class Detail extends BaseComponent
         // Validasi duplikasi matl_id dalam detail
         $this->validateMatlIdDuplicate();
 
-        // Jika sudah ada delivery, hanya boleh update header
-        if ($this->isDeliv) {
-            // Prepare data header saja
-            $headerData = $this->prepareHeaderData();
-            $detailData = []; // Kosongkan detail agar tidak diubah
-
-            // Simpan hanya header (tanpa update detail)
-            try {
-                $result = $this->orderService->saveOrder($headerData, []);
-                if (!$result) {
-                    throw new Exception('Gagal mengubah Purchase Order.');
-                }
-                // $this->dispatch('success', 'Header berhasil diperbarui. Detail tidak diubah karena sudah ada delivery.');
-                return $this->redirectToEdit();
-            } catch (Exception $e) {
-                $this->dispatch('error', $e->getMessage());
-                throw new Exception('Gagal memperbarui Purchase Order: ' . $e->getMessage());
-            }
-        }
+        // Validasi: pastikan item yang tidak editable tidak diubah
+        $this->validateNonEditableItems();
 
         // Jika belum ada delivery, proses normal
         if ($this->actionValue === 'Edit' && $this->object->isOrderCompleted()) {
@@ -204,13 +189,70 @@ class Detail extends BaseComponent
 
         $headerData = $this->prepareHeaderData();
         $detailData = $this->prepareDetailData();
-        $totals = $this->calcTotalFromDetails($detailData);
+
+        // PENTING: Semua item harus dikirim ke service untuk mencegah item non-editable terhapus
+        // Service akan menghapus item yang tidak ada di array detailData
+        $finalDetailData = [];
+        foreach ($detailData as $index => $detail) {
+            // Jika item sudah ada di DB (punya id), cek editable status
+            if (!empty($detail['id'])) {
+                // Cari index di input_details yang sesuai dengan detail ini
+                $originalIndex = null;
+                foreach ($this->input_details as $key => $inputDetail) {
+                    if (isset($inputDetail['id']) && $inputDetail['id'] == $detail['id']) {
+                        $originalIndex = $key;
+                        break;
+                    }
+                }
+
+                // Jika ditemukan
+                if ($originalIndex !== null) {
+                    $isEditable = isset($this->itemEditableStatus[$originalIndex]) ? $this->itemEditableStatus[$originalIndex] : true;
+
+                    if ($isEditable) {
+                        // Item editable: gunakan data dari input (bisa diupdate)
+                        $finalDetailData[] = $detail;
+                    } else {
+                        // Item non-editable: ambil data asli dari database (jangan diupdate)
+                        $orderDtl = OrderDtl::find($detail['id']);
+                        if ($orderDtl) {
+                            // Gunakan data asli dari database untuk memastikan tidak ada perubahan
+                            // Format sesuai dengan prepareDetailData agar kompatibel
+                            $dbData = $orderDtl->toArray();
+                            // Pastikan field yang dibutuhkan ada
+                            $dbData['price_curr'] = $dbData['price'] ?? 0;
+                            $dbData['qty_uom'] = $dbData['qty_uom'] ?? 'PCS';
+                            $dbData['price_uom'] = $dbData['price_uom'] ?? 'PCS';
+                            $dbData['qty_base'] = $dbData['qty_base'] ?? 1;
+                            $dbData['price_base'] = $dbData['price_base'] ?? 1;
+                            // Pastikan field yang mungkin tidak ada di toArray() tapi ada di input
+                            if (!isset($dbData['disc_amt'])) $dbData['disc_amt'] = 0;
+                            if (!isset($dbData['amt_adjustdtl'])) $dbData['amt_adjustdtl'] = 0;
+
+                            $finalDetailData[] = $dbData;
+                        } else {
+                            // Fallback: gunakan detail dari input jika tidak ditemukan di DB
+                            $finalDetailData[] = $detail;
+                        }
+                    }
+                } else {
+                    // Tidak ditemukan index, gunakan data dari input
+                    $finalDetailData[] = $detail;
+                }
+            } else {
+                // Item baru, selalu include
+                $finalDetailData[] = $detail;
+            }
+        }
+
+        // Hitung total dari semua detail (termasuk yang non-editable)
+        $totals = $this->calcTotalFromDetails($finalDetailData);
         $headerData['amt'] = $totals['amt'];
         $headerData['amt_beforetax'] = $totals['amt_beforetax'];
         $headerData['amt_tax'] = $totals['amt_tax'];
         $headerData['amt_adjustdtl'] = $totals['amt_adjustdtl'];
 
-        $order = $this->orderService->saveOrder($headerData, $detailData);
+        $order = $this->orderService->saveOrder($headerData, $finalDetailData);
 
         $this->object = $order['header'];
 
@@ -262,16 +304,16 @@ class Detail extends BaseComponent
         }
 
         try {
-            // Check if can add new item
-            if ($this->isDeliv) {
-                $this->dispatch('error', 'Tidak dapat menambah item baru karena ada item yang sudah terkirim.');
-                return;
-            }
+            // Bisa selalu tambah item baru, tidak perlu cek isDeliv
+            // karena item baru selalu editable
             $this->input_details[] = populateArrayFromModel(new OrderDtl());
             $key = count($this->input_details) - 1;
             $this->input_details[$key]['gt_process_date'] = null;
             $this->input_details[$key]['disc_pct'] = 0;
             $this->input_details[$key]['price_base'] = 1;
+
+            // Set sebagai editable (item baru)
+            $this->itemEditableStatus[$key] = true;
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
         }
@@ -419,18 +461,25 @@ class Detail extends BaseComponent
             if (!isset($this->input_details[$index])) {
                 throw new Exception(__('generic.error.delete_item', ['message' => 'Item tidak ditemukan.']));
             }
-            // Check if item is editable
-            if ($this->isDeliv) {
-                $this->dispatch('error', 'Tidak dapat menghapus item karena sudah memiliki delivery.');
+
+            // Check if item is editable (per-item check)
+            $isEditable = isset($this->itemEditableStatus[$index]) ? $this->itemEditableStatus[$index] : true;
+            if (!$isEditable) {
+                $this->dispatch('error', 'Tidak dapat menghapus item karena sudah full delivery (qty_reff >= qty).');
                 return;
             }
+
             // Track deleted items with IDs
             if (isset($this->input_details[$index]['id'])) {
                 $this->deletedItems[] = $this->input_details[$index]['id'];
             }
 
             unset($this->input_details[$index]);
+            unset($this->itemEditableStatus[$index]);
             $this->input_details = array_values($this->input_details);
+
+            // Re-index itemEditableStatus
+            $this->itemEditableStatus = array_values($this->itemEditableStatus);
 
             // $this->dispatch('success', __('generic.string.delete_item'));
         } catch (Exception $e) {
@@ -653,18 +702,43 @@ class Detail extends BaseComponent
 
     }
 
+    /**
+     * Check delivery status per-item
+     * Set isDeliv = true jika ada item yang sudah full delivery (qty_reff >= qty)
+     * Set itemEditableStatus untuk setiap item berdasarkan qty_reff vs qty
+     */
     public function checkDeliveryStatus()
     {
         $this->isDeliv = false; // Default: field aktif (bisa diedit)
+        $this->itemEditableStatus = []; // Reset editable status per item
 
         foreach ($this->input_details as $key => $detail) {
             if (isset($detail['id']) && !empty($detail['id'])) {
                 $orderDtl = OrderDtl::find($detail['id']);
-                if ($orderDtl && $orderDtl->hasDelivery()) {
-                    $this->isDeliv = true; // Ada delivery, field nonaktif
-                    $this->dispatch('warning', 'Beberapa item sudah memiliki delivery. Detail item tidak dapat diedit.');
-                    break; // Jika ada satu item yang sudah delivery, maka semua nonaktif
+                if ($orderDtl) {
+                    // Cek apakah item editable berdasarkan qty_reff
+                    $isItemEditable = $orderDtl->isEditable();
+                    $this->itemEditableStatus[$key] = $isItemEditable;
+
+                    // Jika ada item yang tidak bisa diedit (full delivery), set flag
+                    if (!$isItemEditable) {
+                        $this->isDeliv = true; // Ada item yang full delivery
+                    }
+                } else {
+                    // Item baru atau belum ada di DB, default editable
+                    $this->itemEditableStatus[$key] = true;
                 }
+            } else {
+                // Item baru (belum ada id), default editable
+                $this->itemEditableStatus[$key] = true;
+            }
+        }
+
+        // Dispatch warning jika ada item yang full delivery
+        if ($this->isDeliv) {
+            $nonEditableCount = count(array_filter($this->itemEditableStatus, fn($status) => !$status));
+            if ($nonEditableCount > 0) {
+                $this->dispatch('warning', "Ada {$nonEditableCount} item yang sudah full delivery dan tidak dapat diedit.");
             }
         }
     }
@@ -706,6 +780,53 @@ class Detail extends BaseComponent
                 throw new Exception("Material '{$materialName}' sudah ada dalam detail. Silakan hapus salah satu atau gunakan material yang berbeda.");
             }
             $matlIds[] = $matlId;
+        }
+    }
+
+    /**
+     * Validasi: item yang tidak editable (full delivery) tidak boleh diubah
+     */
+    private function validateNonEditableItems()
+    {
+        foreach ($this->input_details as $key => $detail) {
+            // Skip item baru (belum ada id)
+            if (empty($detail['id'])) {
+                continue;
+            }
+
+            // Cek apakah item editable
+            $isEditable = isset($this->itemEditableStatus[$key]) ? $this->itemEditableStatus[$key] : true;
+
+            if (!$isEditable) {
+                // Item tidak editable, validasi bahwa data tidak berubah dari DB
+                $orderDtl = OrderDtl::find($detail['id']);
+                if ($orderDtl) {
+                    // Cek perubahan pada field yang penting
+                    $hasChanged = false;
+                    $changedFields = [];
+
+                    if (abs(($detail['qty'] ?? 0) - ($orderDtl->qty ?? 0)) > 0.0001) {
+                        $hasChanged = true;
+                        $changedFields[] = 'qty';
+                    }
+                    if (abs(($detail['price'] ?? 0) - ($orderDtl->price ?? 0)) > 0.0001) {
+                        $hasChanged = true;
+                        $changedFields[] = 'price';
+                    }
+                    if (abs(($detail['disc_pct'] ?? 0) - ($orderDtl->disc_pct ?? 0)) > 0.0001) {
+                        $hasChanged = true;
+                        $changedFields[] = 'disc_pct';
+                    }
+                    if (($detail['matl_id'] ?? null) != ($orderDtl->matl_id ?? null)) {
+                        $hasChanged = true;
+                        $changedFields[] = 'material';
+                    }
+
+                    if ($hasChanged) {
+                        throw new Exception("Item dengan material '{$orderDtl->matl_code}' tidak dapat diubah karena sudah full delivery (qty_reff >= qty).");
+                    }
+                }
+            }
         }
     }
 
