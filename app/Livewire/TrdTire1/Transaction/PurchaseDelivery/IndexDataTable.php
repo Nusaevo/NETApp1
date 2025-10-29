@@ -118,7 +118,6 @@ class IndexDataTable extends BaseDataTableComponent
                         'permissions' => $this->permissions
                     ]);
                 }),
-
         ];
     }
 

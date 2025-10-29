@@ -100,10 +100,15 @@ class OrderDtl extends BaseModel
     {
         return $this->DelivPacking()->exists();
     }
-
+    
     public function isEditable()
     {
-        return !$this->hasDelivery();
+        // Jika qty_reff >= qty, berarti sudah full delivery, tidak bisa diedit
+        // Jika qty_reff < qty, masih bisa diedit (belum full delivery)
+        $qty = $this->qty ?? 0;
+        $qtyReff = $this->qty_reff ?? 0;
+
+        return $qtyReff < $qty;
     }
 
     public function getHasDeliveryAttribute()

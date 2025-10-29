@@ -29,6 +29,34 @@
                     </div>
                 </div>
             </div>
+            {{-- Table untuk menampilkan informasi hasil select --}}
+            @if(count($selectedItemsForDisplay) > 0)
+            <div class="form-group mb-3">
+                <label class="form-label fw-bold">Data yang Dipilih:</label>
+                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table table-sm table-bordered table-striped table-hover mb-0">
+                        <thead class="table-light" style="position: sticky; top: 0; z-index: 10;">
+                            <tr>
+                                <th style="min-width: 150px;">Nama Pembeli</th>
+                                <th style="min-width: 120px;">No. Nota</th>
+                                <th style="min-width: 120px;">Kode Barang</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($selectedItemsForDisplay as $item)
+                            <tr>
+                                <td>{{ $item['nama_pembeli'] }}</td>
+                                <td>{{ $item['no_nota'] }}</td>
+                                <td>{{ $item['kode_barang'] }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
+
+
         </x-slot>
         <x-slot name="footer">
             <x-ui-button clickEvent="submitProsesGT" button-name="Proses" loading="true" :action="$actionValue"
@@ -71,6 +99,7 @@
             $('#modalProsesGT').on('hidden.bs.modal', function() {
                 @this.set('gt_tr_code', '');
                 @this.set('gt_partner_code', []);
+                @this.set('selectedItemsForDisplay', []);
             });
 
             // Listener untuk membuka modal Proses Nota
