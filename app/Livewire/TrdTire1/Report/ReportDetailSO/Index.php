@@ -89,7 +89,7 @@ class Index extends BaseComponent
             dh.tr_date as ship_date,
             bh.tr_date as billing_date,
             bh.print_date as collect_date,
-            ph.tr_date as paid_date
+            ps.bank_duedt as paid_date
             FROM order_hdrs oh
             JOIN order_dtls od on od.trhdr_id=oh.id
             JOIN partners p ON p.id=oh.partner_id
@@ -99,6 +99,7 @@ class Index extends BaseComponent
             LEFT OUTER JOIN billing_hdrs bh on bh.id=bo.trhdr_id
             LEFT OUTER JOIN payment_dtls pd on pd.billhdr_id=bh.id
             LEFT OUTER JOIN payment_hdrs ph on ph.id=pd.trhdr_id
+            LEFT OUTER JOIN payment_srcs ps on ps.trhdr_id=ph.id
             WHERE oh.tr_type='SO'
                 AND oh.tr_date BETWEEN '{$startDate}' AND '{$endDate}'
                 {$statusFilter}

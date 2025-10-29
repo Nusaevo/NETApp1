@@ -134,9 +134,12 @@ class IndexDataTable extends BaseDataTableComponent
             $this->createTextFilter('Nomor Surat Jalan', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }),
-            $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
-                $builder->whereHas('Partner', function ($query) use ($value) {
-                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+            $this->createTextFilter('Nomor Nota', 'reffhdrtr_code', 'Cari Kode Referensi', function (Builder $builder, string $value) {
+                $builder->whereExists(function ($query) use ($value) {
+                    $query->select(DB::raw(1))
+                        ->from('deliv_packings')
+                        ->whereRaw('deliv_packings.trhdr_id = deliv_hdrs.id')
+                        ->where(DB::raw('UPPER(reffhdrtr_code)'), 'like', '%' . strtoupper($value) . '%');
                 });
             }),
             SelectFilter::make('Tipe Kendaraan', 'vehicle_type')
@@ -156,6 +159,11 @@ class IndexDataTable extends BaseDataTableComponent
                         });
                     }
                 }),
+            $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
+                $builder->whereHas('Partner', function ($query) use ($value) {
+                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                });
+            }),
         ];
     }
 }
