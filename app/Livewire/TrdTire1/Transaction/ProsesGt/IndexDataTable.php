@@ -46,7 +46,16 @@ class IndexDataTable extends BaseDataTableComponent
             ->select('order_dtls.*')
             ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
             ->join('partners', 'order_hdrs.partner_id', '=', 'partners.id')
-            ->orderBy('partners.name')
+            ->leftJoin('sales_rewards', function($join) {
+                $join->on('order_dtls.matl_id', '=', 'sales_rewards.matl_id')
+                     ->whereNull('sales_rewards.deleted_at')
+                     ->whereRaw('sales_rewards.id = (
+                         SELECT MIN(sr2.id)
+                         FROM sales_rewards sr2
+                         WHERE sr2.matl_id = order_dtls.matl_id
+                         AND sr2.deleted_at IS NULL
+                     )');
+            })
             ->whereRaw('1=0'); // Default: Tidak menampilkan data
 
         return $query;
@@ -56,9 +65,34 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return [
             Column::make('Nama Pembeli', 'orderHdr.Partner.name')
-                ->label(fn($row) => $row->orderHdr->Partner ? $row->orderHdr->Partner->name . ' - ' . $row->orderHdr->Partner->city : '')
                 ->sortable()
-                ->format(fn($value, $row) => $row->orderHdr->Partner->name ?? ''),
+                ->format(function ($value, $row) {
+                    if (!$row->orderHdr->Partner || !$row->SalesReward) {
+                        return '';
+                    }
+
+                    $partner = $row->orderHdr->Partner;
+                    $salesReward = $row->SalesReward;
+                    $partnerChars = $partner->partner_chars;
+
+                    // Logika CUSTOMER LAIN-LAIN berdasarkan brand
+                    if ($salesReward->brand && $partnerChars) {
+                        if (in_array($salesReward->brand, ['GT RADIAL', 'GAJAH TUNGGAL']) &&
+                            (($partnerChars['GT'] ?? null) === false || ($partnerChars['GT'] ?? null) === null)) {
+                            return 'CUSTOMER LAIN-LAIN';
+                        }
+                        if ($salesReward->brand === 'IRC' &&
+                            (($partnerChars['IRC'] ?? null) === false || ($partnerChars['IRC'] ?? null) === null)) {
+                            return 'CUSTOMER LAIN-LAIN';
+                        }
+                        if ($salesReward->brand === 'ZENEOS' &&
+                            (($partnerChars['ZN'] ?? null) === false || ($partnerChars['ZN'] ?? null) === null)) {
+                            return 'CUSTOMER LAIN-LAIN';
+                        }
+                    }
+
+                    return $partner->name . ' - ' . $partner->city;
+                }),
             Column::make('No. Nota', 'orderHdr.tr_code')
                 ->sortable()
                 ->format(fn($value, $row) =>
@@ -220,6 +254,22 @@ class IndexDataTable extends BaseDataTableComponent
         // Only remove the default no-data condition if all filters are applied
         if ($hasProcessDate && $hasSrCode) {
             $this->removeDefaultNoDataCondition($builder);
+
+            // Add custom sorting to make CUSTOMER LAIN-LAIN appear last
+            $builder->orderByRaw("
+                CASE
+                    WHEN sales_rewards.brand IN ('GT RADIAL', 'GAJAH TUNGGAL') AND (partners.partner_chars->>'GT' = 'false' OR partners.partner_chars->>'GT' IS NULL)
+                    THEN 1
+                    WHEN sales_rewards.brand = 'IRC' AND (partners.partner_chars->>'IRC' = 'false' OR partners.partner_chars->>'IRC' IS NULL)
+                    THEN 1
+                    WHEN sales_rewards.brand = 'ZENEOS' AND (partners.partner_chars->>'ZN' = 'false' OR partners.partner_chars->>'ZN' IS NULL)
+                    THEN 1
+                    ELSE 0
+                END,
+                order_dtls.gt_process_date DESC,
+                partners.name,
+                order_hdrs.tr_code
+            ");
         }
     }
 
