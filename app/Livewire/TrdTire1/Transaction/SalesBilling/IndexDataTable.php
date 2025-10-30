@@ -271,7 +271,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function bulkActions(): array
     {
         return [
-            'autoUpdateSelected' => 'Update Tanggal Tagih',
+            'print' => 'Cetak',
         ];
     }
 
@@ -338,5 +338,57 @@ class IndexDataTable extends BaseDataTableComponent
             Log::error('Error auto-update tanggal tagih: ' . $e->getMessage());
             $this->dispatch('error', 'Gagal update tanggal tagih: ' . $e->getMessage());
         }
+    }
+     public function print()
+    {
+        $selectedOrderIds = $this->getSelected();
+        if (count($selectedOrderIds) > 0) {
+            // Validasi tanggal proses sebelum cetak
+            $billingOrders = BillingHdr::with('OrderHdr')
+                ->whereIn('id', $selectedOrderIds)
+                ->get();
+
+            $ordersWithoutProcessDate = [];
+            foreach ($billingOrders as $billing) {
+                if (empty($billing->print_date)) {
+                    $ordersWithoutProcessDate[] = $billing->tr_code;
+                }
+            }
+
+            // Jika ada nota dengan tanggal proses kosong, tampilkan error
+            if (!empty($ordersWithoutProcessDate)) {
+                $this->dispatch('error', 'Tidak dapat mencetak nota. Beberapa nota belum memiliki tanggal tagih: ' . implode(', ', $ordersWithoutProcessDate));
+                return;
+            }
+
+            $selectedOrders = BillingHdr::whereIn('id', $selectedOrderIds)->get();
+
+            // Update status to PRINT
+            BillingHdr::whereIn('id', $selectedOrderIds)->update(['status_code' => \App\Enums\TrdTire1\Status::PRINT]);
+
+            // Create audit logs for print action
+            // try {
+            //     AuditLogService::createPrintAuditLogs($selectedOrderIds);
+            // } catch (\Exception $e) {
+            //     Log::error('Failed to create print audit logs: ' . $e->getMessage());
+            // }
+
+            // Clear selected items
+            $this->clearSelected();
+
+            // Dispatch event to show success message
+            $this->dispatch('showAlert', [
+                'type' => 'success',
+                'message' => 'Nota berhasil dicetak'
+            ]);
+
+            // Redirect to print view
+            return redirect()->route($this->appCode . '.Transaction.SalesBilling.PrintPdf', [
+                'action' => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey(json_encode($selectedOrderIds)),
+            ]);
+        }
+        $this->dispatch('error', 'Nota belum dipilih.');
+
     }
 }
