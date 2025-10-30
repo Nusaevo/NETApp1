@@ -154,7 +154,8 @@ class IndexDataTable extends BaseDataTableComponent
                         return '';
                     }
                 })
-                ->html(),
+                ->html()
+                ->sortable(),
 
             Column::make($this->trans('Total Harga'), 'total_amt')
                 ->label(function ($row) {
