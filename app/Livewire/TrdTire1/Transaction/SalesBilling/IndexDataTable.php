@@ -15,18 +15,62 @@ class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = DelivHdr::class;
     public $bulkSelectedIds = null;
+    public $tanggalTagih; // Field untuk tanggal tagih - specific untuk sales billing
 
+    protected $listeners = [
+        'refreshDatatable' => '$refresh', // Listen untuk refresh table
+    ];
 
     public function mount(): void
     {
         $this->setSearchDisabled();
-        // $this->setDefaultSort('tr_date', 'desc');
         $this->setDefaultSort('tr_code', 'asc');
         $this->setDefaultSort('partner_code', 'asc');
-        // $this->setDefaultSort('tr_date', 'desc');
+
+        // Enable bulk selection and actions untuk menampilkan checkbox
+        $this->setBulkActionsStatus(true);
+        $this->setHideBulkActionsWhenEmptyStatus(false);
+        $this->setSelectAllStatus(true);
+        $this->setBulkActionsEnabled();
+
+        // Initialize tanggal tagih untuk sales billing
+        $this->initializeTanggalTagih();
     }
 
-    public function builder(): Builder
+    public function configure(): void
+    {
+        // Call parent configure first
+        parent::configure();
+
+        // Enable tanggal tagih functionality - specific untuk sales billing
+        $this->enableTanggalTagihArea('livewire.trd-tire1.transaction.sales-billing.custom-filters');
+
+        // Specific configurations for this datatable
+        $this->setDefaultSort('tgl_transaksi', 'desc')
+            ->setPerPageAccepted([10, 25, 50, 100])
+            ->setPerPage(10)
+            ->setLoadingPlaceholderEnabled();
+    }
+
+    /**
+     * Initialize tanggal tagih with current date - specific untuk sales billing
+     */
+    private function initializeTanggalTagih(): void
+    {
+        if (empty($this->tanggalTagih)) {
+            $this->tanggalTagih = now()->format('Y-m-d');
+        }
+    }
+
+    /**
+     * Enable tanggal tagih functionality in datatable - specific untuk sales billing
+     */
+    private function enableTanggalTagihArea(string $viewPath = 'livewire.custom-filters'): void
+    {
+        $currentAreas = $this->getConfigurableAreas() ?? [];
+        $currentAreas['after-toolbar'] = $viewPath;
+        $this->setConfigurableAreas($currentAreas);
+    }    public function builder(): Builder
     {
         return BillingHdr::with(['Partner', 'OrderHdr'])
             ->where('billing_hdrs.tr_type', 'ARB')
@@ -215,115 +259,55 @@ class IndexDataTable extends BaseDataTableComponent
     public function bulkActions(): array
     {
         return [
-            'setDeliveryDate' => 'Set Tanggal Penagihan',
-            'print' => 'Cetak',
+            'autoUpdateSelected' => 'Update Tanggal Tagih',
         ];
     }
 
-    public function setDeliveryDate()
+    /**
+     * Bulk action untuk auto update tanggal tagih
+     */
+    public function autoUpdateSelected()
     {
-        if (count($this->getSelected()) > 0) {
-            $selectedItems = BillingHdr::whereIn('id', $this->getSelected())
-                ->get(['tr_code as nomor_nota', 'partner_id'])
-                ->map(function ($billing) {
-                    $delivery = DelivHdr::where('tr_type', 'ARB')
-                        ->where('tr_code', $billing->tr_code)
-                        ->first();
-                    return [
-                        'nomor_nota' => $billing->nomor_nota,
-                        'nama' => $billing->Partner->name,
-                        'kota' => $billing->Partner->city,
-                        'tr_date' => $delivery ? $delivery->tr_date : null,
-                    ];
-                })
-                ->toArray();
+        $selectedIds = $this->getSelected();
 
-            $this->dispatch('openDeliveryDateModal', orderIds: $this->getSelected(), selectedItems: $selectedItems);
-            // $this->dispatch('submitDeliveryDate');
-        }
-    }
-
-    public function submitDeliveryDate()
-    {
-        $selectedOrderIds = $this->getSelected();
-        if (count($selectedOrderIds) > 0) {
-            // Get old print dates before update
-            $billings = BillingHdr::whereIn('id', $selectedOrderIds)->get();
-            $oldPrintDates = $billings->pluck('print_date', 'id')->toArray();
-
-            // Update print dates
-            BillingHdr::whereIn('id', $selectedOrderIds)->update(['print_date' => $this->tr_date]);
-
-            // Create audit logs for each billing
+        if (count($selectedIds) > 0 && !empty($this->tanggalTagih)) {
             try {
-                AuditLogService::createPrintDateAuditLogs(
-                    $selectedOrderIds,
-                    $this->tr_date,
-                    $oldPrintDates[$selectedOrderIds[0]] ?? null
-                );
-            } catch (\Exception $e) {
-                Log::error('Failed to create audit logs: ' . $e->getMessage());
-            }
+                DB::beginTransaction();
 
-            $this->clearSelected();
-            $this->dispatch('showAlert', [
-                'type' => 'success',
-                'message' => 'Tanggal penagihan berhasil diatur'
-            ]);
-        }
-    }
+                // Simpan print_date lama untuk audit log
+                $oldPrintDates = BillingHdr::whereIn('id', $selectedIds)
+                    ->pluck('print_date', 'id')
+                    ->toArray();
 
-    public function print()
-    {
-        $selectedOrderIds = $this->getSelected();
-        if (count($selectedOrderIds) > 0) {
-            // Validasi tanggal proses sebelum cetak
-            $billingOrders = BillingHdr::with('OrderHdr')
-                ->whereIn('id', $selectedOrderIds)
-                ->get();
+                // Update print_date di billing_hdrs untuk selected IDs
+                $updated = BillingHdr::whereIn('id', $selectedIds)
+                    ->update([
+                        'print_date' => $this->tanggalTagih,
+                        'updated_at' => now()
+                    ]);
 
-            $ordersWithoutProcessDate = [];
-            foreach ($billingOrders as $billing) {
-                if (empty($billing->print_date)) {
-                    $ordersWithoutProcessDate[] = $billing->tr_code;
+                // Create audit logs menggunakan method yang sama seperti di Index.php
+                try {
+                    AuditLogService::createPrintDateAuditLogs(
+                        $selectedIds,
+                        $this->tanggalTagih,
+                        $oldPrintDates[$selectedIds[0]] ?? null
+                    );
+                } catch (\Exception $e) {
+                    Log::error('Failed to create audit logs: ' . $e->getMessage());
                 }
+
+                DB::commit();
+
+                $this->dispatch('success', "Berhasil update tanggal tagih untuk {$updated} record(s)");
+
+            } catch (\Exception $e) {
+                DB::rollback();
+                Log::error('Error auto-update tanggal tagih: ' . $e->getMessage());
+                $this->dispatch('error', 'Gagal update tanggal tagih: ' . $e->getMessage());
             }
-
-            // Jika ada nota dengan tanggal proses kosong, tampilkan error
-            if (!empty($ordersWithoutProcessDate)) {
-                $this->dispatch('error', 'Tidak dapat mencetak nota. Beberapa nota belum memiliki tanggal tagih: ' . implode(', ', $ordersWithoutProcessDate));
-                return;
-            }
-
-            $selectedOrders = BillingHdr::whereIn('id', $selectedOrderIds)->get();
-
-            // Update status to PRINT
-            BillingHdr::whereIn('id', $selectedOrderIds)->update(['status_code' => \App\Enums\TrdTire1\Status::PRINT]);
-
-            // Create audit logs for print action
-            // try {
-            //     AuditLogService::createPrintAuditLogs($selectedOrderIds);
-            // } catch (\Exception $e) {
-            //     Log::error('Failed to create print audit logs: ' . $e->getMessage());
-            // }
-
-            // Clear selected items
-            $this->clearSelected();
-
-            // Dispatch event to show success message
-            $this->dispatch('showAlert', [
-                'type' => 'success',
-                'message' => 'Nota berhasil dicetak'
-            ]);
-
-            // Redirect to print view
-            return redirect()->route($this->appCode . '.Transaction.SalesBilling.PrintPdf', [
-                'action' => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey(json_encode($selectedOrderIds)),
-            ]);
+        } else {
+            $this->dispatch('warning', 'Pilih data dan pastikan tanggal tagih tidak kosong');
         }
-        $this->dispatch('error', 'Nota belum dipilih.');
-
     }
-
 }

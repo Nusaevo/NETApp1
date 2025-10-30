@@ -263,11 +263,12 @@ class DropdownSearchController extends Controller
                     // Normal search with filters applied
                     if (!empty($searchTerm)) {
                         $modifiedQuery = $this->modifyQueryForSearch($sqlQuery, $searchTerm, $optionLabel);
-                        // Execute query for regular search
-                        $results = $db->select($modifiedQuery . ' LIMIT 50');
+                        // Execute query for regular search - add limit only if not already present
+                        $finalQuery = $this->addLimitIfNeeded($modifiedQuery, 50);
+                        $results = $db->select($finalQuery);
                     } else if ($isSpaceOnlySearch) {
                         // Space-only search - return all data with limit
-                        $finalQuery = $sqlQuery . ' LIMIT 100';
+                        $finalQuery = $this->addLimitIfNeeded($sqlQuery, 100);
                         // Debug logging disabled
                         /*
                         \Log::info('Executing space search query', [
@@ -665,13 +666,55 @@ class DropdownSearchController extends Controller
         //     'original_option_label' => $optionLabel
         // ]);
 
-        // No search placeholders, we need to add the search condition
-        if ($hasWhere) {
-            // Add search condition to existing WHERE clause
-            return $sqlQuery . " AND " . $searchClause;
+        // Parse query to handle ORDER BY and LIMIT correctly
+        return $this->insertSearchCondition($sqlQuery, $searchClause, $hasWhere);
+    }
+
+    /**
+     * Insert search condition into query while preserving ORDER BY and LIMIT clauses
+     *
+     * @param string $sqlQuery Original query
+     * @param string $searchClause Search condition to insert
+     * @param bool $hasWhere Whether query already has WHERE clause
+     * @return string Modified query with search condition in correct position
+     */
+    private function insertSearchCondition($sqlQuery, $searchClause, $hasWhere)
+    {
+        $upperQuery = strtoupper($sqlQuery);
+        
+        // Find positions of ORDER BY and LIMIT
+        $orderByPos = strpos($upperQuery, ' ORDER BY ');
+        $limitPos = strpos($upperQuery, ' LIMIT ');
+        
+        // Determine where to split the query
+        $splitPos = false;
+        if ($orderByPos !== false) {
+            $splitPos = $orderByPos;
+        } elseif ($limitPos !== false) {
+            $splitPos = $limitPos;
+        }
+        
+        if ($splitPos !== false) {
+            // Split query into main part and trailing clauses (ORDER BY/LIMIT)
+            $mainQuery = substr($sqlQuery, 0, $splitPos);
+            $trailingClauses = substr($sqlQuery, $splitPos);
+            
+            // Add search condition to main query
+            if ($hasWhere) {
+                $modifiedMainQuery = $mainQuery . " AND " . $searchClause;
+            } else {
+                $modifiedMainQuery = $mainQuery . " WHERE " . $searchClause;
+            }
+            
+            // Reassemble query with trailing clauses
+            return $modifiedMainQuery . $trailingClauses;
         } else {
-            // Add new WHERE clause with search condition
-            return $sqlQuery . " WHERE " . $searchClause;
+            // No ORDER BY or LIMIT, add search condition at the end
+            if ($hasWhere) {
+                return $sqlQuery . " AND " . $searchClause;
+            } else {
+                return $sqlQuery . " WHERE " . $searchClause;
+            }
         }
     }
 
@@ -788,5 +831,80 @@ class DropdownSearchController extends Controller
         // ]);
 
         return $query;
+    }
+
+    /**
+     * Add LIMIT clause to query only if it doesn't already have one
+     * Also checks for existing ORDER BY clause and respects it
+     *
+     * @param string $query The SQL query
+     * @param int $limit The limit to add
+     * @return string The query with limit added if needed
+     */
+    private function addLimitIfNeeded($query, $limit = 50)
+    {
+        $upperQuery = strtoupper(trim($query));
+        
+        // Check if query already has LIMIT
+        if (strpos($upperQuery, ' LIMIT ') !== false) {
+            // Query already has LIMIT, return as is
+            return $query;
+        }
+        
+        // Check if query already has ORDER BY
+        $hasOrderBy = strpos($upperQuery, ' ORDER BY ') !== false;
+        
+        if ($hasOrderBy) {
+            // Query has ORDER BY, add LIMIT after it
+            return $query . " LIMIT {$limit}";
+        } else {
+            // No ORDER BY, add default ORDER BY with LIMIT
+            // Try to detect the first field from SELECT clause for ordering
+            $orderByField = $this->detectFirstSelectField($query);
+            if ($orderByField) {
+                return $query . " ORDER BY {$orderByField} LIMIT {$limit}";
+            } else {
+                // Fallback: just add LIMIT without ORDER BY
+                return $query . " LIMIT {$limit}";
+            }
+        }
+    }
+
+    /**
+     * Detect the first field from SELECT clause for default ordering
+     *
+     * @param string $query The SQL query
+     * @return string|null The first field name or null if not detected
+     */
+    private function detectFirstSelectField($query)
+    {
+        // Match SELECT clause and extract fields
+        if (preg_match('/SELECT\s+(.*?)\s+FROM\s+/is', $query, $matches)) {
+            $selectClause = trim($matches[1]);
+            
+            // Handle SELECT * case
+            if ($selectClause === '*') {
+                return null; // Can't order by * reliably
+            }
+            
+            // Split by comma and get first field
+            $fields = explode(',', $selectClause);
+            $firstField = trim($fields[0]);
+            
+            // Handle aliased fields (remove AS alias)
+            if (preg_match('/^(.+?)\s+AS\s+/i', $firstField, $aliasMatches)) {
+                $firstField = trim($aliasMatches[1]);
+            }
+            
+            // Remove table prefixes if present for cleaner ORDER BY
+            if (strpos($firstField, '.') !== false) {
+                $parts = explode('.', $firstField);
+                $firstField = end($parts);
+            }
+            
+            return $firstField;
+        }
+        
+        return null;
     }
 }

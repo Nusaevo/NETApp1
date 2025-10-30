@@ -14,81 +14,85 @@ use App\Enums\TrdTire1\Status;
 
 class Index extends BaseComponent
 {
-    public $selectedOrderIds = [];
-    public $deliveryDate = '';
+    public $tanggalTagih; // Field untuk tanggal tagih
     protected $masterService;
     public $warehouses;
-    public $selectedItems = [];
-    public $tr_date = ''; // Add this line
 
     protected $listeners = [
-        'openDeliveryDateModal',
+        'autoUpdateTanggalTagih', // Listener untuk auto update
     ];
 
-    public function openDeliveryDateModal($orderIds, $selectedItems)
-    {
-        $this->selectedOrderIds = $orderIds;
-        $this->selectedItems = $selectedItems;
-        $this->deliveryDate = '';
-        $this->dispatch('open-modal-delivery-date');
-    }
-
-    public function submitDeliveryDate()
-    {
-        $this->validate([
-            'tr_date' => 'required|date',
-        ]);
-
-        DB::beginTransaction();
-
-        try {
-            $selectedOrders = BillingHdr::whereIn('id', $this->selectedOrderIds)->get();
-
-            // Get old print dates before update
-            $oldPrintDates = $selectedOrders->pluck('print_date', 'id')->toArray();
-
-            foreach ($selectedOrders as $order) {
-                $order->update([
-                    'print_date' => $this->tr_date,
-                    'status_code' => Status::PAID, // gunakan constant status
-                ]);
-            }
-
-            // Create audit logs for each billing
-            try {
-                AuditLogService::createPrintDateAuditLogs(
-                    $this->selectedOrderIds,
-                    $this->tr_date,
-                    $oldPrintDates[$this->selectedOrderIds[0]] ?? null
-                );
-            } catch (\Exception $e) {
-                Log::error('Failed to create audit logs: ' . $e->getMessage());
-            }
-
-            DB::commit();
-
-            $this->dispatch('close-modal-delivery-date');
-            $this->dispatch('showAlert', [
-                'type' => 'success',
-                'message' => 'Tanggal penagihan berhasil disimpan'
-            ]);
-
-            $this->dispatch('refreshDatatable');
-
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error('Failed to update delivery date: ' . $e->getMessage());
-            $this->dispatch('showAlert', [
-                'type' => 'error',
-                'message' => 'Gagal menyimpan tanggal penagihan: ' . $e->getMessage()
-            ]);
-        }
-    }
-
-    public function onPrerender()
+    public function onPreRender()
     {
         $this->masterService = new MasterService();
         $this->warehouses = $this->masterService->getWarehouse();
+
+        // Set tanggal tagih default ke hari ini jika belum ada
+        if (empty($this->tanggalTagih)) {
+            $this->tanggalTagih = now()->format('Y-m-d');
+        }
+    }
+
+    /**
+     * Auto update tanggal tagih ketika row dipilih
+     */
+    public function autoUpdateTanggalTagih($selectedIds)
+    {
+        if (empty($this->tanggalTagih)) {
+            $this->dispatch('showAlert', [
+                'type' => 'warning',
+                'message' => 'Silakan pilih tanggal tagih terlebih dahulu.'
+            ]);
+            return;
+        }
+
+        if (count($selectedIds) > 0) {
+            DB::beginTransaction();
+
+            try {
+                $selectedOrders = BillingHdr::whereIn('id', $selectedIds)->get();
+
+                // Get old print dates before update untuk audit log
+                $oldPrintDates = $selectedOrders->pluck('print_date', 'id')->toArray();
+
+                // Update tanggal tagih
+                foreach ($selectedOrders as $order) {
+                    $order->update([
+                        'print_date' => $this->tanggalTagih,
+                        'status_code' => Status::PAID,
+                    ]);
+                }
+
+                // Create audit logs
+                try {
+                    AuditLogService::createPrintDateAuditLogs(
+                        $selectedIds,
+                        $this->tanggalTagih,
+                        $oldPrintDates[$selectedIds[0]] ?? null
+                    );
+                } catch (\Exception $e) {
+                    Log::error('Failed to create audit logs: ' . $e->getMessage());
+                }
+
+                DB::commit();
+
+                $this->dispatch('showAlert', [
+                    'type' => 'success',
+                    'message' => 'Tanggal tagih berhasil diupdate untuk ' . count($selectedIds) . ' data.'
+                ]);
+
+                // REMOVED: Don't refresh datatable to keep selection intact
+                // $this->dispatch('refreshDatatable');
+
+            } catch (\Exception $e) {
+                DB::rollback();
+                Log::error('Failed to auto update tanggal tagih: ' . $e->getMessage());
+                $this->dispatch('showAlert', [
+                    'type' => 'error',
+                    'message' => 'Gagal mengupdate tanggal tagih: ' . $e->getMessage()
+                ]);
+            }
+        }
     }
 
     public function render()
