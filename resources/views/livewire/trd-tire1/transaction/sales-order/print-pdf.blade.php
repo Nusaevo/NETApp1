@@ -33,7 +33,7 @@
                     <td style="text-align: center; margin-top: 20px; vertical-align: bottom; width: 45%; border: none;">
                         <h3 style="margin-bottom: -5px; text-decoration: underline;">
                             NOTA PENJUALAN</h3>
-                        <p style="margin: 0px 0;">No. {{ $this->object->tr_code }}</p>
+                        <p style="margin: 0px 0;">No. <span style="font-family: 'Times New Roman', Times, serif;">{{ $this->object->tr_code }}</span></p>
                     </td>
                     <td style="text-align: left; vertical-align: bottom; width: 30%; border: none;">
                         <p style="margin-bottom: -8px;">
@@ -55,7 +55,6 @@
                     </td>
                 </tr>
             </table>
-
             <!-- Items Table -->
             <table
                 style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #000; line-height: 1.2;">
@@ -196,7 +195,7 @@
                     @endif
                 </tbody>
             </table>
-            <table style="margin-top: -18px; width: 62%;">
+            <table style="margin-top: -18px; width: 47%;">
                 <tr>
                     <td style="border: 1px solid #000; padding: 5px;">
                         <p style="margin: 0; text-align: start; font-size: 16px;">
@@ -240,7 +239,7 @@
                             <td
                                 style="text-align: center; margin-top: 20px; vertical-align: bottom; width: 45%; border: none;">
                                 <h3 style="margin-bottom: 1px; text-decoration: underline;">NOTA PENJUALAN</h3>
-                                <p style="margin: 0px 0;">No. {{ $this->object->tr_code }}</p>
+                                <p style="margin: 0px 0;">No. <span style="font-family: 'Times New Roman', Times, serif;">{{ $this->object->tr_code }}</span></p>
                             </td>
                             <td style="text-align: left; vertical-align: bottom; width: 30%;">
                                 <p style="margin-bottom: -8px;">Surabaya,
@@ -397,7 +396,7 @@
                     </table>
 
                     <!-- Footer -->
-                    <table style="margin-top: -18px; width: 62%;">
+                    <table style="margin-top: -18px; width: 47%;">
                         <tr>
                             <td style="border: 1px solid #000; padding: 5px;">
                                 <p style="margin: 0; text-align: start; font-size: 16px;">
