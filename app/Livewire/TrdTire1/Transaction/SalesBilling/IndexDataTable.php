@@ -102,7 +102,7 @@ class IndexDataTable extends BaseDataTableComponent
             ->select('billing_hdrs.*')
             ->where('billing_hdrs.tr_type', 'ARB')
             ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN, Status::PAID, Status::SHIP, Status::BILL])
-            ->orderBy('order_hdrs.tr_date', 'desc')
+            // ->orderBy('order_hdrs.tr_date', 'desc')
             ->orderBy('partners.name', 'asc')
             ->orderBy('billing_hdrs.tr_code', 'asc');
     }
