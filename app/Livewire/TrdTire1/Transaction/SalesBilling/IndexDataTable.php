@@ -121,8 +121,7 @@ class IndexDataTable extends BaseDataTableComponent
                         return '';
                     }
                 })
-                ->html()
-                ->sortable(),
+                ->html(),
             // Column::make($this->trans("Tgl. Nota"), "tr_date")
             //     ->format(function ($value) {
             //         return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '';
@@ -134,15 +133,13 @@ class IndexDataTable extends BaseDataTableComponent
                     // Gunakan relasi OrderHdr yang sudah ada
                     return $row->OrderHdr && $row->OrderHdr->tr_date ?
                         \Carbon\Carbon::parse($row->OrderHdr->tr_date)->format('d-m-Y') : '';
-                })
-                ->sortable(),
+                }),
             Column::make($this->trans("Tgl. Kirim"), "DeliveryHdr.tr_date")
                 ->format(function ($value, $row) {
                     // Gunakan relasi DeliveryHdr yang akan dibuat
                     return $row->DeliveryHdr && $row->DeliveryHdr->tr_date ?
                         \Carbon\Carbon::parse($row->DeliveryHdr->tr_date)->format('d-m-Y') : '';
-                })
-                ->sortable(),
+                }),
             Column::make($this->trans("Due Date"), "tr_date")
                 ->label(function ($row) {
                     // Gunakan tr_date dan payment_due_days dari relasi OrderHdr
@@ -156,7 +153,6 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                     return '-';
                 })
-                ->searchable()
                 ->sortable(),
             Column::make($this->trans("Customer"), "partner_id")
                 ->format(function ($value, $row) {
@@ -169,28 +165,23 @@ class IndexDataTable extends BaseDataTableComponent
                         return '';
                     }
                 })
-                ->html()
-                ->sortable(),
+                ->html(),
 
             Column::make($this->trans('Total Harga'), 'total_amt')
                 ->label(function ($row) {
                     // Ambil total_amt dari relasi OrderHdr
                     return $row->OrderHdr ? rupiah($row->OrderHdr->amt, false) : '-';
-                })
-                ->sortable(),
+                }),
 
             Column::make($this->trans("tr_type"), "tr_type")
-                ->hideIf(true)
-                ->sortable(),
+                ->hideIf(true),
             Column::make('currency', "curr_rate")
-                ->hideIf(true)
-                ->sortable(),
+                ->hideIf(true),
             Column::make($this->trans("Tanggal Tagih"), "print_date")
                 ->format(function ($value) {
                     return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '';
                 })
-                ->searchable()
-                ->sortable(),
+                ->searchable(),
             // Column::make($this->trans("Status"), "status_code")
             //     ->format(function ($value, $row) {
             //         $statusMap = [
