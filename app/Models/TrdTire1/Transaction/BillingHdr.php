@@ -69,6 +69,12 @@ class BillingHdr extends BaseModel
         return $this->hasOne(OrderHdr::class, 'tr_code', 'tr_code')->where('tr_type', 'SO');
     }
 
+    // Tambahkan relasi ke DelivHdr
+    public function DeliveryHdr()
+    {
+        return $this->hasOne(DelivHdr::class, 'tr_code', 'tr_code')->where('tr_type', 'SD');
+    }
+
     public function BillingOrder()
     {
         return $this->hasMany(BillingOrder::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type)->orderBy('tr_seq');

@@ -20,8 +20,6 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->setSearchDisabled();
-        $this->setDefaultSort('tr_code', 'asc');
-        $this->setDefaultSort('partner_code', 'asc');
 
         // Enable bulk selection and actions untuk menampilkan checkbox
         $this->setBulkActionsStatus(true);
@@ -31,6 +29,7 @@ class IndexDataTable extends BaseDataTableComponent
 
         // Initialize tanggal tagih untuk sales billing
         $this->initializeTanggalTagih();
+
     }
 
     /**
@@ -82,12 +81,29 @@ class IndexDataTable extends BaseDataTableComponent
         $currentAreas = $this->getConfigurableAreas() ?? [];
         $currentAreas['after-toolbar'] = $viewPath;
         $this->setConfigurableAreas($currentAreas);
-    }    public function builder(): Builder
+    }
+
+    public function builder(): Builder
     {
-        return BillingHdr::with(['Partner', 'OrderHdr'])
+        return BillingHdr::with([
+                'Partner',
+                'OrderHdr' => function($query) {
+                    $query->where('tr_type', 'SO');
+                },
+                'DeliveryHdr' => function($query) {
+                    $query->where('tr_type', 'SD');
+                }
+            ])
+            ->leftJoin('order_hdrs', function($join) {
+                $join->on('billing_hdrs.tr_code', '=', 'order_hdrs.tr_code')
+                     ->where('order_hdrs.tr_type', 'SO');
+            })
+            ->leftJoin('partners', 'billing_hdrs.partner_id', '=', 'partners.id')
+            ->select('billing_hdrs.*')
             ->where('billing_hdrs.tr_type', 'ARB')
             ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN, Status::PAID, Status::SHIP, Status::BILL])
-            ->orderBy('billing_hdrs.partner_code', 'asc')
+            ->orderBy('order_hdrs.tr_date', 'desc')
+            ->orderBy('partners.name', 'asc')
             ->orderBy('billing_hdrs.tr_code', 'asc');
     }
 
@@ -105,27 +121,26 @@ class IndexDataTable extends BaseDataTableComponent
                         return '';
                     }
                 })
-                ->html(),
+                ->html()
+                ->sortable(),
             // Column::make($this->trans("Tgl. Nota"), "tr_date")
             //     ->format(function ($value) {
             //         return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '';
             //     })
             //     ->searchable(),
                 // ->sortable(),
-            Column::make($this->trans("Tgl. Nota"), "tr_date")
-                ->label(function ($row) {
-                    $delivery = OrderHdr::where('tr_type', 'SO')
-                        ->where('tr_code', $row->tr_code)
-                        ->first();
-                    return $delivery && $delivery->tr_date ? \Carbon\Carbon::parse($delivery->tr_date)->format('d-m-Y') : '';
+            Column::make($this->trans("Tgl. Nota"), "OrderHdr.tr_date")
+                ->format(function ($value, $row) {
+                    // Gunakan relasi OrderHdr yang sudah ada
+                    return $row->OrderHdr && $row->OrderHdr->tr_date ?
+                        \Carbon\Carbon::parse($row->OrderHdr->tr_date)->format('d-m-Y') : '';
                 })
                 ->sortable(),
-            Column::make($this->trans("Tgl. Kirim"), "tr_date")
-                ->label(function ($row) {
-                    $delivery = DelivHdr::where('tr_type', 'SD')
-                        ->where('tr_code', $row->tr_code)
-                        ->first();
-                    return $delivery && $delivery->tr_date ? \Carbon\Carbon::parse($delivery->tr_date)->format('d-m-Y') : '';
+            Column::make($this->trans("Tgl. Kirim"), "DeliveryHdr.tr_date")
+                ->format(function ($value, $row) {
+                    // Gunakan relasi DeliveryHdr yang akan dibuat
+                    return $row->DeliveryHdr && $row->DeliveryHdr->tr_date ?
+                        \Carbon\Carbon::parse($row->DeliveryHdr->tr_date)->format('d-m-Y') : '';
                 })
                 ->sortable(),
             Column::make($this->trans("Due Date"), "tr_date")
@@ -212,11 +227,11 @@ class IndexDataTable extends BaseDataTableComponent
 
             DateFilter::make('Tanggal Nota Awal')
                 ->filter(function (Builder $builder, string $value) {
-                    $builder->whereDate('tr_date', '>=', $value);
+                    $builder->whereDate('order_hdrs.tr_date', '>=', $value);
                 }),
             DateFilter::make('Tanggal Nota Akhir')
                 ->filter(function (Builder $builder, string $value) {
-                    $builder->whereDate('tr_date', '<=', $value);
+                    $builder->whereDate('order_hdrs.tr_date', '<=', $value);
                 }),
             $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
@@ -248,7 +263,8 @@ class IndexDataTable extends BaseDataTableComponent
                         if ($value) { // Hanya terapkan filter jika ada nilai yang dipilih
                             $builder->whereDate('print_date', $value)
                                    ->reorder()
-                                   ->orderBy('billing_hdrs.partner_code', 'asc')
+                                   ->orderBy('order_hdrs.tr_date', 'desc')
+                                   ->orderBy('partners.name', 'asc')
                                    ->orderBy('billing_hdrs.tr_code', 'asc');
                         }
                     }),
