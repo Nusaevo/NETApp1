@@ -70,10 +70,21 @@ class Index extends BaseComponent
                 $statusFilter = "AND oh.status_code = 'X'";
                 break;
             case 'belum_terkirim':
-                $statusFilter = "AND dh.tr_date IS NULL";
+                $statusFilter = "AND NOT EXISTS (
+                    SELECT 1 FROM deliv_packings dp
+                    JOIN deliv_hdrs dh ON dh.id=dp.trhdr_id
+                    WHERE dp.reffdtl_id=od.id AND dh.tr_date IS NOT NULL AND dh.deleted_at IS NULL
+                )";
                 break;
             case 'belum_lunas':
-                $statusFilter = "AND ph.tr_date IS NULL";
+                $statusFilter = "AND NOT EXISTS (
+                    SELECT 1 FROM billing_orders bo
+                    JOIN billing_hdrs bh ON bh.id=bo.trhdr_id
+                    JOIN payment_dtls pd ON pd.billhdr_id=bh.id
+                    JOIN payment_hdrs ph ON ph.id=pd.trhdr_id
+                    WHERE bo.reffdtl_id=od.id AND ph.tr_date IS NOT NULL
+                    AND bh.deleted_at IS NULL AND pd.deleted_at IS NULL
+                )";
                 break;
         }
 
@@ -82,24 +93,36 @@ class Index extends BaseComponent
         $salesTypeFilter = $this->filterSalesType ? "AND oh.sales_type = '{$this->filterSalesType}'" : "";
         $trCodeFilter = $this->filterTrCode ? "AND oh.tr_code LIKE '%" . addslashes($this->filterTrCode) . "%'" : "";
 
-        // Query untuk mendapatkan data sales order
+        // Query untuk mendapatkan data sales order dengan subquery untuk menghindari duplikasi
         $query = "
             SELECT oh.tr_code, oh.tr_date, p.name, p.city,
             od.matl_code, od.matl_descr, od.qty, od.price, od.disc_pct, od.amt, oh.status_code, oh.npwp_name,
-            dh.tr_date as ship_date,
-            bh.tr_date as billing_date,
-            bh.print_date as collect_date,
-            ps.bank_duedt as paid_date
+            (SELECT MIN(dh.tr_date)
+             FROM deliv_packings dp
+             JOIN deliv_hdrs dh ON dh.id=dp.trhdr_id
+             WHERE dp.reffdtl_id=od.id AND dh.deleted_at IS NULL
+            ) as ship_date,
+            (SELECT MIN(bh.tr_date)
+             FROM billing_orders bo
+             JOIN billing_hdrs bh ON bh.id=bo.trhdr_id
+             WHERE bo.reffdtl_id=od.id AND bh.deleted_at IS NULL
+            ) as billing_date,
+            (SELECT MIN(bh.print_date)
+             FROM billing_orders bo
+             JOIN billing_hdrs bh ON bh.id=bo.trhdr_id
+             WHERE bo.reffdtl_id=od.id AND bh.deleted_at IS NULL
+            ) as collect_date,
+            (SELECT MIN(ps.bank_duedt)
+             FROM billing_orders bo
+             JOIN billing_hdrs bh ON bh.id=bo.trhdr_id
+             JOIN payment_dtls pd ON pd.billhdr_id=bh.id
+             JOIN payment_hdrs ph ON ph.id=pd.trhdr_id
+             JOIN payment_srcs ps ON ps.trhdr_id=ph.id
+             WHERE bo.reffdtl_id=od.id AND bh.deleted_at IS NULL AND pd.deleted_at IS NULL
+            ) as paid_date
             FROM order_hdrs oh
             JOIN order_dtls od on od.trhdr_id=oh.id
             JOIN partners p ON p.id=oh.partner_id
-            LEFT OUTER JOIN deliv_packings dp on dp.reffdtl_id=od.id
-            LEFT OUTER JOIN deliv_hdrs dh on dh.id=dp.trhdr_id
-            LEFT OUTER JOIN billing_orders bo on bo.reffdtl_id=od.id
-            LEFT OUTER JOIN billing_hdrs bh on bh.id=bo.trhdr_id
-            LEFT OUTER JOIN payment_dtls pd on pd.billhdr_id=bh.id
-            LEFT OUTER JOIN payment_hdrs ph on ph.id=pd.trhdr_id
-            LEFT OUTER JOIN payment_srcs ps on ps.trhdr_id=ph.id
             WHERE oh.tr_type='SO'
                 AND oh.tr_date BETWEEN '{$startDate}' AND '{$endDate}'
                 {$statusFilter}
