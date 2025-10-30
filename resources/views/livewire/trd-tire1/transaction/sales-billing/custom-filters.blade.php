@@ -1,75 +1,48 @@
 {{-- Custom content setelah filters untuk tanggal tagih --}}
-<div class="d-flex flex-wrap gap-2 mb-3 p-3 bg-light rounded">
-    <div class="flex-grow-1">
+<div class="d-flex flex-wrap gap-2 mb-3 p-3 bg-light rounded align-items-end">
+    <div>
         <label class="form-label fw-bold">Tanggal Tagih</label>
         <input type="date"
                class="form-control"
-               wire:model.live="tanggalTagih"
+               wire:model.defer="tanggalTagih"
                id="tanggalTagihInput"
                value="{{ $this->tanggalTagih ?? now()->format('Y-m-d') }}"
                style="max-width: 200px;">
     </div>
-    <div class="d-flex align-items-end">
+    <div>
+        <button type="button"
+                class="btn btn-primary"
+                wire:click="autoUpdateSelected"
+                wire:loading.attr="disabled"
+                wire:target="autoUpdateSelected">
+            <span wire:loading.remove wire:target="autoUpdateSelected">
+                <i class="fas fa-calendar-check me-1"></i>
+                Update Tanggal Tagih
+            </span>
+            <span wire:loading wire:target="autoUpdateSelected">
+                <i class="fas fa-spinner fa-spin me-1"></i>
+                Processing...
+            </span>
+        </button>
+    </div>
+    <div class="flex-grow-1 d-flex align-items-center">
         <small class="text-muted">
             <i class="fas fa-info-circle me-1"></i>
-            Otomatis update saat pilih data
+            Pilih data lalu klik tombol update
         </small>
     </div>
 </div>
 
 <script>
-    // Auto-update functionality ketika ada perubahan selection dan tanggal
+    // Simple functionality - no auto-update to prevent loading states
     document.addEventListener('livewire:initialized', function() {
-        let debounceTimer;
+        console.log('Tanggal tagih filter initialized - manual submit only');
 
-        function triggerAutoUpdate() {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                // Check apakah ada checkbox yang selected di dalam tbody
-                const selectedCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]:checked');
-
-                if (selectedCheckboxes.length > 0) {
-                    console.log('Auto-updating tanggal tagih for', selectedCheckboxes.length, 'selected items');
-                    @this.call('autoUpdateSelected');
-                }
-            }, 300);
-        }
-
-        // Listen untuk perubahan checkbox selection di dalam tbody
-        document.addEventListener('change', function(e) {
-            if (e.target.type === 'checkbox' &&
-                e.target.closest('tbody') &&
-                e.target.checked) {
-                console.log('Checkbox checked, triggering auto-update...');
-                triggerAutoUpdate();
-            }
-        });
-
-        // Listen untuk bulk selection (select all)
-        document.addEventListener('click', function(e) {
-            if (e.target.type === 'checkbox' &&
-                e.target.closest('thead')) {
-                setTimeout(() => {
-                    triggerAutoUpdate();
-                }, 200);
-            }
-        });
-
-        // Listen untuk perubahan tanggal tagih - auto update selected records
+        // Update Livewire property when date changes
         document.addEventListener('change', function(e) {
             if (e.target.id === 'tanggalTagihInput') {
-                console.log('Tanggal tagih changed, auto-updating selected records...');
-                triggerAutoUpdate();
+                @this.set('tanggalTagih', e.target.value);
             }
-        });
-
-        // Listen untuk Livewire events dan refresh table setelah update
-        document.addEventListener('livewire:updated', function() {
-            // Refresh table setelah update untuk melihat perubahan data
-            setTimeout(() => {
-                console.log('Refreshing table to show updated data...');
-                Livewire.dispatch('refreshDatatable');
-            }, 500);
         });
     });
 </script>

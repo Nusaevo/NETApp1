@@ -17,10 +17,6 @@ class IndexDataTable extends BaseDataTableComponent
     public $bulkSelectedIds = null;
     public $tanggalTagih; // Field untuk tanggal tagih - specific untuk sales billing
 
-    protected $listeners = [
-        'refreshDatatable' => '$refresh', // Listen untuk refresh table
-    ];
-
     public function mount(): void
     {
         $this->setSearchDisabled();
@@ -37,6 +33,28 @@ class IndexDataTable extends BaseDataTableComponent
         $this->initializeTanggalTagih();
     }
 
+    /**
+     * Override selectAll method to only select visible rows on current page
+     */
+    public function selectAll()
+    {
+        try {
+            // Get only current page rows
+            $currentPageRows = $this->getRows();
+            $currentPageIds = $currentPageRows->pluck('id')->toArray();
+
+            // Set selected to only current page IDs
+            $this->setSelected($currentPageIds);
+
+            // Optional: dispatch event for feedback
+            $this->dispatch('info', 'Selected ' . count($currentPageIds) . ' items on current page');
+
+        } catch (\Exception $e) {
+            Log::error('Error in selectAll: ' . $e->getMessage());
+            $this->dispatch('error', 'Failed to select all items');
+        }
+    }
+
     public function configure(): void
     {
         // Call parent configure first
@@ -44,12 +62,6 @@ class IndexDataTable extends BaseDataTableComponent
 
         // Enable tanggal tagih functionality - specific untuk sales billing
         $this->enableTanggalTagihArea('livewire.trd-tire1.transaction.sales-billing.custom-filters');
-
-        // Specific configurations for this datatable
-        $this->setDefaultSort('tgl_transaksi', 'desc')
-            ->setPerPageAccepted([10, 25, 50, 100])
-            ->setPerPage(10)
-            ->setLoadingPlaceholderEnabled();
     }
 
     /**
@@ -268,46 +280,63 @@ class IndexDataTable extends BaseDataTableComponent
      */
     public function autoUpdateSelected()
     {
+        // Early validation - check if any data selected
         $selectedIds = $this->getSelected();
 
-        if (count($selectedIds) > 0 && !empty($this->tanggalTagih)) {
-            try {
-                DB::beginTransaction();
+        if (empty($selectedIds)) {
+            $this->dispatch('warning', 'Pilih data terlebih dahulu untuk diupdate');
+            return;
+        }
 
-                // Simpan print_date lama untuk audit log
-                $oldPrintDates = BillingHdr::whereIn('id', $selectedIds)
-                    ->pluck('print_date', 'id')
-                    ->toArray();
+        if (empty($this->tanggalTagih)) {
+            $this->dispatch('warning', 'Tanggal tagih tidak boleh kosong');
+            return;
+        }
 
-                // Update print_date di billing_hdrs untuk selected IDs
-                $updated = BillingHdr::whereIn('id', $selectedIds)
-                    ->update([
-                        'print_date' => $this->tanggalTagih,
-                        'updated_at' => now()
-                    ]);
+        try {
+            DB::beginTransaction();
 
-                // Create audit logs menggunakan method yang sama seperti di Index.php
-                try {
-                    AuditLogService::createPrintDateAuditLogs(
-                        $selectedIds,
-                        $this->tanggalTagih,
-                        $oldPrintDates[$selectedIds[0]] ?? null
-                    );
-                } catch (\Exception $e) {
-                    Log::error('Failed to create audit logs: ' . $e->getMessage());
-                }
+            // Directly validate selected IDs instead of getting all rows
+            // This is more efficient and prevents hang
+            $validRecords = BillingHdr::whereIn('id', $selectedIds)->get();
 
-                DB::commit();
-
-                $this->dispatch('success', "Berhasil update tanggal tagih untuk {$updated} record(s)");
-
-            } catch (\Exception $e) {
+            if ($validRecords->isEmpty()) {
+                $this->dispatch('warning', 'Data yang dipilih tidak valid');
                 DB::rollback();
-                Log::error('Error auto-update tanggal tagih: ' . $e->getMessage());
-                $this->dispatch('error', 'Gagal update tanggal tagih: ' . $e->getMessage());
+                return;
             }
-        } else {
-            $this->dispatch('warning', 'Pilih data dan pastikan tanggal tagih tidak kosong');
+
+            $validSelectedIds = $validRecords->pluck('id')->toArray();
+
+            // Simpan print_date lama untuk audit log
+            $oldPrintDates = $validRecords->pluck('print_date', 'id')->toArray();
+
+            // Update print_date di billing_hdrs untuk valid selected IDs saja
+            $updated = BillingHdr::whereIn('id', $validSelectedIds)
+                ->update([
+                    'print_date' => $this->tanggalTagih,
+                    'updated_at' => now()
+                ]);
+
+            // Create audit logs menggunakan method yang sama seperti di Index.php
+            try {
+                AuditLogService::createPrintDateAuditLogs(
+                    $validSelectedIds,
+                    $this->tanggalTagih,
+                    $oldPrintDates[$validSelectedIds[0]] ?? null
+                );
+            } catch (\Exception $e) {
+                Log::error('Failed to create audit logs: ' . $e->getMessage());
+            }
+
+            DB::commit();
+
+            $this->dispatch('success', "Berhasil update tanggal tagih untuk {$updated} record(s)");
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error auto-update tanggal tagih: ' . $e->getMessage());
+            $this->dispatch('error', 'Gagal update tanggal tagih: ' . $e->getMessage());
         }
     }
 }
