@@ -109,6 +109,19 @@ class Index extends BaseComponent
                 ];
             })
             ->toArray();
+        // Validasi: pastikan semua baris memiliki customer (partner) yang sama
+        $partnerIds = OrderDtl::whereIn('order_dtls.id', $orderIds)
+            ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
+            ->pluck('order_hdrs.partner_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($partnerIds->count() > 1) {
+            $this->dispatch('error', 'Customer berbeda. Pilih data dengan customer yang sama.');
+            // Jangan buka modal jika customer tidak sama
+            return;
+        }
 
         $this->dispatch('open-modal-proses-gt');
     }
@@ -139,6 +152,21 @@ class Index extends BaseComponent
             'gt_partner_code' => 'nullable', // Allow null values
         ]);
 
+        // Validasi ulang sebelum proses: semua pilihan harus dari customer yang sama
+        if (!empty($this->selectedOrderIds)) {
+            $partnerIds = OrderDtl::whereIn('order_dtls.id', $this->selectedOrderIds)
+                ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
+                ->pluck('order_hdrs.partner_id')
+                ->filter()
+                ->unique()
+                ->values();
+
+            if ($partnerIds->count() > 1) {
+                $this->dispatch('error', 'Customer berbeda. Pilih data dengan customer yang sama.');
+                return;
+            }
+        }
+
         DB::beginTransaction();
 
         try {
@@ -164,7 +192,7 @@ class Index extends BaseComponent
             DB::commit();
             $this->dispatch('close-modal-proses-gt');
             $this->dispatch('success', ['Proses GT berhasil disimpan']);
-            $this->dispatch('refreshTable');
+            // $this->dispatch('refreshTable');
             $this->dispatch('clearSelections'); // Clear selection after successful process
         } catch (\Exception $e) {
             DB::rollBack();

@@ -275,6 +275,12 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function setNotaGT()
     {
+        // Validasi: semua pilihan harus dari customer yang sama
+        if (!$this->validateSameCustomerForSelection()) {
+            $this->dispatch('error', 'Customer berbeda. Pilih data dengan customer yang sama.');
+            return;
+        }
+
         // Get the current year and month
         $year = now()->format('y'); // Two-digit year
         $month = now()->format('m'); // Two-digit month
@@ -304,6 +310,12 @@ class IndexDataTable extends BaseDataTableComponent
     public function prosesNotadanPoint()
     {
         if (count($this->getSelected()) > 0) {
+            // Validasi: semua pilihan harus dari customer yang sama
+            if (!$this->validateSameCustomerForSelection()) {
+                $this->dispatch('error', 'Customer berbeda. Pilih data dengan customer yang sama.');
+                return;
+            }
+
             $selectedItems = OrderDtl::whereIn('id', $this->getSelected())
                 ->with('OrderHdr')
                 ->get()
@@ -357,6 +369,24 @@ class IndexDataTable extends BaseDataTableComponent
     public function clearSelections()
     {
         $this->clearSelected();
+    }
+
+    private function validateSameCustomerForSelection(): bool
+    {
+        $selectedIds = $this->getSelected();
+        if (empty($selectedIds)) {
+            return false;
+        }
+
+        $partnerIds = OrderDtl::whereIn('id', $selectedIds)
+            ->with('OrderHdr')
+            ->get()
+            ->pluck('OrderHdr.partner_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        return $partnerIds->count() <= 1;
     }
 
     // protected function isFirstFilterApplied(Builder $query): bool
