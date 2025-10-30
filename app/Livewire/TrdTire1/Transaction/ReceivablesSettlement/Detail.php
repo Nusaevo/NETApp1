@@ -959,7 +959,7 @@ class Detail extends BaseComponent
                                    AND bh.deleted_at IS NULL
                                    AND (bh.amt + COALESCE(bh.amt_shipcost, 0) - COALESCE(bh.amt_reff, 0)) > 0
                                    {$excludeCondition}
-                           ) sub";
+                           ) sub ORDER BY tr_code,outstanding_amt,due_date DESC";
     }
 
     public function toggleLunas($key)
