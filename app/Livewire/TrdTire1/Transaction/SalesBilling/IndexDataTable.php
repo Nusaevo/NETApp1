@@ -252,7 +252,7 @@ class IndexDataTable extends BaseDataTableComponent
                 DateFilter::make('Tanggal Tagih')
                     ->filter(function (Builder $builder, string $value) {
                         if ($value) { // Hanya terapkan filter jika ada nilai yang dipilih
-                            $builder->whereDate('print_date', $value)
+                            $builder->whereDate('billing_hdrs.print_date', $value)
                                    ->reorder()
                                    ->orderBy('order_hdrs.tr_date', 'desc')
                                    ->orderByRaw("REPLACE(partners.name, ' ', '') asc")
