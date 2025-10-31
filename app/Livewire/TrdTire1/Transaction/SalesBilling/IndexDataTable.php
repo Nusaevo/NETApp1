@@ -319,12 +319,21 @@ class IndexDataTable extends BaseDataTableComponent
             // Simpan print_date lama untuk audit log
             $oldPrintDates = $validRecords->pluck('print_date', 'id')->toArray();
 
-            // Update print_date di billing_hdrs untuk valid selected IDs saja
-            $updated = BillingHdr::whereIn('id', $validSelectedIds)
-                ->update([
-                    'print_date' => $this->tanggalTagih,
-                    'updated_at' => now()
-                ]);
+            // Update print_date di billing_hdrs menggunakan save() untuk setiap record
+            $updated = 0;
+            foreach ($validRecords as $record) {
+                $record->print_date = $this->tanggalTagih;
+                $record->updated_at = now();
+                if ($record->save()) {
+                    $updated++;
+
+                    // Update OrderHdr juga untuk tracking updated_at
+                    if ($record->OrderHdr) {
+                        $record->OrderHdr->updated_at = now();
+                        $record->OrderHdr->save();
+                    }
+                }
+            }
 
             // Create audit logs menggunakan method yang sama seperti di Index.php
             try {
