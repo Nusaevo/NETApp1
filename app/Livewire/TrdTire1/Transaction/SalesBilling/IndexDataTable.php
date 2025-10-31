@@ -7,13 +7,14 @@ use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\S
 use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderDtl, OrderHdr, BillingHdr, BillingDeliv};
 use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\TrdTire1\AuditLogService;
 
 class IndexDataTable extends BaseDataTableComponent
 {
-    protected $model = DelivHdr::class;
+    protected $model = BillingHdr::class;
     public $bulkSelectedIds = null;
     public $tanggalTagih; // Field untuk tanggal tagih - specific untuk sales billing
 
@@ -30,7 +31,12 @@ class IndexDataTable extends BaseDataTableComponent
         // Initialize tanggal tagih untuk sales billing
         $this->initializeTanggalTagih();
 
+    // Default sorting is handled at the query builder level (see builder()) so
+    // do not set a UI-level default sort here which would disable the query default.
+    // $this->setDefaultSort('tr_code', 'asc');
+
     }
+
 
     /**
      * Override selectAll method to only select visible rows on current page
@@ -58,6 +64,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         // Call parent configure first
         parent::configure();
+        $this->setSingleSortingStatus(false);
 
         // Enable tanggal tagih functionality - specific untuk sales billing
         $this->enableTanggalTagihArea('livewire.trd-tire1.transaction.sales-billing.custom-filters');
@@ -85,7 +92,7 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return BillingHdr::with([
+        $query = BillingHdr::with([
                 'Partner',
                 'OrderHdr' => function($query) {
                     $query->where('tr_type', 'SO');
@@ -101,10 +108,19 @@ class IndexDataTable extends BaseDataTableComponent
             ->leftJoin('partners', 'billing_hdrs.partner_id', '=', 'partners.id')
             ->select('billing_hdrs.*')
             ->where('billing_hdrs.tr_type', 'ARB')
-            ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN, Status::PAID, Status::SHIP, Status::BILL])
-            // ->orderBy('order_hdrs.tr_date', 'desc')
-            ->orderByRaw("REPLACE(partners.name, ' ', '') asc")
-            ->orderBy('billing_hdrs.tr_code', 'asc');
+            ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN, Status::PAID, Status::SHIP, Status::BILL]);
+
+        // Apply default sorting when no user sorting applied:
+        // 1) Tgl. Nota (order_hdrs.tr_date) desc
+        // 2) Partner name (ignoring spaces) asc
+        // 3) billing_hdrs.tr_code asc
+        if (empty($this->sorts)) {
+            $query->orderBy('order_hdrs.tr_date', 'desc')
+                  ->orderByRaw("REPLACE(partners.name, ' ', '') asc")
+                  ->orderBy('billing_hdrs.tr_code', 'asc');
+        }
+
+        return $query;
     }
 
     public function columns(): array
@@ -121,7 +137,8 @@ class IndexDataTable extends BaseDataTableComponent
                         return '';
                     }
                 })
-                ->html(),
+                ->html()
+                ->sortable(),
             // Column::make($this->trans("Tgl. Nota"), "tr_date")
             //     ->format(function ($value) {
             //         return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '';
@@ -133,13 +150,15 @@ class IndexDataTable extends BaseDataTableComponent
                     // Gunakan relasi OrderHdr yang sudah ada
                     return $row->OrderHdr && $row->OrderHdr->tr_date ?
                         \Carbon\Carbon::parse($row->OrderHdr->tr_date)->format('d-m-Y') : '';
-                }),
+                })
+                ->sortable(),
             Column::make($this->trans("Tgl. Kirim"), "DeliveryHdr.tr_date")
                 ->format(function ($value, $row) {
                     // Gunakan relasi DeliveryHdr yang akan dibuat
                     return $row->DeliveryHdr && $row->DeliveryHdr->tr_date ?
                         \Carbon\Carbon::parse($row->DeliveryHdr->tr_date)->format('d-m-Y') : '';
-                }),
+                })
+                ->sortable(),
             Column::make($this->trans("Due Date"), "tr_date")
                 ->label(function ($row) {
                     // Gunakan tr_date dan payment_due_days dari relasi OrderHdr
@@ -154,7 +173,9 @@ class IndexDataTable extends BaseDataTableComponent
                     return '-';
                 })
                 ->sortable(),
-            Column::make($this->trans("Customer"), "partner_id")
+            // Use relation field for customer so SQL selects a real column.
+            // Default ordering that ignores spaces is applied in builder() via orderByRaw(REPLACE(partners.name, ' ', '')) when no user sort is set.
+            Column::make($this->trans("Customer"), "Partner.name")
                 ->format(function ($value, $row) {
                     if ($row->Partner && $row->Partner->name) {
                         return '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
@@ -165,13 +186,15 @@ class IndexDataTable extends BaseDataTableComponent
                         return '';
                     }
                 })
-                ->html(),
+                ->html()
+                ->sortable(),
 
             Column::make($this->trans('Total Harga'), 'total_amt')
                 ->label(function ($row) {
                     // Ambil total_amt dari relasi OrderHdr
                     return $row->OrderHdr ? rupiah($row->OrderHdr->amt, false) : '-';
-                }),
+                })
+                ->sortable(),
 
             Column::make($this->trans("tr_type"), "tr_type")
                 ->hideIf(true),
@@ -181,7 +204,8 @@ class IndexDataTable extends BaseDataTableComponent
                 ->format(function ($value) {
                     return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '';
                 })
-                ->searchable(),
+                ->searchable()
+                ->sortable(),
             // Column::make($this->trans("Status"), "status_code")
             //     ->format(function ($value, $row) {
             //         $statusMap = [
@@ -254,7 +278,6 @@ class IndexDataTable extends BaseDataTableComponent
                         if ($value) { // Hanya terapkan filter jika ada nilai yang dipilih
                             $builder->whereDate('billing_hdrs.print_date', $value)
                                    ->reorder()
-                                   ->orderBy('order_hdrs.tr_date', 'desc')
                                    ->orderByRaw("REPLACE(partners.name, ' ', '') asc")
                                    ->orderBy('billing_hdrs.tr_code', 'asc');
                         }
@@ -328,10 +351,10 @@ class IndexDataTable extends BaseDataTableComponent
                     $updated++;
 
                     // Update OrderHdr juga untuk tracking updated_at
-                    if ($record->OrderHdr) {
-                        $record->OrderHdr->updated_at = now();
-                        $record->OrderHdr->save();
-                    }
+                    // if ($record->OrderHdr) {
+                    //     $record->OrderHdr->updated_at = now();
+                    //     $record->OrderHdr->save();
+                    // }
                 }
             }
 
