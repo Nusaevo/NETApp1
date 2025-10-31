@@ -225,7 +225,7 @@ class IndexDataTable extends BaseDataTableComponent
                     $builder->whereDate('order_hdrs.tr_date', '<=', $value);
                 }),
             $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
-                $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
+                $builder->where(DB::raw("UPPER(billing_hdrs.tr_code)"), 'like', '%' . strtoupper($value) . '%');
             }),
             $this->createTextFilter($this->trans("Customer"), 'name', 'Cari Custommer', function (Builder $builder, string $value) {
                 $builder->whereHas('Partner', function ($query) use ($value) {
