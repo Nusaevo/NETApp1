@@ -172,6 +172,11 @@ class Detail extends BaseComponent
             $this->orderService = app(OrderService::class);
         }
 
+        // Validasi input_details tidak boleh kosong
+        if (empty($this->input_details)) {
+            throw new Exception('Tidak dapat menyimpan karena Item kosong.');
+        }
+
         // Validasi duplikasi tr_code
         $this->validateTrCodeDuplicate();
 
