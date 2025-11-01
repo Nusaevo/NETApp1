@@ -468,12 +468,16 @@ class MasterService extends BaseService
         $currentYear = $date->format('y');
         $currentMonth = $date->month;
         $currentMonthLetter = chr(64 + $currentMonth);
+        $fullYear = $date->format('Y');
 
         $taxInvoiceFlag = $tax_doc_flag ? 1 : 0;
 
+        // Filter berdasarkan tahun dan bulan yang sama dengan tanggal yang dipilih
         $lastOrder = OrderHdr::where('tr_type', 'SO')
             ->where('sales_type', $sales_type)
             ->where('tax_doc_flag', $taxInvoiceFlag)
+            ->whereYear('tr_date', $fullYear)
+            ->whereMonth('tr_date', $currentMonth)
             ->orderBy('id', 'desc')
             ->first();
 
@@ -497,6 +501,8 @@ class MasterService extends BaseService
                 $lastOrderMotor = OrderHdr::where('tr_type', 'SO')
                     ->where('sales_type', $sales_type)
                     ->where('tax_doc_flag', $taxInvoiceFlag)
+                    ->whereYear('tr_date', $fullYear)
+                    ->whereMonth('tr_date', $currentMonth)
                     ->where('tr_code', 'like', $currentMonthLetter . '%')
                     ->orderBy('tr_code', 'desc')
                     ->first();
