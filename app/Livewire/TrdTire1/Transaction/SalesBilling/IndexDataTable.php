@@ -31,10 +31,9 @@ class IndexDataTable extends BaseDataTableComponent
         // Initialize tanggal tagih untuk sales billing
         $this->initializeTanggalTagih();
 
-    // Default sorting is handled at the query builder level (see builder()) so
-    // do not set a UI-level default sort here which would disable the query default.
-    // $this->setDefaultSort('tr_code', 'asc');
-
+        // Clear any existing sorts and set default
+        $this->clearSorts();
+        $this->setDefaultSort('Partner.name', 'asc');
     }
 
 
@@ -64,13 +63,19 @@ class IndexDataTable extends BaseDataTableComponent
     {
         // Call parent configure first
         parent::configure();
+
+        // Enable multiple column sorting
         $this->setSingleSortingStatus(false);
+
+        // Enable sorting functionality
+        $this->setSortingStatus(true);
+
+        // Hide sorting pills to avoid confusion
+        $this->setSortingPillsStatus(false);
 
         // Enable tanggal tagih functionality - specific untuk sales billing
         $this->enableTanggalTagihArea('livewire.trd-tire1.transaction.sales-billing.custom-filters');
-    }
-
-    /**
+    }    /**
      * Initialize tanggal tagih with current date - specific untuk sales billing
      */
     private function initializeTanggalTagih(): void
@@ -110,29 +115,19 @@ class IndexDataTable extends BaseDataTableComponent
             ->where('billing_hdrs.tr_type', 'ARB')
             ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN, Status::PAID, Status::SHIP, Status::BILL]);
 
-        // Apply default sorting when no user sorting applied:
-        // 1) Tgl. Nota (order_hdrs.tr_date) desc
-        // 2) Partner name (ignoring spaces) asc
-        // 3) billing_hdrs.tr_code asc
-        if (empty($this->sorts)) {
-            $query->orderBy('order_hdrs.tr_date', 'desc')
-                  ->orderByRaw("REPLACE(partners.name, ' ', '') asc")
-                  ->orderBy('billing_hdrs.tr_code', 'asc');
-        }
-
         return $query;
     }
 
     public function columns(): array
     {
         return [
-            Column::make($this->trans("Nomor Nota"), "tr_code")
+            Column::make($this->trans("Nomor Nota"), "DeliveryHdr.tr_code")
                 ->format(function ($value, $row) {
-                    if ($row->partner_id && $row->OrderHdr) {
+                    if ($row->partner_id && $row->OrderHdr && $row->DeliveryHdr) {
                         return '<a href="' . route($this->appCode . '.Transaction.SalesOrder.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->OrderHdr->id)
-                        ]) . '">' . $row->tr_code . '</a>';
+                        ]) . '">' . $row->DeliveryHdr->tr_code . '</a>';
                     } else {
                         return '';
                     }
