@@ -398,7 +398,7 @@ class MasterService extends BaseService
         } else {
             switch ($trType) {
                 case 'PO':
-                    $code = '   ';
+                    $code = 'PURCHORDER_LASTID';
                     $format = 'PO%06d';
                     break;
                 case 'TW':
