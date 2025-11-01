@@ -57,6 +57,8 @@ class BillingHdr extends BaseModel
         'partnerbal_id' => 'integer',
     ];
 
+    // partner_name_without_space accessor removed to avoid SQL selection issues
+
     #region Relations
     public function Partner()
     {
