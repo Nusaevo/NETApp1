@@ -427,11 +427,6 @@ class Detail extends BaseComponent
 
         $this->validate();
 
-        // Validasi input_details tidak boleh kosong
-        if (empty($this->input_details)) {
-            throw new Exception('Tidak dapat menyimpan karena Item kosong.');
-        }
-
         // Validasi duplikasi tr_code
         $this->validateTrCodeDuplicate();
 
