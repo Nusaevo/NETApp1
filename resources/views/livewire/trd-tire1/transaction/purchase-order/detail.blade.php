@@ -46,7 +46,7 @@
                                         query="SELECT id, code, name, address, city FROM partners WHERE deleted_at IS NULL AND grp = 'V'"
                                         optionValue="id" optionLabel="code,name,address,city"
                                         placeHolder="Type to search suppliers..." :selectedValue="$inputs['partner_id']" required="true"
-                                        :action="$actionValue" :enabled="$isPanelEnabled" type="int" />
+                                        :action="$actionValue" enabled="true" type="int" />
 
                                     <x-ui-dropdown-select label="{{ $this->trans('PPN') }}" model="inputs.tax_code"
                                         :options="$taxCode" required="true" :action="$actionValue"
