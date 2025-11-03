@@ -58,8 +58,15 @@ class Partner extends BaseModel
         'amt_limit' => 'float',
     ];
 
-    protected $appends = ['name_without_space'];
+    // protected $appends = ['name_without_space'];
 
+    #endregion
+
+    #region Attributes
+    // public function getNameWithoutSpaceAttribute()
+    // {
+    //     return str_replace(' ', '', $this->name);
+    // }
     #endregion
 
     #region Relations

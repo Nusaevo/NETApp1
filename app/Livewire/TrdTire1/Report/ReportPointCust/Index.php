@@ -107,22 +107,38 @@ class Index extends BaseComponent
                     CASE
                         WHEN r.brand = 'GT RADIAL' THEN
                             CASE WHEN (p.partner_chars->>'GT')::bool
-                                THEN p.name || ' - ' || p.city
+                                THEN p.name ||
+                                     CASE WHEN NULLIF(TRIM(p.address), '') IS NOT NULL
+                                          THEN ' - ' || p.address || ' - ' || p.city
+                                          ELSE ' - ' || p.city
+                                     END
                                 ELSE '_CUSTOMER GTR'
                             END
                         WHEN r.brand = 'GAJAH TUNGGAL' THEN
                             CASE WHEN (p.partner_chars->>'GT')::bool
-                                THEN p.name || ' - ' || p.city
+                                THEN p.name ||
+                                     CASE WHEN NULLIF(TRIM(p.address), '') IS NOT NULL
+                                          THEN ' - ' || p.address || ' - ' || p.city
+                                          ELSE ' - ' || p.city
+                                     END
                                 ELSE '_CUSTOMER GTL'
                             END
                         WHEN r.brand = 'ZENEOS' THEN
                             CASE WHEN (p.partner_chars->>'ZN')::bool
-                                THEN p.name || ' - ' || p.city
+                                THEN p.name ||
+                                     CASE WHEN NULLIF(TRIM(p.address), '') IS NOT NULL
+                                          THEN ' - ' || p.address || ' - ' || p.city
+                                          ELSE ' - ' || p.city
+                                     END
                                 ELSE '_CUSTOMER ZN'
                             END
                         WHEN r.brand = 'IRC' THEN
                             CASE WHEN (p.partner_chars->>'IRC')::bool
-                                THEN p.name || ' - ' || p.city
+                                THEN p.name ||
+                                     CASE WHEN NULLIF(TRIM(p.address), '') IS NOT NULL
+                                          THEN ' - ' || p.address || ' - ' || p.city
+                                          ELSE ' - ' || p.city
+                                     END
                                 ELSE '_CUSTOMER IRC'
                             END
                         ELSE ''
@@ -155,11 +171,50 @@ class Index extends BaseComponent
             ) AS ct(customer text, $cols)
         ";
 
-        // 3. Execute crosstab query (no bindings)
+        // 3. Get sales_rewards mapping (grp -> qty, reward) untuk menghitung ban_point dan sisa
+        // Ambil qty dan reward per grup (gunakan MAX untuk memastikan konsistensi)
+        $srMapping = DB::connection(Session::get('app_code'))
+            ->table('sales_rewards')
+            ->where('code', $code)
+            ->select('grp', DB::raw('MAX(qty) as qty'), DB::raw('MAX(reward) as reward'))
+            ->groupBy('grp')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->grp => ['qty' => (float)$item->qty, 'reward' => (float)$item->reward]];
+            })
+            ->toArray();
+
+        // 4. Execute crosstab query (no bindings)
         $rows = DB::connection(Session::get('app_code'))->select($crosstab);
 
+        // 5. Process results: tambahkan ban_point dan sisa untuk setiap grup
+        foreach ($rows as $row) {
+            $rowArray = (array)$row;
+            foreach ($rowArray as $colName => $val) {
+                if ($colName !== 'customer' && !empty($val)) {
+                    $parts = explode('|', $val);
+                    if (isset($parts[0]) && isset($parts[1])) {
+                        $total_ban = (int)$parts[0]; // qty
+                        $point = (int)$parts[1];
 
-        // 4. Assign results
+                        // Ambil sr.qty dan sr.reward untuk grup ini
+                        $srQty = isset($srMapping[$colName]['qty']) ? $srMapping[$colName]['qty'] : 1;
+                        $srReward = isset($srMapping[$colName]['reward']) ? $srMapping[$colName]['reward'] : 1;
+
+                        // Hitung ban_point dan sisa
+                        $ban_point = $srQty > 0 && $srReward > 0
+                            ? (int)($point / $srReward * $srQty)
+                            : 0;
+                        $sisa = $total_ban - $ban_point;
+
+                        // Update format: qty|point|sisa
+                        $row->$colName = $total_ban . '|' . $point . '|' . $sisa;
+                    }
+                }
+            }
+        }
+
+        // 6. Assign results
         $this->results = $rows;
         // dd($this->results);
         // dd($this->results);
@@ -203,14 +258,16 @@ class Index extends BaseComponent
             }
             $groupColumns = array_values(array_filter($columns, fn($c) => $c !== 'customer'));
 
-            // Header: Customer, untuk setiap grup 2 kolom (Point, Qty), lalu Total Point dan Total Qty
+            // Header: Customer, untuk setiap grup 3 kolom (Qty, Point, Sisa), lalu Total Qty, Total Point, dan Total Sisa
             $headers = ['Customer'];
             foreach ($groupColumns as $grpCol) {
-                $headers[] = $grpCol . ' Point';
                 $headers[] = $grpCol . ' Qty';
+                $headers[] = $grpCol . ' Point';
+                $headers[] = $grpCol . ' Sisa';
             }
-            $headers[] = 'Total Point';
             $headers[] = 'Total Qty';
+            $headers[] = 'Total Point';
+            $headers[] = 'Total Sisa';
 
             // Data rows
             $excelData = [];
@@ -221,20 +278,25 @@ class Index extends BaseComponent
 
                 $rowTotalQty = 0;
                 $rowTotalPoint = 0;
+                $rowTotalSisa = 0;
                 foreach ($groupColumns as $grpCol) {
                     $val = $row->$grpCol ?? '';
                     $parts = explode('|', $val);
                     $qty = isset($parts[0]) ? (int)$parts[0] : 0;   // qty/ban
                     $point = isset($parts[1]) ? (int)$parts[1] : 0; // point
+                    $sisa = isset($parts[2]) ? (int)$parts[2] : 0;  // sisa
                     $rowTotalQty += $qty;
                     $rowTotalPoint += $point;
-                    // pisahkan ke 2 kolom: Point, Qty
-                    $dataRow[] = $point;
+                    $rowTotalSisa += $sisa;
+                    // pisahkan ke 3 kolom: Qty, Point, Sisa
                     $dataRow[] = $qty;
+                    $dataRow[] = $point;
+                    $dataRow[] = $sisa;
                 }
-                // total dipisah: Total Point, Total Qty
-                $dataRow[] = $rowTotalPoint ?: 0;
+                // total dipisah: Total Qty, Total Point, Total Sisa
                 $dataRow[] = $rowTotalQty ?: 0;
+                $dataRow[] = $rowTotalPoint ?: 0;
+                $dataRow[] = $rowTotalSisa ?: 0;
                 $excelData[] = $dataRow;
             }
 
