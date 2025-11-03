@@ -128,7 +128,7 @@ class Index extends BaseComponent
         }
 
         // Always order by material code, customer, and transaction code
-        $sql .= " ORDER BY od.matl_code, p.name, oh.tr_code";
+        $sql .= " ORDER BY oh.tr_date, oh.tr_code";
 
         $this->results = DB::connection(Session::get('app_code'))->select($sql);
     }
