@@ -41,11 +41,13 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         $query = OrderDtl::query()
-            ->with(['OrderHdr', 'OrderHdr.Partner', 'SalesReward', 'Material'])
+			->with(['OrderHdr', 'OrderHdr.Partner', 'SalesReward', 'Material'])
             ->where('order_dtls.tr_type', 'SO')
-            ->select('order_dtls.*')
+			->select('order_dtls.*')
             ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
-            ->join('partners', 'order_hdrs.partner_id', '=', 'partners.id')
+			->join('partners', 'order_hdrs.partner_id', '=', 'partners.id')
+			->leftJoin('partners as partners_point', 'partners_point.code', '=', 'order_dtls.gt_partner_code')
+			->addSelect(DB::raw('partners_point.name as gt_partner_name'))
             ->leftJoin('sales_rewards', function($join) {
                 $join->on('order_dtls.matl_id', '=', 'sales_rewards.matl_id')
                      ->whereNull('sales_rewards.deleted_at')
@@ -124,8 +126,8 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make('No Nota GT', 'gt_tr_code')
                 ->label(fn($row) => ($row->gt_tr_code))
                 ->sortable(),
-            Column::make('Custommer Point', 'gt_partner_code')
-                ->label(fn($row) => $row->gt_partner_code ? $row->gt_partner_code : '')
+			Column::make('Custommer Point', 'gt_partner_code')
+				->label(fn($row) => $row->gt_partner_code ? ($row->gt_partner_name ?? $row->gt_partner_code) : '')
                 ->sortable(),
             Column::make('Tgl Proses GT', 'gt_process_date')
                 ->sortable(),

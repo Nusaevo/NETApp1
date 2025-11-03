@@ -20,7 +20,13 @@
                             required="true" enabled="true" clickEvent="setNotaGT" buttonName="Set Nota GT" />
                     </div>
                     <div class="col">
-                        <x-ui-dropdown-select label="Customer Point" model="gt_partner_code" :options="$partners"
+                        <x-ui-dropdown-search label="Customer Point" model="gt_partner_code"
+                            optionValue="code"
+                            optionLabel="name"
+                            connection="Default"
+                            searchOnSpace="true"
+                            placeHolder="Ketik untuk cari customer..."
+                            query="SELECT code, CONCAT(code, ' - ', name, ' - ', COALESCE(city, '')) AS name FROM partners WHERE deleted_at IS NULL"
                             required="true" />
                     </div>
                     <div class="col-auto">

@@ -181,7 +181,7 @@ class Index extends BaseComponent
             // Prepare update data without gt_process_date
             $updateData = [
                 'gt_tr_code' => $this->gt_tr_code ?: '', // Set null if empty
-                'gt_partner_code' => $partner ? $partner->name : '', // Set null if no partner
+                'gt_partner_code' => $partner ? $partner->code : '', // Set null if no partner
                 'gt_partner_id' => $partner ? $partner->id : 0, // Set null if no partner
             ];
 
