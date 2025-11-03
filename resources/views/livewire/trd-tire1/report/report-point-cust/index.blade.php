@@ -67,26 +67,36 @@
                             width: 100% !important;
                         }
                         #print th, #print td {
-                            padding: 4px 6px !important;
-                            font-size:17px !important;
+                            padding: 3px 4px !important;
+                            font-size:16px !important;
                             border: 1px solid #000 !important;
                             vertical-align: middle !important;
+                            line-height: 1.2 !important;
                         }
                         #print th {
                             background: #f9f9f9 !important;
                             font-weight: bold !important;
                             text-align: center !important;
+                            font-size:14px !important;
                         }
                         #print h3, #print h4 {
-                            margin: 10px 0 !important;
+                            margin: 8px 0 !important;
                             font-weight: bold !important;
+                            font-size:18px !important;
+                        }
+                        #print h3 {
+                            font-size:20px !important;
+                        }
+                        #print h4 {
+                            font-size:18px !important;
                         }
                         #print p {
-                            margin: 5px 0 !important;
+                            margin: 4px 0 !important;
+                            font-size:14px !important;
                         }
                         /* Hilangkan margin/padding default print */
                         @page {
-                            margin: 1cm 0.5cm 1cm 0.5cm;
+                            margin: 1cm 0.3cm 1cm 0.3cm;
                             size: A4 landscape;
                         }
                         /* Sembunyikan elemen yang tidak perlu di print */
@@ -96,7 +106,27 @@
                         /* Pastikan konten tidak terpotong */
                         #print {
                             font-family: 'Calibri', Arial, sans-serif !important;
-                            font-size:15px !important;
+                            font-size:12px !important;
+                        }
+                        /* Override font-size inline pada tabel saat print */
+                        #print table th,
+                        #print table td {
+                            font-size:16px !important;
+                            padding: 2px 3px !important;
+                        }
+                        /* Header tabel diperbesar sesuai style utama */
+                        #print table th {
+                            font-size:14px !important;
+                        }
+                        /* Perbesar font untuk header grup yang vertical */
+                        #print table th[style*="writing-mode"] {
+                            font-size:13px !important;
+                            min-width:35px !important;
+                            padding: 2px 3px !important;
+                        }
+                        /* Kompaktkan spacing untuk baris data */
+                        #print table td br {
+                            line-height: 1.1 !important;
                         }
                     }
                 </style>
@@ -106,7 +136,7 @@
                             <div style="max-width:2480px; margin:auto;">
                                 <h4>TOKO BAN CAHAYA TERANG - SURABAYA</h4>
                                 <h3 style="text-decoration:underline; text-align:left;">
-                                    DATA PENJUALAN GT RADIAL per Customer
+                                    DATA PENJUALAN per Customer
                                 </h3>
                                 <p style="text-align:left; margin-bottom:0;">
                                     <strong>Nama Program : {{ $category }}</strong>
@@ -173,22 +203,31 @@
                                     </thead>
                                     <tbody>
                                         @php
-                                            // Hitung total per kolom untuk footer (hanya point)
+                                            // Hitung total per kolom untuk footer (point dan sisa)
                                             $colTotals = [];
+                                            $colTotalsSisa = [];
                                             $grandTotal = 0;
+                                            $grandTotalSisa = 0;
                                             foreach ($groupColumns as $col) {
                                                 $colTotals[$col] = array_sum(array_map(function($row) use ($col) {
                                                     $val = $row->$col ?? '';
                                                     $parts = explode('|', $val);
                                                     return isset($parts[1]) ? (int)$parts[1] : 0;
                                                 }, $results));
+                                                $colTotalsSisa[$col] = array_sum(array_map(function($row) use ($col) {
+                                                    $val = $row->$col ?? '';
+                                                    $parts = explode('|', $val);
+                                                    return isset($parts[2]) ? (int)$parts[2] : 0;
+                                                }, $results));
                                                 $grandTotal += $colTotals[$col];
+                                                $grandTotalSisa += $colTotalsSisa[$col];
                                             }
                                         @endphp
                                         @foreach ($results as $row)
                                             @php
                                                 $rowTotalQty = 0;
                                                 $rowTotalPoint = 0;
+                                                $rowTotalSisa = 0;
                                                 $customer = $row->customer ?? '';
                                             @endphp
                                             <tr>
@@ -199,17 +238,21 @@
                                                         $parts = explode('|', $val);
                                                         $qty = isset($parts[0]) ? (int)$parts[0] : 0;
                                                         $point = isset($parts[1]) ? (int)$parts[1] : 0;
+                                                        $sisa = isset($parts[2]) ? (int)$parts[2] : 0;
                                                         $rowTotalQty += $qty;
                                                         $rowTotalPoint += $point;
+                                                        $rowTotalSisa += $sisa;
                                                     @endphp
                                                     <td style="text-align:center; padding:4px 8px; border: 1px solid #000">
                                                         {{ $qty ? $qty : '' }}<br>
-                                                        <span style="color:#000;">{{ $point ? $point : '' }}</span>
+                                                        <span style="color:#000;">{{ $point ? $point : '' }}</span><br>
+                                                        <span style="color:#000;">{{ $sisa ? $sisa : '' }}</span>
                                                     </td>
                                                 @endforeach
                                                 <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold;">
                                                     {{ $rowTotalQty ? $rowTotalQty : '' }}<br>
-                                                    <span style="color:#000;">{{ $rowTotalPoint ? $rowTotalPoint : '' }}</span>
+                                                    <span style="color:#000;">{{ $rowTotalPoint ? $rowTotalPoint : '' }}</span><br>
+                                                    <span style="color:#000;">{{ $rowTotalSisa ? $rowTotalSisa : '' }}</span>
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -231,12 +274,14 @@
                                             @foreach ($groupColumns as $col)
                                                 <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold; background:#f2f2f2;">
                                                     {{ $colTotalsQty[$col] ? $colTotalsQty[$col] : '' }}<br>
-                                                    <span style="color:#000;">{{ $colTotals[$col] ? $colTotals[$col] : '' }}</span>
+                                                    <span style="color:#000;">{{ $colTotals[$col] ? $colTotals[$col] : '' }}</span><br>
+                                                    <span style="color:#000;">{{ $colTotalsSisa[$col] ? $colTotalsSisa[$col] : '' }}</span>
                                                 </td>
                                             @endforeach
                                             <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold; background:#f2f2f2;">
                                                 {{ $grandTotalQty ? $grandTotalQty : '' }}<br>
-                                                <span style="color:#000;">{{ $grandTotal ? $grandTotal : '' }}</span>
+                                                <span style="color:#000;">{{ $grandTotal ? $grandTotal : '' }}</span><br>
+                                                <span style="color:#000;">{{ $grandTotalSisa ? $grandTotalSisa : '' }}</span>
                                             </td>
                                         </tr>
                                     </tbody>
