@@ -14,7 +14,8 @@ class Index extends BaseComponent
 {
     public $codeSalesreward;
     public $brand; // tambah property untuk brand
-    public $brandOptions; // tambah property untuk brand options
+    public $brandOptions; // tambah property untuk brand options (untuk backward compatibility)
+    public $brandQuery; // query SQL untuk dropdown search
     public $category;
     public $startCode;
     public $endCode;
@@ -29,14 +30,18 @@ class Index extends BaseComponent
 
     protected function onPreRender()
     {
-        // Ambil brand dari query raw SQL untuk dropdown
-        $query = "
+        // Query SQL untuk dropdown search brand
+        $this->brandQuery = "
             SELECT DISTINCT m.brand
             FROM ivt_bals b
             JOIN materials m ON m.id = b.matl_id
             WHERE (b.qty_oh > 0 OR b.qty_fgi > 0 OR b.qty_fgr > 0)
             AND m.deleted_at IS NULL
+            AND m.brand IS NOT NULL
         ";
+
+        // Simpan untuk backward compatibility jika diperlukan
+        $query = $this->brandQuery;
         $this->brandOptions = collect(DB::connection(Session::get('app_code'))->select($query))
             ->map(function ($item) {
                 return [

@@ -23,7 +23,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <x-ui-dropdown-search label="Customer" model="customer_id" optionValue="id"
-                                        :query="$customerQuery" optionLabel="code,name"
+                                        :query="$customerQuery" optionLabel="code,name,address,city"
                                         placeHolder="Ketik untuk cari customer..." :selectedValue="$customer_id" required="false"
                                         action="Edit" enabled="true" type="int" onChanged="onCustomerChanged" />
                                 </div>
@@ -143,16 +143,19 @@
                     }
                 </style>
                 <div class="card print-page">
-                    <div class="card-body">
+                    <div class="card-body" style="overflow: visible !important; max-height: none !important;">
                         <div class="container mb-3 mt-4">
-                            <div style="max-width:2480px; margin:auto; padding:20px 20px 10px 20px;">
+                            <div style="max-width:2480px; margin:auto; padding:20px 20px 10px 20px; overflow: visible !important;">
                                 <div style="text-align: left; margin-bottom: 20px;">
                                     <h3 style="font-weight:bold; margin:0; text-decoration: underline;">Laporan Piutang
                                     </h3>
+                                    <p style="margin: 5px 0; color: #666; font-size: 12px;">
+                                        Total Data: {{ count($results) }} record(s)
+                                    </p>
                                 </div>
 
                                 <table
-                                    style="width:100%; border-collapse:collapse; font-family: 'Calibri', Arial, sans-serif; border: 1px solid #000;">
+                                    style="width:100%; border-collapse:collapse; font-family: 'Calibri', Arial, sans-serif; border: 1px solid #000; display: table;">
                                     <thead>
                                         <tr>
                                             <th
@@ -162,7 +165,7 @@
                                                 style="text-align:left; padding:5px 8px; font-weight:bold; font-size:15px; width:20%; border:1px solid #000;">
                                                 Nomor Nota</th>
                                             <th
-                                                style="text-align:left; padding:5px 8px; font-weight:bold; font-size:15px; width:25%; border:1px solid #000;">
+                                                style="text-align:left; padding:5px 8px; font-weight:bold; font-size:15px; width:35%; border:1px solid #000;">
                                                 Customer</th>
                                             <th
                                                 style="text-align:right; padding:5px 8px; font-weight:bold; font-size:15px; width:15%; border:1px solid #000;">
@@ -175,13 +178,13 @@
                                                 Tanggal Tagih</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="receivables-tbody">
                                         @php
                                             $totalAmount = 0;
                                             $totalPayment = 0;
                                         @endphp
                                         @foreach ($results as $index => $row)
-                                            <tr>
+                                            <tr wire:key="receivable-{{ $index }}-{{ $row->tr_code ?? '' }}">
                                                 <td
                                                     style="text-align:left; padding:4px 6px; font-size:14px; border:1px solid #000;">
                                                     {{ $row->tr_date ? \Carbon\Carbon::parse($row->tr_date)->format('d-m-Y') : '' }}</td>
@@ -240,5 +243,17 @@
         function printReport() {
             window.print();
         }
+
+        // Debug: Log jumlah baris yang di-render
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const tbody = document.getElementById('receivables-tbody');
+                if (tbody) {
+                    const rowCount = tbody.querySelectorAll('tr').length;
+                    console.log('Jumlah baris yang di-render di tabel:', rowCount);
+                    console.log('Jumlah data dari PHP:', {{ count($results) }});
+                }
+            }, 1000);
+        });
     </script>
 </div>
