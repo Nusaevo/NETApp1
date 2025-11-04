@@ -23,28 +23,41 @@
         </div>
     </div>
 
-    <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/invoice.css') }}">
+    {{-- <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/invoice.css') }}"> --}}
 
     <style>
         @media print {
             @page {
                 size: A4;
-                margin: 10mm 8mm 10mm 8mm; 
+                margin: 10mm 8mm 10mm 8mm;
             }
             body {
                 margin: 0 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
+            /* Semua warna menjadi hitam saat print */
+            * {
+                color: #000 !important;
+                background-color: #fff !important;
+            }
+            /* Icon menjadi hitam */
+            .fas, .fa, i {
+                color: #000 !important;
+            }
             #print .report-box {
                 padding: 8px !important;
             }
             #print h3 {
                 margin: 0 0 6px 0 !important;
-                font-size: 16px !important;
+                font-size: 18px !important;
             }
             #print table {
-                font-size: 12px !important;
+                font-size: 14px !important;
+            }
+            /* Perbesar semua font di area print */
+            #print {
+                font-size: 16px !important;
             }
             #print th, #print td {
                 padding-top: 3px !important;
@@ -53,6 +66,92 @@
             #print thead { display: table-header-group; }
             #print tfoot { display: table-footer-group; }
             #print tr { page-break-inside: avoid; }
+            /* Pastikan border bottom header muncul di setiap halaman */
+            #print tr.header2,
+            #print thead tr:last-child {
+                border-bottom: 1px solid #000 !important;
+            }
+            #print thead tr:last-child th {
+                border-bottom: 1px solid #000 !important;
+            }
+            /* Hapus border bottom dari setiap baris data (tidak ada border antar item) */
+            #print table tbody tr:not(.summary-row) td {
+                border-bottom: none !important;
+            }
+            /* Baris summary tetap ada border bottom */
+            #print table tbody tr[style*="font-weight"] td {
+                border-bottom: 1px solid #000 !important;
+            }
+            /* Pastikan border bottom muncul di akhir setiap halaman dengan menambahkan pada setiap baris summary */
+            #print table tbody tr[style*="font-weight: bold"] td {
+                border-bottom: 1px solid #000 !important;
+            }
+            /* Untuk baris terakhir di setiap halaman, tambahkan border bottom */
+            #print table tbody tr {
+                page-break-inside: avoid;
+            }
+            /* Pastikan border kiri dan kanan tetap ada */
+            #print table tbody td:first-child {
+                border-left: 1px solid #000 !important;
+            }
+            #print table tbody td:last-child {
+                border-right: 1px solid #000 !important;
+            }
+            /* Tambahkan border bottom pada baris terakhir dari seluruh tabel */
+            #print table tbody tr:last-child td {
+                border-bottom: 1px solid #000 !important;
+            }
+            /* Pastikan setiap baris summary memiliki border bottom lengkap */
+            #print table tbody tr[style*="font-weight"] td {
+                border-bottom: 1px solid #000 !important;
+            }
+            /* Atur lebar kolom saat print */
+            /* Kolom Tgl SJ (kolom 1) - sempit */
+            #print table th:nth-child(1),
+            #print table td:nth-child(1) {
+                width: 8% !important;
+                max-width: 8% !important;
+                white-space: nowrap !important;
+            }
+            /* Kolom No Nota (kolom 2) - sempit */
+            #print table th:nth-child(2),
+            #print table td:nth-child(2) {
+                width: 8% !important;
+                max-width: 8% !important;
+            }
+            /* Kolom Kode Brg. (kolom 3) - sempit */
+            #print table th:nth-child(3),
+            #print table td:nth-child(3) {
+                width: 12% !important;
+                max-width: 12% !important;
+            }
+            /* Kolom Nama Barang (kolom 4) - LEBAR (mengambil sisa space) */
+            #print table th:nth-child(4),
+            #print table td:nth-child(4) {
+                width: 50% !important;
+                min-width: 50% !important;
+            }
+            /* Kolom Total Ban (kolom 5) - sempit */
+            #print table th:nth-child(5),
+            #print table td:nth-child(5) {
+                width: 8% !important;
+                max-width: 8% !important;
+                white-space: nowrap !important;
+            }
+            /* Kolom Point (kolom 6) - sempit */
+            #print table th:nth-child(6),
+            #print table td:nth-child(6) {
+                width: 8% !important;
+                max-width: 8% !important;
+                white-space: nowrap !important;
+            }
+            /* Kolom Total Point (kolom 7) - sempit */
+            #print table th:nth-child(7),
+            #print table td:nth-child(7) {
+                width: 8% !important;
+                max-width: 8% !important;
+                white-space: nowrap !important;
+            }
         }
     </style>
 
@@ -77,7 +176,7 @@
                             <th colspan="1" style="text-align:center; padding:8px 12px; border-right:1px dashed #000; border-top: 1px solid #000; background-color: #f8f9fa;"></th>
                             <th colspan="1" style="text-align:center; padding:8px 12px; border-right:1px solid #000; border-top: 1px solid #000; background-color: #f8f9fa;"></th>
                         </tr>
-                        <tr>
+                        <tr class="header2">
                             <th style="text-align:left; padding:8px 12px; border-bottom:1px solid #000; border-left:1px solid #000; background-color: #f8f9fa;">Tgl SJ</th>
                             <th style="text-align:left; padding:8px 12px; border-bottom:1px solid #000; background-color: #f8f9fa;">No. Nota</th>
                             <th style="text-align:left; padding:8px 12px; border-bottom:1px solid #000; background-color: #f8f9fa;">Kode Brg.</th>
@@ -92,13 +191,13 @@
                             @php($prevNota = null)
                             @foreach ($group['details'] as $row)
                                 <tr style="background-color: {{ $loop->parent->index % 2 == 0 ? '#ffffff' : '#f8f9fa' }};">
-                                    <td style="padding:8px 12px; border-left:1px solid #000; border-bottom:1px solid #e0e0e0;">{{ $prevNota !== $row['no_nota'] ? ($row['tgl_sj'] ? \Carbon\Carbon::parse($row['tgl_sj'])->format('d M Y') : '') : '' }}</td>
-                                    <td style="padding:8px 12px; border-bottom:1px solid #e0e0e0;">{{ $prevNota !== $row['no_nota'] ? $row['no_nota'] : '' }}</td>
-                                    <td style="padding:8px 12px; text-align:left; border-bottom:1px solid #e0e0e0;">{{ $row['kode_brg'] }}</td>
-                                    <td style="padding:8px 12px; border-bottom:1px solid #e0e0e0;">{{ $row['nama_barang'] }}</td>
-                                    <td style="padding:8px 12px; text-align:center; border-left:1px dashed #000; border-right:1px dashed #000; border-bottom:1px solid #e0e0e0;">{{ fmod($row['total_ban'], 1) == 0 ? number_format($row['total_ban'], 0) : number_format($row['total_ban'], 2) }}</td>
-                                    <td style="padding:8px 12px; text-align:center; border-right:1px dashed #000; border-bottom:1px solid #e0e0e0;">{{ fmod($row['point'], 1) == 0 ? number_format($row['point'], 0) : number_format($row['point'], 2) }}</td>
-                                    <td style="padding:8px 12px; border-right:1px solid #000; text-align:center; border-bottom:1px solid #e0e0e0;">{{ fmod($row['total_point'], 1) == 0 ? number_format($row['total_point'], 0) : number_format($row['total_point'], 2) }}</td>
+                                    <td style="padding:8px 12px; border-left:1px solid #000;">{{ $prevNota !== $row['no_nota'] ? ($row['tgl_sj'] ? \Carbon\Carbon::parse($row['tgl_sj'])->format('d M Y') : '') : '' }}</td>
+                                    <td style="padding:8px 12px;">{{ $prevNota !== $row['no_nota'] ? $row['no_nota'] : '' }}</td>
+                                    <td style="padding:8px 12px; text-align:left;">{{ $row['kode_brg'] }}</td>
+                                    <td style="padding:8px 12px;">{{ $row['nama_barang'] }}</td>
+                                    <td style="padding:8px 12px; text-align:center; border-left:1px dashed #000; border-right:1px dashed #000;">{{ fmod($row['total_ban'], 1) == 0 ? number_format($row['total_ban'], 0) : number_format($row['total_ban'], 2) }}</td>
+                                    <td style="padding:8px 12px; text-align:center; border-right:1px dashed #000;">{{ fmod($row['point'], 1) == 0 ? number_format($row['point'], 0) : number_format($row['point'], 2) }}</td>
+                                    <td style="padding:8px 12px; border-right:1px solid #000; text-align:center;">{{ fmod($row['total_point'], 1) == 0 ? number_format($row['total_point'], 0) : number_format($row['total_point'], 2) }}</td>
                                 </tr>
                                 @php($prevNota = $row['no_nota'])
                             @endforeach
@@ -121,7 +220,7 @@
 
     <!-- Area print tetap tampil saat print -->
     <div id="print" class="d-none d-print-block p-20">
-        <div style="max-width: 1200px; margin: 0 auto; font-family: 'Calibri'; font-size: 14px;">
+        <div style="max-width: 1200px; margin: 0 auto; font-family: 'Calibri'; font-size: 16px;">
             <div class="report-box" style="max-width: 1200px; margin: auto; padding: 20px;">
                 <h3 style="text-decoration:underline; text-align:left;">
                     {!! $menuName !!}
@@ -140,7 +239,7 @@
                             <th colspan="1" style="text-align:center; padding:4px 8px; border-right:1px dashed #000; border-top: 1px solid #000;"></th>
                             <th colspan="1" style="text-align:center; padding:4px 8px; border-right:1px solid #000; border-top: 1px solid #000;"></th>
                         </tr>
-                        <tr>
+                        <tr class="header2">
                             <th style="text-align:left; padding:4px 8px; border-bottom:1px solid #000; border-left:1px solid #000;">Tgl SJ</th>
                             <th style="text-align:left; padding:4px 8px; border-bottom:1px solid #000;">No. Nota</th>
                             <th style="text-align:left; padding:4px 8px; border-bottom:1px solid #000;">Kode Brg.</th>
@@ -155,13 +254,13 @@
                             @php($prevNota = null)
                             @foreach ($group['details'] as $row)
                                 <tr>
-                                    <td style="padding:4px 8px; border-left:1px solid #000; border-bottom:1px solid #cfcfcf;">{{ $prevNota !== $row['no_nota'] ? ($row['tgl_sj'] ? \Carbon\Carbon::parse($row['tgl_sj'])->format('d M Y') : '') : '' }}</td>
-                                    <td style="padding:4px 8px; border-bottom:1px solid #cfcfcf;">{{ $prevNota !== $row['no_nota'] ? $row['no_nota'] : '' }}</td>
-                                    <td style="padding:4px 8px; text-align:left; border-bottom:1px solid #cfcfcf;">{{ $row['kode_brg'] }}</td>
-                                    <td style="padding:4px 8px; border-bottom:1px solid #cfcfcf;">{{ $row['nama_barang'] }}</td>
-                                    <td style="padding:4px 8px; text-align:center; border-left:1px dashed #000; border-right:1px dashed #000; border-bottom:1px solid #cfcfcf;">{{ fmod($row['total_ban'], 1) == 0 ? number_format($row['total_ban'], 0) : number_format($row['total_ban'], 2) }}</td>
-                                    <td style="padding:4px 8px; text-align:center; border-right:1px dashed #000; border-bottom:1px solid #cfcfcf;">{{ fmod($row['point'], 1) == 0 ? number_format($row['point'], 0) : number_format($row['point'], 2) }}</td>
-                                    <td style="padding:4px 8px; border-right:1px solid #000; text-align:center; border-bottom:1px solid #cfcfcf;">{{ fmod($row['total_point'], 1) == 0 ? number_format($row['total_point'], 0) : number_format($row['total_point'], 2) }}</td>
+                                    <td style="padding:4px 8px; border-left:1px solid #000;">{{ $prevNota !== $row['no_nota'] ? ($row['tgl_sj'] ? \Carbon\Carbon::parse($row['tgl_sj'])->format('d M Y') : '') : '' }}</td>
+                                    <td style="padding:4px 8px;">{{ $prevNota !== $row['no_nota'] ? $row['no_nota'] : '' }}</td>
+                                    <td style="padding:4px 8px; text-align:left;">{{ $row['kode_brg'] }}</td>
+                                    <td style="padding:4px 8px;">{{ $row['nama_barang'] }}</td>
+                                    <td style="padding:4px 8px; text-align:center; border-left:1px dashed #000; border-right:1px dashed #000;">{{ fmod($row['total_ban'], 1) == 0 ? number_format($row['total_ban'], 0) : number_format($row['total_ban'], 2) }}</td>
+                                    <td style="padding:4px 8px; text-align:center; border-right:1px dashed #000;">{{ fmod($row['point'], 1) == 0 ? number_format($row['point'], 0) : number_format($row['point'], 2) }}</td>
+                                    <td style="padding:4px 8px; border-right:1px solid #000; text-align:center;">{{ fmod($row['total_point'], 1) == 0 ? number_format($row['total_point'], 0) : number_format($row['total_point'], 2) }}</td>
                                 </tr>
                                 @php($prevNota = $row['no_nota'])
                             @endforeach
