@@ -23,7 +23,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <x-ui-dropdown-search label="Customer" model="customer_id" optionValue="id"
-                                        :query="$customerQuery" optionLabel="code,name"
+                                        :query="$customerQuery" optionLabel="code,name,address,city"
                                         placeHolder="Ketik untuk cari customer..." :selectedValue="$customer_id" required="false"
                                         action="Edit" enabled="true" type="int" onChanged="onCustomerChanged" />
                                 </div>
@@ -143,16 +143,17 @@
                     }
                 </style>
                 <div class="card print-page">
-                    <div class="card-body">
+                    <div class="card-body" style="overflow: visible !important; max-height: none !important;">
                         <div class="container mb-3 mt-4">
-                            <div style="max-width:2480px; margin:auto; padding:20px 20px 10px 20px;">
+                            <div
+                                style="max-width:2480px; margin:auto; padding:20px 20px 10px 20px; overflow: visible !important;">
                                 <div style="text-align: left; margin-bottom: 20px;">
                                     <h3 style="font-weight:bold; margin:0; text-decoration: underline;">Laporan Piutang
                                     </h3>
                                 </div>
 
                                 <table
-                                    style="width:100%; border-collapse:collapse; font-family: 'Calibri', Arial, sans-serif; border: 1px solid #000;">
+                                    style="width:100%; border-collapse:collapse; font-family: 'Calibri', Arial, sans-serif; border: 1px solid #000; display: table;">
                                     <thead>
                                         <tr>
                                             <th
@@ -162,7 +163,7 @@
                                                 style="text-align:left; padding:5px 8px; font-weight:bold; font-size:15px; width:20%; border:1px solid #000;">
                                                 Nomor Nota</th>
                                             <th
-                                                style="text-align:left; padding:5px 8px; font-weight:bold; font-size:15px; width:25%; border:1px solid #000;">
+                                                style="text-align:left; padding:5px 8px; font-weight:bold; font-size:15px; width:35%; border:1px solid #000;">
                                                 Customer</th>
                                             <th
                                                 style="text-align:right; padding:5px 8px; font-weight:bold; font-size:15px; width:15%; border:1px solid #000;">
@@ -171,26 +172,65 @@
                                                 style="text-align:right; padding:5px 8px; font-weight:bold; font-size:15px; width:15%; border:1px solid #000;">
                                                 Pelunasan</th>
                                             <th
-                                                style="text-align:left; padding:5px 8px; font-weight:bold; font-size:15px; width:10%; border:1px solid #000;">
+                                                style="text-align:left; padding:5px 8px; font-weight:bold; font-size:15px; width:25%; border:1px solid #000; white-space: nowrap;">
                                                 Tanggal Tagih</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="receivables-tbody">
                                         @php
-                                            $totalAmount = 0;
-                                            $totalPayment = 0;
+                                            $currentCustomer = null;
+                                            $customerTotal = 0;
+                                            $customerPayment = 0;
                                         @endphp
                                         @foreach ($results as $index => $row)
+                                            @php
+                                                $customerName = $row->customer_name ?? '';
+                                                $showTotal = false;
+
+                                                // Jika customer berubah, tampilkan total customer sebelumnya
+                                                if ($currentCustomer !== null && $currentCustomer !== $customerName) {
+                                                    $showTotal = true;
+                                                    $prevCustomer = $currentCustomer;
+                                                    $prevTotal = $customerTotal;
+                                                    $prevPayment = $customerPayment;
+                                                    // Reset untuk customer baru
+                                                    $customerTotal = 0;
+                                                    $customerPayment = 0;
+                                                }
+                                                $currentCustomer = $customerName;
+                                                $customerTotal += $row->amt ?? 0;
+                                                $customerPayment += $row->amt_reff ?? 0;
+                                            @endphp
+
+                                            @if ($showTotal)
+                                                <tr style="background-color: #f0f0f0;">
+                                                    <td colspan="3"
+                                                        style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
+                                                        <strong>Total:</strong>
+                                                    </td>
+                                                    <td
+                                                        style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
+                                                        <strong>{{ number_format($prevTotal, 0, ',', '.') }}</strong>
+                                                    </td>
+                                                    <td
+                                                        style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
+                                                        <strong>{{ number_format($prevPayment, 0, ',', '.') }}</strong>
+                                                    </td>
+                                                    <td style="border:1px solid #000;"></td>
+                                                </tr>
+                                            @endif
+
                                             <tr>
                                                 <td
                                                     style="text-align:left; padding:4px 6px; font-size:14px; border:1px solid #000;">
-                                                    {{ $row->tr_date ? \Carbon\Carbon::parse($row->tr_date)->format('d-m-Y') : '' }}</td>
+                                                    {{ $row->tr_date ? \Carbon\Carbon::parse($row->tr_date)->format('d-m-Y') : '' }}
+                                                </td>
                                                 <td
                                                     style="text-align:left; padding:4px 6px; font-size:14px; border:1px solid #000;">
                                                     {{ $row->tr_code ?? '' }}</td>
                                                 <td
                                                     style="text-align:left; padding:4px 6px; font-size:14px; border:1px solid #000;">
-                                                    {{ $row->customer_name ?? '' }}</td>
+                                                    {{ $customerName }}</td>
                                                 <td
                                                     style="text-align:right; padding:4px 6px; font-size:14px; border:1px solid #000;">
                                                     {{ number_format($row->amt ?? 0, 0, ',', '.') }}</td>
@@ -198,17 +238,12 @@
                                                     style="text-align:right; padding:4px 6px; font-size:14px; border:1px solid #000;">
                                                     {{ number_format($row->amt_reff ?? 0, 0, ',', '.') }}</td>
                                                 <td
-                                                    style="text-align:left; padding:4px 6px; font-size:14px; border:1px solid #000;">
+                                                    style="text-align:left; padding:4px 6px; font-size:14px; border:1px solid #000; white-space: nowrap;">
                                                     {{ $row->print_date ? \Carbon\Carbon::parse($row->print_date)->format('d-m-Y') : '' }}
                                                 </td>
                                             </tr>
-                                            @php
-                                                $totalAmount += $row->amt;
-                                                $totalPayment += $row->amt_reff;
-                                            @endphp
                                         @endforeach
-                                        {{-- Total row --}}
-                                        @if (count($results) > 0)
+                                        @if ($currentCustomer !== null)
                                             <tr style="background-color: #f0f0f0;">
                                                 <td colspan="3"
                                                     style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
@@ -216,18 +251,17 @@
                                                 </td>
                                                 <td
                                                     style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
-                                                    <strong>{{ number_format($totalAmount, 0, ',', '.') }}</strong>
+                                                    <strong>{{ number_format($customerTotal, 0, ',', '.') }}</strong>
                                                 </td>
                                                 <td
                                                     style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
-                                                    <strong>{{ number_format($totalPayment, 0, ',', '.') }}</strong>
+                                                    <strong>{{ number_format($customerPayment, 0, ',', '.') }}</strong>
                                                 </td>
-                                                <td></td>
+                                                <td style="border:1px solid #000;"></td>
                                             </tr>
                                         @endif
                                     </tbody>
                                 </table>
-
                             </div>
                         </div>
                     </div>

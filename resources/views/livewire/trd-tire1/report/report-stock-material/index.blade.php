@@ -6,8 +6,14 @@
                 <div class="container mb-2 mt-2">
                     <div class="row align-items-end">
                         <div class="col-md-4">
-                            <x-ui-dropdown-select label="Brand" model="brand" :options="$brandOptions" action="Edit" />
-                            {{-- @dump($brandOptions) --}}
+                            <x-ui-dropdown-search label="Brand" model="brand"
+                                optionValue="brand"
+                                optionLabel="brand"
+                                :query="$brandQuery"
+                                placeHolder="Ketik untuk cari brand..."
+                                connection="Default"
+                                searchOnSpace="true"
+                                action="Edit" />
                         </div>
                         <div class="col-md-2">
                             <x-ui-button clickEvent="search" button-name="View" loading="true" action="Edit"
@@ -56,12 +62,12 @@
                     @media print {
                         @page:first {
                             size: A4 landscape;
-                            margin: 0 0 0 0;
+                            margin: 5mm 1mm 15mm 1mm;
                         }
 
                         @page {
                             size: A4 landscape;
-                            margin: 10mm 0 0 0;
+                            margin: 15mm 1mm 15mm 1mm;
                         }
 
                         .card.mb-4,
@@ -104,10 +110,10 @@
                             font-size: 12px !important;
                         }
 
-                        .laporan-stok th,
+                        /* .laporan-stok th,
                         .laporan-stok td {
                             padding: 2px 4px !important;
-                        }
+                        } */
                     }
                 </style>
                 <div class="card print-page laporan-stok">
@@ -136,7 +142,7 @@
                                             <th>G02</th>
                                             <th>G04</th>
                                             <th>Total</th>
-                                            <th>FGI</th>
+                                            <th>Rsv</th>
                                             <th>Total</th>
                                         </tr>
                                     </thead>

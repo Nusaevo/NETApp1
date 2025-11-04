@@ -141,7 +141,7 @@ class Index extends BaseComponent
             JOIN partners p ON p.id = dh.partner_id
             JOIN deliv_pickings dpi ON dpi.trpacking_id = dp.id
             JOIN materials m ON m.id = dpi.matl_id
-            LEFT JOIN sales_rewards sr ON sr.code = '{$rewardCode}'
+            JOIN sales_rewards sr ON sr.code = '{$rewardCode}'
                 AND sr.matl_code = dpi.matl_code
                 AND sr.brand = m.brand
             WHERE dp.tr_type = 'PD'

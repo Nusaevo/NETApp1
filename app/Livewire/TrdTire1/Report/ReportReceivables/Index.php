@@ -16,7 +16,7 @@ class Index extends BaseComponent
     public $customers = [];
     public $customer_name = '';
     public $customerQuery = "
-        SELECT p.id, p.code, p.name
+        SELECT p.id, p.code, p.name, p.address, p.city
         FROM partners p
         WHERE p.grp = 'C'
         AND p.status_code = 'A'
@@ -28,7 +28,6 @@ class Index extends BaseComponent
     {
         $this->masterService = new MasterService();
         $this->customers = $this->masterService->getCustomers();
-        // $this->resetFilters();
     }
 
     public function resetFilters()
@@ -41,25 +40,22 @@ class Index extends BaseComponent
         $this->customer_name = '';
     }
 
-
     public function onCustomerChanged()
     {
-        // Get customer code and name from selected customer ID
-        if ($this->customer_id) {
-            $customer = DB::connection(Session::get('app_code'))
-                ->table('partners')
-                ->select('code', 'name')
-                ->where('id', $this->customer_id)
-                ->first();
-
-            if ($customer) {
-                $this->customer_code = $customer->code;
-                $this->customer_name = $customer->name;
-            }
-        } else {
+        if (!$this->customer_id) {
             $this->customer_code = '';
             $this->customer_name = '';
+            return;
         }
+
+        $customer = DB::connection(Session::get('app_code'))
+            ->table('partners')
+            ->select('code', 'name')
+            ->where('id', $this->customer_id)
+            ->first();
+
+        $this->customer_code = $customer->code ?? '';
+        $this->customer_name = $customer->name ?? '';
     }
 
     public function resetResult()
@@ -69,41 +65,31 @@ class Index extends BaseComponent
 
     public function search()
     {
-        $customerCode = $this->customer_code ? addslashes($this->customer_code) : null;
-        $startDate = $this->start_date ? addslashes($this->start_date) : null;
-        $endDate = $this->end_date ? addslashes($this->end_date) : null;
+        $startDate = $this->start_date ? addslashes($this->start_date) : '';
+        $endDate = $this->end_date ? addslashes($this->end_date) : '';
+        $customerCode = $this->customer_code ? addslashes($this->customer_code) : '';
 
-        // Build base query
+        $dateFilter = ($startDate && $endDate) ? "AND bh.tr_date BETWEEN '{$startDate}' AND '{$endDate}'" : '';
+        $customerFilter = $customerCode ? "AND bh.partner_code = '{$customerCode}'" : '';
+
         $sql = "
             SELECT
                 bh.tr_date,
                 bh.tr_code,
-                p.name as customer_name,
+                CONCAT_WS(' - ', p.name, p.address, p.city) as customer_name,
                 bh.amt,
                 bh.amt_reff,
                 bh.print_date
             FROM billing_hdrs bh
             LEFT JOIN partners p ON bh.partner_id = p.id
             WHERE (bh.amt - bh.amt_reff) > 0
-            AND bh.status_code != 'X'
-            AND bh.deleted_at IS NULL
+                AND bh.tr_type = 'ARB'
+                AND bh.status_code != 'X'
+                AND bh.deleted_at IS NULL
+                {$dateFilter}
+                {$customerFilter}
+            ORDER BY bh.partner_code, bh.tr_date ASC
         ";
-
-        // Add date filters only if dates are provided
-        if ($startDate) {
-            $sql .= " AND bh.tr_date >= '{$startDate}'";
-        }
-
-        if ($endDate) {
-            $sql .= " AND bh.tr_date <= '{$endDate}'";
-        }
-
-        // Add customer filter only if customer is selected
-        if ($customerCode) {
-            $sql .= " AND bh.partner_code = '{$customerCode}'";
-        }
-
-        $sql .= " ORDER BY bh.tr_date asc";
 
         $this->results = DB::connection(Session::get('app_code'))->select($sql);
     }
