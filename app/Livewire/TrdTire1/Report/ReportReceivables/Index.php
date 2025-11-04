@@ -83,11 +83,12 @@ class Index extends BaseComponent
             FROM billing_hdrs bh
             LEFT JOIN partners p ON bh.partner_id = p.id
             WHERE (bh.amt - bh.amt_reff) > 0
+                AND bh.tr_type = 'ARB'
                 AND bh.status_code != 'X'
                 AND bh.deleted_at IS NULL
                 {$dateFilter}
                 {$customerFilter}
-            ORDER BY bh.tr_date ASC
+            ORDER BY bh.partner_code, bh.tr_date ASC
         ";
 
         $this->results = DB::connection(Session::get('app_code'))->select($sql);
