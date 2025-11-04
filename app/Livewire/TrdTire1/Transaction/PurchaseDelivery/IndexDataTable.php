@@ -89,11 +89,25 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->html()
                 ->sortable(),
-            Column::make($this->trans('Total Barang'), 'total_qty')
+            Column::make($this->trans('Barang'), 'total_qty')
                 ->label(function ($row) {
-                    $totalQty = DelivPacking::where('tr_code', $row->tr_code)->sum('qty');
-                    return round($totalQty);
+                    // Tampilkan qty per item sesuai urutan daftar Kode/Nama Barang
+                    $pickings = DelivPicking::with('DelivPacking')
+                        ->whereHas('DelivPacking', function($query) use ($row) {
+                            $query->where('trhdr_id', $row->id);
+                        })
+                        ->get();
+
+                    if ($pickings->isNotEmpty()) {
+                        $qtyList = $pickings->map(function($picking) {
+                            return round($picking->qty);
+                        });
+                        return $qtyList->implode('<br>');
+                    }
+
+                    return '0';
                 })
+                ->html()
                 ->sortable(),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
@@ -124,12 +138,38 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
+            DateFilter::make('Tanggal Awal Terima')->filter(function (Builder $builder, string $value) {
                 $builder->where('deliv_hdrs.tr_date', '>=', $value);
             }),
-            DateFilter::make('Tanggal Akhir')->filter(function (Builder $builder, string $value) {
+            DateFilter::make('Tanggal Akhir Terima')->filter(function (Builder $builder, string $value) {
                 $builder->where('deliv_hdrs.tr_date', '<=', $value);
             }),
+            DateFilter::make('Tanggal Awal Kirim')->filter(function (Builder $builder, string $value) {
+                $builder->where('deliv_hdrs.reff_date', '>=', $value);
+            }),
+            DateFilter::make('Tanggal Akhir Kirim')->filter(function (Builder $builder, string $value) {
+                $builder->where('deliv_hdrs.reff_date', '<=', $value);
+            }),
+            SelectFilter::make('Jenis', 'brand')
+                ->options([
+                    '' => 'Semua',
+                    'IRC' => 'IRC',
+                    'GT RADIAL' => 'GT RADIAL',
+                    'GAJAH TUNGGAL' => 'GAJAH TUNGGAL',
+                    'ZENEOS' => 'ZENEOS',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value !== '') {
+                        $builder->whereExists(function ($query) use ($value) {
+                            $query->select(DB::raw(1))
+                                ->from('deliv_pickings')
+                                ->join('deliv_packings', 'deliv_packings.id', '=', 'deliv_pickings.trpacking_id')
+                                ->join('materials', 'materials.id', '=', 'deliv_pickings.matl_id')
+                                ->whereRaw('deliv_packings.trhdr_id = deliv_hdrs.id')
+                                ->where('materials.brand', $value);
+                        });
+                    }
+                }),
             $this->createTextFilter('Nomor Surat Jalan', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }),
@@ -141,23 +181,24 @@ class IndexDataTable extends BaseDataTableComponent
                         ->where(DB::raw('UPPER(reffhdrtr_code)'), 'like', '%' . strtoupper($value) . '%');
                 });
             }),
-            SelectFilter::make('Tipe Kendaraan', 'vehicle_type')
-                ->options([
-                    '' => 'Semua',
-                    'O' => 'Mobil',
-                    'I' => 'Motor',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    if ($value !== '') {
-                        $builder->whereExists(function ($query) use ($value) {
-                            $query->select(DB::raw(1))
-                                ->from('deliv_packings')
-                                ->join('order_hdrs', 'order_hdrs.tr_code', '=', 'deliv_packings.reffhdrtr_code')
-                                ->whereRaw('deliv_packings.trhdr_id = deliv_hdrs.id')
-                                ->where('order_hdrs.sales_type', $value);
-                        });
-                    }
-                }),
+
+            // SelectFilter::make('Tipe Kendaraan', 'vehicle_type')
+            //     ->options([
+            //         '' => 'Semua',
+            //         'O' => 'Mobil',
+            //         'I' => 'Motor',
+            //     ])
+            //     ->filter(function (Builder $builder, string $value) {
+            //         if ($value !== '') {
+            //             $builder->whereExists(function ($query) use ($value) {
+            //                 $query->select(DB::raw(1))
+            //                     ->from('deliv_packings')
+            //                     ->join('order_hdrs', 'order_hdrs.tr_code', '=', 'deliv_packings.reffhdrtr_code')
+            //                     ->whereRaw('deliv_packings.trhdr_id = deliv_hdrs.id')
+            //                     ->where('order_hdrs.sales_type', $value);
+            //             });
+            //         }
+            //     }),
             $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
                 $builder->whereHas('Partner', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');

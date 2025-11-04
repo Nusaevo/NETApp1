@@ -4,13 +4,13 @@
             <div class="container mb-2 mt-2">
                 <div class="row align-items-end">
                     <div class="col-md-3">
+                        <x-ui-dropdown-select label="Kode Program" model="selectedRewardCode" :options="$rewardOptions" action="Edit" onChanged="onSrCodeChanged" />
+                    </div>
+                    <div class="col-md-3">
                         <x-ui-text-field label="Tanggal Awal" model="startPrintDate" type="date" action="Edit" />
                     </div>
                     <div class="col-md-3">
                         <x-ui-text-field label="Tanggal Akhir" model="endPrintDate" type="date" action="Edit" />
-                    </div>
-                    <div class="col-md-3">
-                        <x-ui-dropdown-select label="Kode Program" model="selectedRewardCode" :options="$rewardOptions" action="Edit" onChanged="onSrCodeChanged" />
                     </div>
                     <div class="col-md-2">
                         <x-ui-button clickEvent="search" button-name="View" loading="true" action="Edit" cssClass="btn-primary w-100 mb-2" />
@@ -24,6 +24,37 @@
     </div>
 
     <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/invoice.css') }}">
+
+    <style>
+        @media print {
+            @page {
+                size: A4;
+                margin: 10mm 8mm 10mm 8mm; 
+            }
+            body {
+                margin: 0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            #print .report-box {
+                padding: 8px !important;
+            }
+            #print h3 {
+                margin: 0 0 6px 0 !important;
+                font-size: 16px !important;
+            }
+            #print table {
+                font-size: 12px !important;
+            }
+            #print th, #print td {
+                padding-top: 3px !important;
+                padding-bottom: 3px !important;
+            }
+            #print thead { display: table-header-group; }
+            #print tfoot { display: table-footer-group; }
+            #print tr { page-break-inside: avoid; }
+        }
+    </style>
 
     <!-- Card hanya tampil di layar, tidak saat print -->
     <div class="card d-print-none" style="width: 100%; margin: 20px 0; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0px 1.5px rgba(0,0,0,0.03); border-radius: 10px; padding: 20px;">
@@ -58,16 +89,18 @@
                     </thead>
                     <tbody>
                         @foreach ($results as $group)
+                            @php($prevNota = null)
                             @foreach ($group['details'] as $row)
                                 <tr style="background-color: {{ $loop->parent->index % 2 == 0 ? '#ffffff' : '#f8f9fa' }};">
-                                    <td style="padding:8px 12px; border-left:1px solid #000;">{{ $row['tgl_sj'] ? \Carbon\Carbon::parse($row['tgl_sj'])->format('d M Y') : '' }}</td>
-                                    <td style="padding:8px 12px;">{{ $row['no_nota'] }}</td>
-                                    <td style="padding:8px 12px; text-align:left;">{{ $row['kode_brg'] }}</td>
-                                    <td style="padding:8px 12px;">{{ $row['nama_barang'] }}</td>
-                                    <td style="padding:8px 12px; text-align:center; border-left:1px dashed #000; border-right:1px dashed #000;">{{ fmod($row['total_ban'], 1) == 0 ? number_format($row['total_ban'], 0) : number_format($row['total_ban'], 2) }}</td>
-                                    <td style="padding:8px 12px; text-align:center; border-right:1px dashed #000;">{{ fmod($row['point'], 1) == 0 ? number_format($row['point'], 0) : number_format($row['point'], 2) }}</td>
-                                    <td style="padding:8px 12px; border-right:1px solid #000; text-align:center;">{{ fmod($row['total_point'], 1) == 0 ? number_format($row['total_point'], 0) : number_format($row['total_point'], 2) }}</td>
+                                    <td style="padding:8px 12px; border-left:1px solid #000; border-bottom:1px solid #e0e0e0;">{{ $prevNota !== $row['no_nota'] ? ($row['tgl_sj'] ? \Carbon\Carbon::parse($row['tgl_sj'])->format('d M Y') : '') : '' }}</td>
+                                    <td style="padding:8px 12px; border-bottom:1px solid #e0e0e0;">{{ $prevNota !== $row['no_nota'] ? $row['no_nota'] : '' }}</td>
+                                    <td style="padding:8px 12px; text-align:left; border-bottom:1px solid #e0e0e0;">{{ $row['kode_brg'] }}</td>
+                                    <td style="padding:8px 12px; border-bottom:1px solid #e0e0e0;">{{ $row['nama_barang'] }}</td>
+                                    <td style="padding:8px 12px; text-align:center; border-left:1px dashed #000; border-right:1px dashed #000; border-bottom:1px solid #e0e0e0;">{{ fmod($row['total_ban'], 1) == 0 ? number_format($row['total_ban'], 0) : number_format($row['total_ban'], 2) }}</td>
+                                    <td style="padding:8px 12px; text-align:center; border-right:1px dashed #000; border-bottom:1px solid #e0e0e0;">{{ fmod($row['point'], 1) == 0 ? number_format($row['point'], 0) : number_format($row['point'], 2) }}</td>
+                                    <td style="padding:8px 12px; border-right:1px solid #000; text-align:center; border-bottom:1px solid #e0e0e0;">{{ fmod($row['total_point'], 1) == 0 ? number_format($row['total_point'], 0) : number_format($row['total_point'], 2) }}</td>
                                 </tr>
+                                @php($prevNota = $row['no_nota'])
                             @endforeach
                             <tr style="font-weight: bold;">
                                 <td colspan="3" style="padding:10px 12px; border-left:1px solid #000; text-align:left;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">
@@ -119,16 +152,18 @@
                     </thead>
                     <tbody>
                         @foreach ($results as $group)
+                            @php($prevNota = null)
                             @foreach ($group['details'] as $row)
                                 <tr>
-                                    <td style="padding:4px 8px; border-left:1px solid #000;">{{ $row['tgl_sj'] ? \Carbon\Carbon::parse($row['tgl_sj'])->format('d M Y') : '' }}</td>
-                                    <td style="padding:4px 8px;">{{ $row['no_nota'] }}</td>
-                                    <td style="padding:4px 8px; text-align:left;">{{ $row['kode_brg'] }}</td>
-                                    <td style="padding:4px 8px;">{{ $row['nama_barang'] }}</td>
-                                    <td style="padding:4px 8px; text-align:center; border-left:1px dashed #000; border-right:1px dashed #000;">{{ fmod($row['total_ban'], 1) == 0 ? number_format($row['total_ban'], 0) : number_format($row['total_ban'], 2) }}</td>
-                                    <td style="padding:4px 8px; text-align:center; border-right:1px dashed #000;">{{ fmod($row['point'], 1) == 0 ? number_format($row['point'], 0) : number_format($row['point'], 2) }}</td>
-                                    <td style="padding:4px 8px; border-right:1px solid #000; text-align:center;">{{ fmod($row['total_point'], 1) == 0 ? number_format($row['total_point'], 0) : number_format($row['total_point'], 2) }}</td>
+                                    <td style="padding:4px 8px; border-left:1px solid #000; border-bottom:1px solid #cfcfcf;">{{ $prevNota !== $row['no_nota'] ? ($row['tgl_sj'] ? \Carbon\Carbon::parse($row['tgl_sj'])->format('d M Y') : '') : '' }}</td>
+                                    <td style="padding:4px 8px; border-bottom:1px solid #cfcfcf;">{{ $prevNota !== $row['no_nota'] ? $row['no_nota'] : '' }}</td>
+                                    <td style="padding:4px 8px; text-align:left; border-bottom:1px solid #cfcfcf;">{{ $row['kode_brg'] }}</td>
+                                    <td style="padding:4px 8px; border-bottom:1px solid #cfcfcf;">{{ $row['nama_barang'] }}</td>
+                                    <td style="padding:4px 8px; text-align:center; border-left:1px dashed #000; border-right:1px dashed #000; border-bottom:1px solid #cfcfcf;">{{ fmod($row['total_ban'], 1) == 0 ? number_format($row['total_ban'], 0) : number_format($row['total_ban'], 2) }}</td>
+                                    <td style="padding:4px 8px; text-align:center; border-right:1px dashed #000; border-bottom:1px solid #cfcfcf;">{{ fmod($row['point'], 1) == 0 ? number_format($row['point'], 0) : number_format($row['point'], 2) }}</td>
+                                    <td style="padding:4px 8px; border-right:1px solid #000; text-align:center; border-bottom:1px solid #cfcfcf;">{{ fmod($row['total_point'], 1) == 0 ? number_format($row['total_point'], 0) : number_format($row['total_point'], 2) }}</td>
                                 </tr>
+                                @php($prevNota = $row['no_nota'])
                             @endforeach
                             <tr>
                                 <td colspan="3" style="padding:6px 8px;  font-weight:bold; border-left:1px solid #000; text-align:left;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">

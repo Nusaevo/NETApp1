@@ -129,8 +129,11 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            DateFilter::make('Tanggal Nota')->filter(function (Builder $builder, string $value) {
-                $builder->where('order_hdrs.tr_date', '=', $value);
+            DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
+                $builder->where('order_hdrs.tr_date', '>=', $value);
+            }),
+            DateFilter::make('Tanggal Akhir')->filter(function (Builder $builder, string $value) {
+                $builder->where('order_hdrs.tr_date', '<=', $value);
             }),
             $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(order_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
