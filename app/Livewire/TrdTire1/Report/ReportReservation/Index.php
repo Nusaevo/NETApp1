@@ -3,7 +3,7 @@
 namespace App\Livewire\TrdTire1\Report\ReportReservation;
 
 use App\Livewire\Component\BaseComponent;
-use Illuminate\Support\Facades\{DB, Session};
+use Illuminate\Support\Facades\{DB, Session, Log};
 use App\Services\TrdTire1\Master\MasterService;
 
 class Index extends BaseComponent
@@ -24,7 +24,7 @@ class Index extends BaseComponent
         AND m.deleted_at IS NULL
     ";
     public $customerQuery = "
-        SELECT p.id, p.code, p.name
+        SELECT p.id, p.code, p.name, p.address, p.city
         FROM partners p
         WHERE p.grp = 'C'
         AND p.status_code = 'A'
@@ -32,11 +32,60 @@ class Index extends BaseComponent
     ";
     protected $masterService;
 
+    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
+    {
+        // Get additionalParam from query string if not provided
+        if (empty($additionalParam) && request()->has('additionalParam')) {
+            $additionalParam = request()->query('additionalParam');
+        }
+
+        parent::mount($action, $objectId, $actionValue, $objectIdValue, $additionalParam);
+    }
+
     protected function onPreRender()
     {
         $this->masterService = new MasterService();
         $this->customers = $this->masterService->getCustomers();
-        $this->resetFilters();
+
+        // Handle additionalParam if exists
+        if (!empty($this->additionalParam)) {
+            try {
+                // First decrypt the additionalParam
+                $decryptedParam = decryptWithSessionKey($this->additionalParam);
+
+                // Parse JSON array format
+                $decodedParam = json_decode($decryptedParam, true);
+                if (is_array($decodedParam) && json_last_error() === JSON_ERROR_NONE) {
+                    // Handle JSON array structure
+                    if (isset($decodedParam['type']) && $decodedParam['type'] === 'fromStockMaterial') {
+                        if (isset($decodedParam['matl_code'])) {
+                            $this->matl_code = $decodedParam['matl_code'];
+
+                            // Find material ID from code
+                            $material = DB::connection(Session::get('app_code'))
+                                ->table('materials')
+                                ->select('id', 'code', 'name')
+                                ->where('code', $this->matl_code)
+                                ->first();
+
+                            if ($material) {
+                                $this->matl_id = $material->id;
+                                $this->material_name = $material->name;
+                            }
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // If parsing fails, silently continue without setting filters
+                // Log error for debugging if needed
+                Log::warning('ReportReservation: Failed to parse additionalParam', [
+                    'error' => $e->getMessage(),
+                    'additionalParam' => $this->additionalParam
+                ]);
+            }
+        } else {
+            $this->resetFilters();
+        }
     }
 
     public function resetFilters()
@@ -106,7 +155,7 @@ class Index extends BaseComponent
                 m.name as matl_name,
                 oh.tr_date,
                 oh.tr_code,
-                p.name as customer_name,
+                CONCAT_WS(' - ', p.name, p.address, p.city) as customer_name,
                 od.qty
             FROM order_dtls od
             JOIN order_hdrs oh ON od.tr_code = oh.tr_code

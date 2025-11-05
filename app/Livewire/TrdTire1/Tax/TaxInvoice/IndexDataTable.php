@@ -229,7 +229,7 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             'nomorFaktur' => 'Set Nomor Faktur',
             'deleteNomorFaktur' => 'Hapus Nomor Faktur',
-            'cetakProsesDate' => 'Cetak Proses Faktur Pajak',
+            // 'cetakProsesDate' => 'Cetak Proses Faktur Pajak',
             'transferKeCTMS' => 'Transfer ke CTMS',
         ];
     }

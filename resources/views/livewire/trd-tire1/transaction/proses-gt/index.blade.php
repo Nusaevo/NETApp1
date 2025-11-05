@@ -20,14 +20,20 @@
                             required="true" enabled="true" clickEvent="setNotaGT" buttonName="Set Nota GT" />
                     </div>
                     <div class="col">
-                        <x-ui-dropdown-search label="Customer Point" model="gt_partner_code"
-                            optionValue="code"
-                            optionLabel="name"
-                            connection="Default"
-                            searchOnSpace="true"
-                            placeHolder="Ketik untuk cari customer..."
-                            query="SELECT code, CONCAT(code, ' - ', name, ' - ', COALESCE(city, '')) AS name FROM partners WHERE deleted_at IS NULL"
-                            required="true" />
+                        @if($useSimpleDropdown)
+                            <x-ui-dropdown-select label="Customer Point" model="gt_partner_code"
+                                :options="$partners"
+                                required="true" />
+                        @else
+                            <x-ui-dropdown-search label="Customer Point" model="gt_partner_code"
+                                optionValue="code"
+                                optionLabel="name"
+                                connection="Default"
+                                searchOnSpace="true"
+                                placeHolder="Ketik untuk cari customer..."
+                                query="SELECT code, CONCAT(code, ' - ', name, ' - ', COALESCE(city, '')) AS name FROM partners WHERE deleted_at IS NULL"
+                                required="true" />
+                        @endif
                     </div>
                     <div class="col-auto">
                         <x-ui-button clickEvent="fillCustomerPoint" button-name="Customer Nota"
@@ -104,8 +110,9 @@
             // Handle modal hidden event
             $('#modalProsesGT').on('hidden.bs.modal', function() {
                 @this.set('gt_tr_code', '');
-                @this.set('gt_partner_code', []);
+                @this.set('gt_partner_code', '');
                 @this.set('selectedItemsForDisplay', []);
+                @this.set('useSimpleDropdown', false);
             });
 
             // Listener untuk membuka modal Proses Nota

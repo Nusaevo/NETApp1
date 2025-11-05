@@ -279,7 +279,7 @@ class IndexDataTable extends BaseDataTableComponent
                         // Nota ini tidak bisa dibatalkan karena sudah ditagih
                         $failedOrders[] = [
                             'tr_code' => $delivHdr->tr_code,
-                            'reason' => 'Sudah ditagih (print_date: ' . $billing->print_date . ')'
+                            'reason' => 'Sudah ditagih (Tanggal: ' . $billing->print_date . ')'
                         ];
                         continue;
                     }
