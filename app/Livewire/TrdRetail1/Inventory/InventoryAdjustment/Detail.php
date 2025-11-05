@@ -781,7 +781,6 @@ class Detail extends BaseComponent
 
         if ($addedCount > 0) {
             $this->dispatch('success', "$addedCount material(s) berhasil ditambahkan.");
-            $this->recalculateTotals();
         } else {
             $this->dispatch('warning', 'Semua material yang dipilih sudah ada dalam daftar.');
         }
