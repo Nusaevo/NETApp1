@@ -84,6 +84,15 @@ class DeliveryService
                 $packing = $existingPackings->firstWhere('id', $detail['id']);
                 if ($packing) {
                     $originalQty = $packing->getOriginal('qty');
+
+                    // Check if warehouse changed by comparing with existing picking
+                    $existingPicking = DelivPicking::where('trpacking_id', $detail['id'])->first();
+                    $warehouseChanged = false;
+                    if ($existingPicking) {
+                        $warehouseChanged = ($existingPicking->wh_id != $detail['wh_id'] ||
+                                           $existingPicking->wh_code != $detail['wh_code']);
+                    }
+
                     $packing->fill($detail);
                     if ($packing->isDirty()) {
                         $this->inventoryService->delIvtLog(0, $detail['id']);
@@ -92,6 +101,9 @@ class DeliveryService
                         OrderDtl::updateQtyReff($detail['qty'], $detail['reffdtl_id']);
 
                         $this->inventoryService->addReservation($headerData, $detail);
+                        $this->savePicking($headerData, $detail);
+                    } elseif ($warehouseChanged) {
+                        // Warehouse changed but packing not dirty, still need to update picking
                         $this->savePicking($headerData, $detail);
                     }
                 }
@@ -163,13 +175,24 @@ class DeliveryService
         $existingPickings = DelivPicking::where('trpacking_id', $detailData['id'])->get();
 
         foreach ($pickingData as $key => $detail) {
-            $picking = $existingPickings
-                ->where('trpacking_id', $detail['trpacking_id'])
-                ->where('matl_id', $detail['matl_id'])
-                ->where('matl_uom', $detail['matl_uom'])
-                ->where('wh_id', $detail['wh_id'])
-                ->where('batch_code', $detail['batch_code'])
-                ->first();
+            // For PD type, find picking without wh_id filter to allow warehouse updates
+            // For SD type, keep wh_id filter as there might be multiple pickings with different warehouses
+            if ($detailData['tr_type'] === 'PD') {
+                $picking = $existingPickings
+                    ->where('trpacking_id', $detail['trpacking_id'])
+                    ->where('matl_id', $detail['matl_id'])
+                    ->where('matl_uom', $detail['matl_uom'])
+                    ->where('batch_code', $detail['batch_code'])
+                    ->first();
+            } else {
+                $picking = $existingPickings
+                    ->where('trpacking_id', $detail['trpacking_id'])
+                    ->where('matl_id', $detail['matl_id'])
+                    ->where('matl_uom', $detail['matl_uom'])
+                    ->where('wh_id', $detail['wh_id'])
+                    ->where('batch_code', $detail['batch_code'])
+                    ->first();
+            }
 
             if (!$picking) {
                 // tr_seq picking = urutan picking dalam packing yang sama (1, 2, 3, dst)
@@ -213,7 +236,12 @@ class DeliveryService
                     $pickingTrSeq = $picking->tr_seq;
                     $detail['tr_seq2'] = $pickingTrSeq;
 
-                    $this->inventoryService->addOnhand($headerData, $detail);
+                    $ivtBalId = $this->inventoryService->addOnhand($headerData, $detail);
+                    // Update ivt_id if warehouse changed (for PD type)
+                    if ($detailData['tr_type'] === 'PD' && $ivtBalId) {
+                        $picking->ivt_id = $ivtBalId;
+                        $picking->save();
+                    }
                 }
                 $picking_ids[] = $picking->id;
             }

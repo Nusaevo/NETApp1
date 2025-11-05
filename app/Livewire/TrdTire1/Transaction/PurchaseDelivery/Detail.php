@@ -328,7 +328,12 @@ class Detail extends BaseComponent
 
         // Cari wh_id dari ConfigConst berdasarkan wh_code
         $warehouse = ConfigConst::where('str1', $value)->first();
-        $wh_id = $warehouse ? $warehouse->id : null;
+        if (!$warehouse) {
+            $this->dispatch('error', 'Gudang tidak ditemukan.');
+            return;
+        }
+
+        $wh_id = $warehouse->id;
 
         $this->inputs['wh_id'] = $warehouse->id;
         $this->inputs['wh_code'] = $warehouse->str1;
@@ -376,8 +381,7 @@ class Detail extends BaseComponent
         ])->first();
 
         if ($existingDelivery && $existingDelivery->id !== $this->object->id) {
-            $this->dispatch('error', 'Nomor Surat Jalan ' . $this->inputs['tr_code'] . ' sudah ada. Silakan gunakan nomor yang berbeda.');
-            return;
+            throw new Exception('Nomor Surat Jalan ' . $this->inputs['tr_code'] . ' sudah ada. Silakan gunakan nomor yang berbeda.');
         }
 
         if ($this->object->isNew()) {
