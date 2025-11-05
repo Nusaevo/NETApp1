@@ -27,7 +27,7 @@
                         @else
                             <x-ui-dropdown-search label="Customer Point" model="gt_partner_code"
                                 optionValue="code"
-                                optionLabel="name"
+                                optionLabel="code,name"
                                 connection="Default"
                                 searchOnSpace="true"
                                 placeHolder="Ketik untuk cari customer..."

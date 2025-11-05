@@ -33,7 +33,7 @@
                                         type="code" :action="$actionValue" required="false" clickEvent="trCodeOnClick"
                                         buttonName="Nomor Baru" enabled="true" :buttonEnabled="$isPanelEnabled" />
                                     <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
-                                        :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
+                                        :action="$actionValue" required="true" enabled="true" />
                                     <x-ui-dropdown-select label="{{ $this->trans('payment_terms') }}"
                                         model="inputs.payment_term_id" :options="$paymentTerms" required="true"
                                         :action="$actionValue" onChanged="paymentTermOnChanged" />

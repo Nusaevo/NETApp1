@@ -113,7 +113,7 @@
                                 @foreach ($orders as $order)
                                     @foreach ($order->OrderDtl as $detail)
                                         <tr>
-                                            <td>{{ $order->Partner->name }} - {{ $order->Partner->city }}</td>
+                                            <td>{{ $this->getCustomerName($order, $detail) }}</td>
                                             <td>{{ $order->tr_code }}</td>
                                             <td>{{ $detail->matl_code }}</td>
                                             <td>{{ $detail->matl_descr }}</td>
@@ -125,7 +125,7 @@
                                                 {{ $detail->SalesReward ? round(($detail->qty / $detail->SalesReward->qty) * $detail->SalesReward->reward, 2) : 0 }}
                                             </td>
                                             <td>{{ $detail->gt_tr_code ?? '-' }}</td>
-                                             <td>{{ $detail->gt_partner_code ? $detail->gt_partner_code . ' - ' . ($order->Partner->city ?? '') : '' }}</td>
+                                             <td>{{ $this->getCustomerPointName($detail, $order->Partner->city ?? '') }}</td>
                                         </tr>
                                     @endforeach
                                 @endforeach
@@ -169,7 +169,7 @@
                             @foreach ($order->OrderDtl as $detail)
                                 <tr>
                                     <td style="border: 1px solid #000; padding: 3px 5px; font-size: 11px;">
-                                        {{ $order->Partner->name }} - {{ $order->Partner->city }}
+                                        {{ $this->getCustomerName($order, $detail) }}
                                     </td>
                                     <td style="border: 1px solid #000; padding: 3px 5px; font-size: 11px;">
                                         {{ $order->tr_code }}
@@ -193,7 +193,7 @@
                                         {{ $detail->gt_tr_code ?? '-' }}
                                     </td>
                                     <td style="border: 1px solid #000; padding: 3px 5px; font-size: 11px;">
-                                        {{ $detail->gt_partner_code ? $detail->gt_partner_code . ' - ' . ($order->Partner->city ?? '') : '' }}
+                                        {{ $this->getCustomerPointName($detail, $order->Partner->city ?? '') }}
                                     </td>
                                 </tr>
                             @endforeach
