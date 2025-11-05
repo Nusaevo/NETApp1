@@ -12,6 +12,7 @@ use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use App\Models\SysConfig1\ConfigSnum;
+use Carbon\Carbon;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -283,11 +284,43 @@ class IndexDataTable extends BaseDataTableComponent
             return;
         }
 
-        // Get the current year and month
-        $year = now()->format('y'); // Two-digit year
-        $month = now()->format('m'); // Two-digit month
+        // Get year and month from gt_process_date - ambil dari record yang dipilih sebagai prioritas
+        $processDate = null;
+        $selectedIds = $this->getSelected();
 
-        // Get the last sequence number for the current month
+        if (!empty($selectedIds)) {
+            // Ambil gt_process_date dari record pertama yang dipilih
+            $firstRecord = OrderDtl::where('id', $selectedIds[0])->first();
+            if ($firstRecord && $firstRecord->gt_process_date) {
+                $processDate = $firstRecord->gt_process_date;
+            }
+        }
+
+        // Jika tidak ada di record, coba ambil dari filter (dari berbagai sumber)
+        if (!$processDate) {
+            // Coba dari query string (filter biasanya tersimpan di sini)
+            $queryFilters = request()->query('table-filters', []);
+            if (is_string($queryFilters)) {
+                parse_str($queryFilters, $queryFilters);
+            }
+            $processDate = $queryFilters['gt_process_date'] ??
+                          $this->appliedFilters['gt_process_date'] ??
+                          $this->filters['gt_process_date'] ??
+                          null;
+        }
+
+        if ($processDate) {
+            // Parse tanggal dari filter (format: YYYY-MM-DD atau datetime)
+            $date = Carbon::parse($processDate);
+            $year = $date->format('y'); // Two-digit year
+            $month = $date->format('m'); // Two-digit month
+        } else {
+            // Fallback ke bulan sekarang jika filter belum dipilih
+            $year = now()->format('y'); // Two-digit year
+            $month = now()->format('m'); // Two-digit month
+        }
+
+        // Get the last sequence number for the selected month
         $lastSequence = OrderDtl::whereNotNull('gt_tr_code')
             ->where('gt_tr_code', 'like', $year . $month . '%')
             ->orderBy('gt_tr_code', 'desc')
@@ -297,7 +330,7 @@ class IndexDataTable extends BaseDataTableComponent
         $sequence = $lastSequence ? (int)substr($lastSequence, -4) : 0;
 
         // Iterate over selected items and assign GT numbers
-        foreach ($this->getSelected() as $id) {
+        foreach ($selectedIds as $id) {
             $sequence++; // Increment the sequence number
             $gtTrCode = $year . $month . str_pad($sequence, 4, '0', STR_PAD_LEFT); // Format GT number
 

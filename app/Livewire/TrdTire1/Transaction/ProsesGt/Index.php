@@ -21,6 +21,7 @@ class Index extends BaseComponent
     public $gt_tr_code = '';
     public $gt_partner_code = '';
     public $partners = [];
+    public $useSimpleDropdown = false;
     public $start_date;
     public $end_date;
     public $sr_code;
@@ -39,7 +40,7 @@ class Index extends BaseComponent
             ->get()
             ->map(function ($partner) {
                 return [
-                    'label' => $partner->name . ' - ' . $partner->city,
+                    'label' => $partner->code . ' - ' . $partner->name . ' - ' . ($partner->city ?? ''),
                     'value' => $partner->code,
                     'id' => $partner->id
                 ];
@@ -78,6 +79,11 @@ class Index extends BaseComponent
     {
         $this->selectedOrderIds = $orderIds;
         $this->selectedItems = $selectedItems;
+
+        // Reset form fields ketika modal dibuka
+        $this->gt_tr_code = '';
+        $this->gt_partner_code = '';
+        $this->useSimpleDropdown = false; // Reset ke dropdown search
 
         // Load selected items with relationships for display
         // Use join to ensure relationships are loaded properly
@@ -128,10 +134,29 @@ class Index extends BaseComponent
 
     public function setNotaGT()
     {
-        $year = now()->format('y'); // Two-digit year
-        $month = now()->format('m'); // Two-digit month
+        // Get year and month from gt_process_date - ambil dari record yang dipilih
+        $processDate = null;
 
-        // Get the last sequence number for the current month
+        if (!empty($this->selectedOrderIds)) {
+            // Ambil gt_process_date dari record pertama yang dipilih
+            $firstRecord = OrderDtl::where('id', $this->selectedOrderIds[0])->first();
+            if ($firstRecord && $firstRecord->gt_process_date) {
+                $processDate = $firstRecord->gt_process_date;
+            }
+        }
+
+        if ($processDate) {
+            // Parse tanggal dari record (format: YYYY-MM-DD atau datetime)
+            $date = Carbon::parse($processDate);
+            $year = $date->format('y'); // Two-digit year
+            $month = $date->format('m'); // Two-digit month
+        } else {
+            // Fallback ke bulan sekarang jika tidak ada gt_process_date
+            $year = now()->format('y'); // Two-digit year
+            $month = now()->format('m'); // Two-digit month
+        }
+
+        // Get the last sequence number for the selected month
         $lastSequence = OrderDtl::whereNotNull('gt_tr_code')
             ->where('gt_tr_code', 'like', $year . $month . '%')
             ->orderBy('gt_tr_code', 'desc')
@@ -147,6 +172,11 @@ class Index extends BaseComponent
 
     public function submitProsesGT()
     {
+        // Pastikan gt_partner_code adalah string, bukan array
+        if (is_array($this->gt_partner_code)) {
+            $this->gt_partner_code = '';
+        }
+
         $this->validate([
             'gt_tr_code' => 'nullable', // Allow null values
             'gt_partner_code' => 'nullable', // Allow null values
@@ -171,8 +201,11 @@ class Index extends BaseComponent
 
         try {
             $partner = null;
-            if (!empty($this->gt_partner_code)) {
-                $partner = Partner::where('code', $this->gt_partner_code)->first();
+            // Pastikan gt_partner_code adalah string sebelum digunakan
+            $partnerCode = is_string($this->gt_partner_code) ? trim($this->gt_partner_code) : '';
+
+            if (!empty($partnerCode)) {
+                $partner = Partner::where('code', $partnerCode)->first();
                 if (!$partner) {
                     throw new \Exception('Partner tidak ditemukan');
                 }
@@ -190,6 +223,12 @@ class Index extends BaseComponent
                 ->update($updateData);
 
             DB::commit();
+
+            // Reset form fields setelah berhasil
+            $this->gt_tr_code = '';
+            $this->gt_partner_code = '';
+            $this->useSimpleDropdown = false;
+
             $this->dispatch('close-modal-proses-gt');
             $this->dispatch('success', ['Proses GT berhasil disimpan']);
             // $this->dispatch('refreshTable');
@@ -300,6 +339,7 @@ class Index extends BaseComponent
 
                 if ($orderHdr && $orderHdr->Partner) {
                     $this->gt_partner_code = $orderHdr->Partner->code; // Isi dengan code partner
+                    $this->useSimpleDropdown = true; // Ubah ke dropdown biasa
                 } else {
                     $this->dispatch('error', 'Partner tidak ditemukan untuk OrderHdr yang dipilih.');
                 }

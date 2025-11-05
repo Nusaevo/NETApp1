@@ -53,6 +53,7 @@ class Detail extends BaseComponent
     public $canPrintNotaButton = true; // enable/disable tombol Cetak Nota Jual
     public $canPrintSuratJalanButton = true; // enable/disable tombol Cetak Surat Jalan
     public $canSaveButtonEnabled = true; // enable/disable tombol Simpan
+    public $originalTrDate = null; // Menyimpan tanggal asli untuk validasi bulan
 
     public $ddPartner = [
         'placeHolder' => "Ketik untuk cari customer ...",
@@ -263,6 +264,9 @@ class Detail extends BaseComponent
                     ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
                     : ($trDate ? $trDate->format('Y-m-d') : null);
 
+                // Simpan tanggal asli untuk validasi bulan saat edit
+                $this->originalTrDate = $this->object->tr_date;
+
                 $printRemarks = $this->object->getDisplayFormat();
                 if (is_array($printRemarks)) {
                     $this->inputs['print_remarks'] = isset($printRemarks['nota']) ? $printRemarks['nota'] : '0.0';
@@ -408,6 +412,9 @@ class Detail extends BaseComponent
         $this->inputs['curr_rate'] = 1.00;
         $this->inputs['print_remarks'] = ['nota' => 0, 'surat_jalan' => 0];
 
+        // Reset originalTrDate
+        $this->originalTrDate = null;
+
         // Set default payment term to COD
         $this->setDefaultPaymentTerm();
 
@@ -432,6 +439,21 @@ class Detail extends BaseComponent
 
         // Validasi duplikasi matl_id dalam detail
         $this->validateMatlIdDuplicate();
+
+        // Validasi bulan tr_date tidak boleh berubah saat edit
+        if ($this->actionValue === 'Edit' && $this->originalTrDate) {
+            $originalMonth = \Carbon\Carbon::parse($this->originalTrDate)->month;
+            $newTrDate = !empty($this->inputs['tr_date']) ? $this->inputs['tr_date'] : null;
+
+            if ($newTrDate) {
+                $newMonth = \Carbon\Carbon::parse($newTrDate)->month;
+                if ($originalMonth !== $newMonth) {
+                    $originalDateFormatted = \Carbon\Carbon::parse($this->originalTrDate)->format('d/m/Y');
+                    $newDateFormatted = \Carbon\Carbon::parse($newTrDate)->format('d/m/Y');
+                    throw new Exception("Bulan pada tanggal transaksi tidak boleh diubah. Tanggal asli: {$originalDateFormatted}, Tanggal baru: {$newDateFormatted}. Bulan harus tetap sama seperti awal.");
+                }
+            }
+        }
 
         // Guard: batasi update jika sudah pernah dicetak dan user tidak berizin
         $this->updateAfterPrintPermission();

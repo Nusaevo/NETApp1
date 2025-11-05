@@ -6,7 +6,7 @@
                class="form-control"
                wire:model.defer="tanggalTagih"
                id="tanggalTagihInput"
-               value="{{ $this->tanggalTagih ?? now()->format('Y-m-d') }}"
+               value="{{ $this->tanggalTagih ?? '' }}"
                style="max-width: 200px;">
     </div>
     <div>

@@ -14,7 +14,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <x-ui-dropdown-search label="Customer" model="customer_id" optionValue="id"
-                                        :query="$customerQuery" optionLabel="code,name"
+                                        :query="$customerQuery" optionLabel="code,name,address,city"
                                         placeHolder="Ketik untuk cari customer..." :selectedValue="$customer_id" required="false"
                                         action="Edit" enabled="true" type="int" onChanged="onCustomerChanged" />
                                 </div>

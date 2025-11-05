@@ -314,10 +314,10 @@ class IndexDataTable extends BaseDataTableComponent
             return;
         }
 
-        if (empty($this->tanggalTagih)) {
-            $this->dispatch('warning', 'Tanggal tagih tidak boleh kosong');
-            return;
-        }
+        // if (empty($this->tanggalTagih)) {
+        //     $this->dispatch('warning', 'Tanggal tagih tidak boleh kosong');
+        //     return;
+        // }
 
         try {
             DB::beginTransaction();
@@ -338,9 +338,10 @@ class IndexDataTable extends BaseDataTableComponent
             $oldPrintDates = $validRecords->pluck('print_date', 'id')->toArray();
 
             // Update print_date di billing_hdrs menggunakan save() untuk setiap record
+            // Jika tanggalTagih kosong/null, set print_date ke null
             $updated = 0;
             foreach ($validRecords as $record) {
-                $record->print_date = $this->tanggalTagih;
+                $record->print_date = !empty($this->tanggalTagih) ? $this->tanggalTagih : null;
                 $record->updated_at = now();
                 if ($record->save()) {
                     $updated++;
@@ -366,7 +367,7 @@ class IndexDataTable extends BaseDataTableComponent
 
             DB::commit();
 
-            $this->dispatch('success', "Berhasil update tanggal tagih untuk {$updated} record(s)");
+            $this->dispatch('success', "Berhasil update tanggal tagih untuk {$updated} data");
 
         } catch (\Exception $e) {
             DB::rollback();
