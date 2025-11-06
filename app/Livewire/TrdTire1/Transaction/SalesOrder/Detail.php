@@ -101,6 +101,8 @@ class Detail extends BaseComponent
         'onTaxPayerChanged' => 'onTaxPayerChanged',
         'salesTypeOnChanged' => 'salesTypeOnChanged', // tambahkan listener baru
         'onTrDateChanged' => 'onTrDateChanged', // listener untuk perubahan tr_date
+        'onTrCodeChanged' => 'onTrCodeChanged', // listener untuk perubahan tr_code
+        'resetToCreateMode' => 'resetToCreateMode', // listener untuk reset ke mode create
     ];
     public function openNpwpDialogBox()
     {
@@ -246,43 +248,26 @@ class Detail extends BaseComponent
         $this->paymentTerms = $this->masterService->getPaymentTerm();
         // $this->warehouses = $this->masterService->getWarehouse();
 
-        if ($this->isEditOrView()) {
+        if ($this->isEditOrView() && !empty($this->objectIdValue)) {
+            // Load object berdasarkan objectIdValue jika ada
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
             if ($this->object) {
-                $this->inputs = $this->object->toArray();
-                // dd($this->inputs);
-                // $this->inputs['tax_doc_flag'] = $this->object->tax_doc_flag;
-                $this->onTaxDocFlagChanged();
-                $this->loadShippingOptions();
-                $this->inputs['tr_code'] = $this->object->tr_code;
-                $this->inputs['partner_name'] = $this->object->partner ? $this->object->partner->code : '';
-
-                // Pastikan print_remarks adalah string/float, bukan array/object
-                $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
-                $paymentDueDays = is_numeric($this->object->payment_due_days) ? (int)$this->object->payment_due_days : 0;
-                $this->inputs['due_date'] = ($trDate && $paymentDueDays > 0)
-                    ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
-                    : ($trDate ? $trDate->format('Y-m-d') : null);
-
-                // Simpan tanggal asli untuk validasi bulan saat edit
-                $this->originalTrDate = $this->object->tr_date;
-
-                $printRemarks = $this->object->getDisplayFormat();
-                if (is_array($printRemarks)) {
-                    $this->inputs['print_remarks'] = isset($printRemarks['nota']) ? $printRemarks['nota'] : '0.0';
-                } else {
-                    $this->inputs['print_remarks'] = $printRemarks;
-                }
-
-                // dd($this->materialQuery);
-                $this->salesTypeOnChanged();
-                $this->loadDetails();
-                $this->updateAfterPrintPermission();
-                $this->updateButtonStatesByCounter();
+                $this->loadOrderData();
             } else {
                 // Jika object tidak ditemukan, buat instance baru dan tampilkan error
                 $this->object = new OrderHdr();
                 $this->dispatch('error', 'Data tidak ditemukan');
+            }
+        } else if ($this->actionValue === 'Edit' && !empty($this->inputs['tr_code'])) {
+            // Untuk mode edit tanpa objectIdValue, cari berdasarkan tr_code
+            $existingOrder = OrderHdr::where('tr_code', $this->inputs['tr_code'])
+                ->where('tr_type', $this->trType)
+                ->first();
+
+            if ($existingOrder) {
+                $this->object = $existingOrder;
+                $this->objectIdValue = $existingOrder->id;
+                $this->loadOrderData();
             }
         } else {
             $this->object = new OrderHdr(); // Inisialisasi object untuk mode Create
@@ -311,6 +296,39 @@ class Detail extends BaseComponent
             }
         }
         return $rev;
+    }
+
+    private function loadOrderData()
+    {
+        // Method untuk load data order yang dipanggil dari berbagai tempat
+        $this->inputs = $this->object->toArray();
+        $this->onTaxDocFlagChanged();
+        $this->loadShippingOptions();
+        $this->inputs['tr_code'] = $this->object->tr_code;
+        $this->inputs['partner_name'] = $this->object->partner ? $this->object->partner->code : '';
+
+        // Pastikan print_remarks adalah string/float, bukan array/object
+        $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
+        $paymentDueDays = is_numeric($this->object->payment_due_days) ? (int)$this->object->payment_due_days : 0;
+        $this->inputs['due_date'] = ($trDate && $paymentDueDays > 0)
+            ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
+            : ($trDate ? $trDate->format('Y-m-d') : null);
+
+        // Simpan tanggal asli untuk validasi bulan saat edit
+        $this->originalTrDate = $this->object->tr_date;
+
+        $printRemarks = $this->object->getDisplayFormat();
+        if (is_array($printRemarks)) {
+            $this->inputs['print_remarks'] = isset($printRemarks['nota']) ? $printRemarks['nota'] : '0.0';
+        } else {
+            $this->inputs['print_remarks'] = $printRemarks;
+        }
+
+        $this->salesTypeOnChanged();
+        $this->loadDetails();
+        $this->updateAfterPrintPermission();
+        $this->updateButtonStatesByCounter();
+        $this->isPanelEnabled = "false"; // Disable panel karena sudah ada data
     }
 
     private function updateAfterPrintPermission(): void
@@ -579,6 +597,7 @@ class Detail extends BaseComponent
 
     public function trCodeOnClick()
     {
+        $this->resetToCreateModeInternal();
         // Tambahkan pengecekan sales_type
         if (empty($this->inputs['sales_type'])) {
             $this->dispatch('error', 'Silakan pilih Tipe Kendaraan terlebih dahulu sebelum generate Nomor.');
@@ -595,6 +614,199 @@ class Detail extends BaseComponent
         $taxDocFlag = !empty($this->inputs['tax_doc_flag']);
         $trDate = $this->inputs['tr_date'];
         $this->inputs['tr_code'] = app(MasterService::class)->getNewTrCode($this->trType,$salesType,$taxDocFlag,$trDate);
+    }
+
+    public function onTrCodeChanged()
+    {
+        $trCode = trim($this->inputs['tr_code'] ?? '');
+
+        if (empty($trCode)) {
+            // Jika tr_code kosong, reset ke mode create tanpa object
+            $this->resetToCreateModeInternal();
+            return;
+        }
+
+        try {
+            // Cari OrderHdr berdasarkan tr_code dan tr_type
+            $existingOrder = OrderHdr::where('tr_code', $trCode)
+                ->where('tr_type', $this->trType)
+                ->first();
+
+            if ($existingOrder) {
+                // Jika nota ditemukan, load data untuk edit tanpa redirect
+                $this->loadOrderByTrCode($existingOrder);
+                $this->dispatch('info', "Nota {$trCode} ditemukan. Data telah dimuat untuk edit.");
+            } else {
+                $this->dispatch('error', 'Nomor nota tidak ditemukan.');
+                $this->resetToCreateModeInternal();
+            }
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Terjadi kesalahan saat mencari nota: ' . $e->getMessage());
+            $this->inputs['tr_code'] = '';
+        }
+    }
+
+    private function loadOrderByTrCode($order)
+    {
+        // Set mode ke edit dan load object
+        $this->actionValue = 'Edit';
+        $this->objectIdValue = $order->id;
+        $this->object = $order;
+
+        // Load semua data order
+        $this->inputs = $this->object->toArray();
+        $this->onTaxDocFlagChanged();
+        $this->loadShippingOptions();
+        $this->inputs['tr_code'] = $this->object->tr_code;
+        $this->inputs['partner_name'] = $this->object->partner ? $this->object->partner->code : '';
+
+        // Load payment due date
+        $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
+        $paymentDueDays = is_numeric($this->object->payment_due_days) ? (int)$this->object->payment_due_days : 0;
+        $this->inputs['due_date'] = ($trDate && $paymentDueDays > 0)
+            ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
+            : ($trDate ? $trDate->format('Y-m-d') : null);
+
+        // Simpan tanggal asli untuk validasi bulan saat edit
+        $this->originalTrDate = $this->object->tr_date;
+
+        // Load print remarks
+        $printRemarks = $this->object->getDisplayFormat();
+        if (is_array($printRemarks)) {
+            $this->inputs['print_remarks'] = isset($printRemarks['nota']) ? $printRemarks['nota'] : '0.0';
+        } else {
+            $this->inputs['print_remarks'] = $printRemarks;
+        }
+
+        // Load related data
+        $this->salesTypeOnChanged();
+        $this->loadDetails();
+        $this->updateAfterPrintPermission();
+        $this->updateButtonStatesByCounter();
+        $this->isPanelEnabled = "false"; // Disable panel karena sudah ada data
+
+        // Update tax settings
+        if (!empty($this->inputs['tax_code'])) {
+            $this->onSOTaxChange();
+        }
+        $this->dispatch('updateTaxPayerEnabled', !empty($this->inputs['tax_doc_flag']));
+
+        // Sinkronisasi version number dengan object yang di-load
+        $this->versionNumber = $this->object->version_number ?? 1;
+    }
+
+    private function setToCreateModeWithTrCode($trCode)
+    {
+        // Set mode ke create dengan tr_code yang sudah diinput
+        $this->actionValue = 'Create';
+        $this->objectIdValue = null;
+        $this->object = new OrderHdr();
+
+        // Reset inputs ke default tapi pertahankan tr_code
+        $this->resetInputsToDefault();
+        $this->inputs['tr_code'] = $trCode;
+        $this->isPanelEnabled = "true"; // Enable panel untuk input baru
+
+        // Reset version number untuk create mode
+        $this->versionNumber = 1;
+    }
+
+    private function resetToCreateModeInternal()
+    {
+        // Reset ke mode create murni
+        $this->actionValue = 'Create';
+        $this->objectIdValue = null;
+        $this->object = new OrderHdr();
+        $this->resetInputsToDefault();
+        $this->isPanelEnabled = "true";
+
+        // Reset version number untuk create mode
+        $this->versionNumber = 1;
+    }
+
+    private function resetInputsToDefault()
+    {
+        // Reset semua inputs ke nilai default
+        $this->inputs = populateArrayFromModel(new OrderHdr());
+        $this->inputs['tax_process_date'] = null;
+        $this->inputs['print_date'] = null;
+        $this->inputs['tr_date'] = date('Y-m-d');
+        $this->inputs['due_date'] = date('Y-m-d');
+        $this->inputs['tr_type'] = $this->trType;
+        $this->inputs['curr_code'] = "IDR";
+        $this->inputs['curr_id'] = app(ConfigService::class)->getConstIdByStr1('BASE_CURRENCY', $this->inputs['curr_code']);
+        $this->inputs['curr_rate'] = 1.00;
+        $this->inputs['print_remarks'] = ['nota' => 0, 'surat_jalan' => 0];
+        $this->inputs['tax_doc_flag'] = true;
+        $this->inputs['tax_code'] = 'I';
+        $this->inputs['print_remarks'] = '0.0';
+        $this->dispatch('resetSelect2Dropdowns');
+
+        // Reset originalTrDate
+        $this->originalTrDate = null;
+
+        // Set default payment term
+        $this->setDefaultPaymentTerm();
+
+        // Reset detail items
+        $this->input_details = [];
+
+        // Reset NPWP
+        $this->npwpDetails = [
+            'npwp' => '',
+            'wp_name' => '',
+            'wp_location' => '',
+        ];
+        $this->npwpOptions = [];
+        $this->shipOptions = [];
+
+        // Reset semua totals
+        $this->total_amount = 0;
+        $this->total_tax = 0;
+        $this->total_dpp = 0;
+        $this->total_discount = 0;
+    }
+
+    private function isValidTrCodeFormat($trCode)
+    {
+        // Validasi format tr_code berdasarkan pattern yang digunakan sistem
+        // Contoh format: SO-MBL-I-2024-11-0001 atau SO-MTR-E-2024-11-0001
+
+        if (empty($this->inputs['sales_type'])) {
+            return false;
+        }
+
+        $salesType = $this->inputs['sales_type'];
+        $taxDocFlag = !empty($this->inputs['tax_doc_flag']);
+        $trDate = $this->inputs['tr_date'] ?? date('Y-m-d');
+
+        // Generate expected pattern
+        $expectedPattern = $this->generateTrCodePattern($salesType, $taxDocFlag, $trDate);
+
+        // Check if tr_code matches the expected pattern
+        return preg_match($expectedPattern, $trCode);
+    }
+
+    private function generateTrCodePattern($salesType, $taxDocFlag, $trDate)
+    {
+        // Generate regex pattern berdasarkan format tr_code sistem
+        $year = date('Y', strtotime($trDate));
+        $month = date('m', strtotime($trDate));
+
+        $typeCode = ($salesType === 'MOBIL') ? 'MBL' : 'MTR';
+        $taxCode = $taxDocFlag ? 'I' : 'E';
+
+        // Pattern: SO-MBL-I-2024-11-0001 (dengan nomor sequence 4 digit)
+        $pattern = '/^SO-' . $typeCode . '-' . $taxCode . '-' . $year . '-' . $month . '-\d{4}$/';
+
+        return $pattern;
+    }
+
+    public function resetToCreateMode()
+    {
+        // Method untuk reset ke mode create (dipanggil dari tombol "Mode Create")
+        $this->resetToCreateModeInternal();
+        $this->dispatch('info', 'Mode telah direset ke Create. Silakan input data baru.');
     }
 
     public function onSOTaxChange()
@@ -1419,21 +1631,32 @@ class Detail extends BaseComponent
     }
 
     /**
-     * Validasi duplikasi tr_code
+     * Validasi duplikasi tr_code dengan tambahan validasi format
      */
     private function validateTrCodeDuplicate()
     {
         $trCode = $this->inputs['tr_code'] ?? null;
-        if (empty($trCode)) return;
+        if (empty($trCode)) {
+            throw new Exception("Kode transaksi harus diisi.");
+        }
 
+        // Validasi format tr_code untuk mode create
+        if ($this->actionValue === 'Create') {
+            if (!$this->isValidTrCodeFormat($trCode)) {
+                throw new Exception("Format kode transaksi '{$trCode}' tidak valid. Gunakan tombol 'Nomor Baru' untuk generate kode yang benar.");
+            }
+        }
+
+        // Cek duplikasi berdasarkan tr_code
         $query = OrderHdr::where('tr_code', $trCode)->where('tr_type', $this->trType);
 
+        // Untuk mode edit, exclude object yang sedang diedit berdasarkan ID
         if ($this->actionValue === 'Edit' && !empty($this->object->id)) {
             $query->where('id', '!=', $this->object->id);
         }
 
         if ($query->exists()) {
-            throw new Exception("Kode transaksi '{$trCode}' sudah digunakan. Silakan gunakan kode yang berbeda.");
+            throw new Exception("Kode transaksi '{$trCode}' sudah digunakan. Silakan gunakan kode yang berbeda atau cari nota yang sudah ada.");
         }
     }
 

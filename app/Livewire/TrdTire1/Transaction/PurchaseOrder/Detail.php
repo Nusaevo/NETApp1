@@ -78,6 +78,8 @@ class Detail extends BaseComponent
         'delete' => 'delete',
         // 'updateAmount' => 'updateAmount',
         'salesTypeOnChanged' => 'salesTypeOnChanged', // tambahkan listener baru
+        'onTrCodeChanged' => 'onTrCodeChanged', // listener untuk perubahan tr_code
+        'resetToCreateMode' => 'resetToCreateMode', // listener untuk reset ke mode create
     ];
 
     // Livewire lifecycle hooks
@@ -338,7 +340,174 @@ class Detail extends BaseComponent
 
      public function trCodeOnClick()
     {
+        // Reset ke mode create
+        $this->resetToCreateModeInternal();
+
+        // Generate new tr_code
         $this->inputs['tr_code'] = app(MasterService::class)->getNewTrCode($this->trType,"","");
+    }
+
+    public function onTrCodeChanged()
+    {
+        $trCode = trim($this->inputs['tr_code'] ?? '');
+
+        if (empty($trCode)) {
+            // Jika tr_code kosong, reset ke mode create tanpa object
+            $this->resetToCreateModeInternal();
+            return;
+        }
+
+        try {
+            // Cari OrderHdr berdasarkan tr_code dan tr_type
+            $existingOrder = OrderHdr::where('tr_code', $trCode)
+                ->where('tr_type', $this->trType)
+                ->first();
+
+            if ($existingOrder) {
+                // Jika nota ditemukan, load data untuk edit tanpa redirect
+                $this->loadOrderByTrCode($existingOrder);
+                $this->dispatch('info', "Purchase Order {$trCode} ditemukan. Data telah dimuat untuk edit.");
+            } else {
+                $this->dispatch('error', 'Nomor nota tidak ditemukan.');
+                $this->resetToCreateModeInternal();
+            }
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Terjadi kesalahan saat mencari Purchase Order: ' . $e->getMessage());
+            $this->inputs['tr_code'] = '';
+        }
+    }
+
+    private function loadOrderByTrCode($order)
+    {
+        // Set mode ke edit dan load object
+        $this->actionValue = 'Edit';
+        $this->objectIdValue = $order->id;
+        $this->object = $order;
+
+        // Load semua data order
+        $this->inputs = $this->object->toArray();
+        $this->inputs['tr_code'] = $this->object->tr_code;
+        $this->inputs['partner_name'] = $this->object->partner ? $this->object->partner->code : '';
+
+        // Load payment due date
+        $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
+        $paymentDueDays = is_numeric($this->object->payment_due_days) ? (int)$this->object->payment_due_days : 0;
+        $this->inputs['due_date'] = ($trDate && $paymentDueDays > 0)
+            ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
+            : ($trDate ? $trDate->format('Y-m-d') : null);
+
+        // Load related data
+        $this->salesTypeOnChanged();
+        $this->loadDetails();
+        $this->isPanelEnabled = "false"; // Disable panel karena sudah ada data
+
+        // Update tax settings
+        if (!empty($this->inputs['tax_code'])) {
+            $this->taxCodeOnChanged();
+        }
+
+        // Sinkronisasi version number dengan object yang di-load
+        $this->versionNumber = $this->object->version_number ?? 1;
+    }
+
+    private function setToCreateModeWithTrCode($trCode)
+    {
+        // Set mode ke create dengan tr_code yang sudah diinput
+        $this->actionValue = 'Create';
+        $this->objectIdValue = null;
+        $this->object = new OrderHdr();
+
+        // Reset inputs ke default tapi pertahankan tr_code
+        $this->resetInputsToDefault();
+        $this->inputs['tr_code'] = $trCode;
+        $this->isPanelEnabled = "true"; // Enable panel untuk input baru
+
+        // Reset version number untuk create mode
+        $this->versionNumber = 1;
+    }
+
+    private function resetToCreateModeInternal()
+    {
+        // Reset ke mode create murni
+        $this->actionValue = 'Create';
+        $this->objectIdValue = null;
+        $this->object = new OrderHdr();
+        $this->resetInputsToDefault();
+        $this->isPanelEnabled = "true";
+
+        // Reset version number untuk create mode
+        $this->versionNumber = 1;
+
+        // Reset Select2 dropdowns
+        $this->dispatch('resetSelect2Dropdowns');
+    }
+
+    private function resetInputsToDefault()
+    {
+        // Reset semua inputs ke nilai default
+        $this->inputs = populateArrayFromModel(new OrderHdr());
+        $this->inputs['tr_date'] = date('Y-m-d');
+        $this->inputs['due_date'] = date('Y-m-d');
+        $this->inputs['tr_type'] = $this->trType;
+        $this->inputs['curr_code'] = "IDR";
+        $this->inputs['curr_id'] = app(ConfigService::class)->getConstIdByStr1('BASE_CURRENCY', $this->inputs['curr_code']);
+        $this->inputs['curr_rate'] = 1.00;
+
+        // Set default payment term
+        $this->setDefaultPaymentTerm();
+
+        // Reset detail items
+        $this->input_details = [];
+
+        // Reset semua totals
+        $this->total_amount = 0;
+        $this->total_tax = 0;
+        $this->total_dpp = 0;
+        $this->total_discount = 0;
+    }
+
+    private function isValidTrCodeFormat($trCode)
+    {
+        // Validasi format tr_code berdasarkan pattern yang digunakan sistem
+        // Untuk PO, format umumnya: PO-YYYY-MM-NNNN
+
+        // Generate expected pattern
+        $expectedPattern = $this->generateTrCodePattern();
+
+        // Check if tr_code matches the expected pattern
+        return preg_match($expectedPattern, $trCode);
+    }
+
+    private function generateTrCodePattern()
+    {
+        // Generate regex pattern berdasarkan format tr_code sistem PO
+        $year = date('Y');
+        $month = date('m');
+
+        // Pattern: PO-2024-11-0001 (dengan nomor sequence 4 digit)
+        $pattern = '/^PO-' . $year . '-' . $month . '-\d{4}$/';
+
+        return $pattern;
+    }
+
+    public function resetToCreateMode()
+    {
+        // Method untuk reset ke mode create (dipanggil dari tombol "Mode Create")
+        $this->resetToCreateModeInternal();
+        $this->dispatch('info', 'Mode telah direset ke Create. Silakan input data baru.');
+    }
+
+    private function setDefaultPaymentTerm()
+    {
+        $cod = ConfigConst::where('const_group', 'MPAYMENT_TERMS')->where('str1', 'COD')->first();
+        if ($cod) {
+            $this->inputs['payment_term_id'] = $cod->id;
+            $this->inputs['payment_term'] = $cod->str1;
+            $this->inputs['payment_due_days'] = $cod->num1;
+            if (!empty($this->inputs['tr_date'])) {
+                $this->inputs['due_date'] = \Carbon\Carbon::parse($this->inputs['tr_date'])->addDays($cod->num1)->format('Y-m-d');
+            }
+        }
     }
 
     public function taxCodeOnChanged()
@@ -766,7 +935,14 @@ class Detail extends BaseComponent
     private function validateTrCodeDuplicate()
     {
         $trCode = $this->inputs['tr_code'] ?? null;
-        if (empty($trCode)) return;
+        if (empty($trCode)) {
+            throw new Exception('Kode transaksi harus diisi');
+        }
+
+        // Validasi format tr_code
+        if (!$this->isValidTrCodeFormat($trCode)) {
+            throw new Exception("Format kode transaksi '{$trCode}' tidak valid");
+        }
 
         $query = OrderHdr::where('tr_code', $trCode)->where('tr_type', $this->trType);
 

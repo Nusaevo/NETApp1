@@ -31,9 +31,14 @@
                                         <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                             :action="$actionValue" required="true" enabled="true"
                                             onChanged="onTrDateChanged" />
+
                                         <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
-                                            type="code" :action="$actionValue" required="true" clickEvent="trCodeOnClick"
-                                            buttonName="Nomor Baru" enabled="false" :buttonEnabled="$isPanelEnabled" />
+                                            type="text" :action="$actionValue" required="true"
+                                            clickEvent="trCodeOnClick"
+                                            buttonName="Nomor Nota Baru"
+                                            enabled="true" :buttonEnabled="true"
+                                            onChanged="onTrCodeChanged"
+                                            placeHolder="Edit nomor nota dan tekan enter untuk cari nota lain, klik nomor baru untuk create" />
                                     </div>
                                     <div class="row">
                                         <x-ui-dropdown-search label="Customer" model="inputs.partner_id"
