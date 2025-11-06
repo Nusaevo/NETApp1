@@ -46,6 +46,7 @@ class Detail extends BaseComponent
     public $isPanelEnabled = "false";
     public $payer = "true";
     public $isDeliv = false; // True jika ada delivery pada salah satu detail
+    public $isTrCodeFormatInvalid = false; // Track if tr_code format is invalid to prevent saving
     public $object;
     public $object_detail;
     public $canUpdateAfterPrint = true; // izin untuk save/print/delete setelah pernah dicetak
@@ -450,6 +451,12 @@ class Detail extends BaseComponent
             $this->orderService = app(OrderService::class);
         }
 
+        // Cek apakah tr_code format invalid untuk mencegah save
+        if ($this->isTrCodeFormatInvalid) {
+            $this->dispatch('error', 'Format nomor nota tidak valid. Perbaiki format nomor nota sebelum menyimpan.');
+            return;
+        }
+
         $this->validate();
 
         // Validasi duplikasi tr_code
@@ -601,8 +608,9 @@ class Detail extends BaseComponent
         if ($this->actionValue !== 'Create') {
             $this->resetToCreateModeInternal();
         }
-        
+
         // Tambahkan pengecekan sales_type
+
         if (empty($this->inputs['sales_type'])) {
             $this->dispatch('error', 'Silakan pilih Tipe Kendaraan terlebih dahulu sebelum generate Nomor.');
             return;
@@ -618,6 +626,9 @@ class Detail extends BaseComponent
         $taxDocFlag = !empty($this->inputs['tax_doc_flag']);
         $trDate = $this->inputs['tr_date'];
         $this->inputs['tr_code'] = app(MasterService::class)->getNewTrCode($this->trType,$salesType,$taxDocFlag,$trDate);
+
+        // Reset flag karena tr_code yang di-generate pasti valid
+        $this->isTrCodeFormatInvalid = false;
     }
 
     public function onTrCodeChanged()
@@ -626,6 +637,7 @@ class Detail extends BaseComponent
 
         if (empty($trCode)) {
             // Jika tr_code kosong, reset ke mode create tanpa object
+            $this->isTrCodeFormatInvalid = false;
             $this->resetToCreateModeInternal();
             return;
         }
@@ -638,15 +650,24 @@ class Detail extends BaseComponent
 
             if ($existingOrder) {
                 // Jika nota ditemukan, load data untuk edit tanpa redirect
+                $this->isTrCodeFormatInvalid = false;
                 $this->loadOrderByTrCode($existingOrder);
                 $this->dispatch('info', "Nota {$trCode} ditemukan. Data telah dimuat untuk edit.");
             } else {
-                $this->dispatch('error', 'Nomor nota tidak ditemukan.');
-                $this->resetToCreateModeInternal();
+                // Validasi format tr_code jika tidak ditemukan di database
+                if (!$this->isValidTrCodeFormat($trCode)) {
+                    $this->isTrCodeFormatInvalid = true;
+                    $this->dispatch('error', "Format nomor nota '{$trCode}' tidak valid. Gunakan tombol 'Nomor Baru' untuk generate nomor yang benar atau periksa format yang sesuai.");
+                    return;
+                }
+
+                // Jika format valid tapi tidak ditemukan, biarkan tr_code tetap di field untuk koreksi user
+                $this->isTrCodeFormatInvalid = false;
+                $this->dispatch('warning', "Nomor nota '{$trCode}' tidak ditemukan. Silakan periksa kembali atau gunakan nomor lain.");
             }
         } catch (Exception $e) {
             $this->dispatch('error', 'Terjadi kesalahan saat mencari nota: ' . $e->getMessage());
-            $this->inputs['tr_code'] = '';
+            // Jangan hapus tr_code, biarkan user bisa perbaiki
         }
     }
 
@@ -769,6 +790,9 @@ class Detail extends BaseComponent
         $this->total_tax = 0;
         $this->total_dpp = 0;
         $this->total_discount = 0;
+
+        // Reset tr_code format validation flag
+        $this->isTrCodeFormatInvalid = false;
     }
 
     private function isValidTrCodeFormat($trCode)
