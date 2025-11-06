@@ -96,24 +96,24 @@ class InventoryService
             case 'PD': // Purchase Delivery: Tambah OH, Kurangi FGR
                 $qty = $detailData['qty'];
                 // $amt = $price * $qty;
-                $trDesc = 'DELIVERY IN ' . $headerData['tr_code'];
+                $trDesc = 'DELIVERY IN ' . ($detailData['wh_code'] ?? '') . ' ' . $headerData['tr_code'];
                 break;
             case 'SD': // Sales Delivery: Kurangi OH, Kurangi FGI
                 $qty = -$detailData['qty'];
                 // $amt = $price * $qty;
-                $trDesc = 'DELIVERY OUT ' . $headerData['tr_code'];
+                $trDesc = 'DELIVERY OUT ' . ($detailData['wh_code'] ?? '') . ' ' . $headerData['tr_code'];
                 break;
             case 'TW':
                 $qty = $detailData['qty'];
                 if ($detailData['qty'] < 0) {
-                    $trDesc = 'TRANSFER WH OUT ' . $headerData['tr_code'];
+                    $trDesc = 'TRANSFER WH OUT ' . ($detailData['wh_code'] ?? '') . ' ' . $headerData['tr_code'];
                 } else {
-                    $trDesc = 'TRANSFER WH IN ' . $headerData['tr_code'];
+                    $trDesc = 'TRANSFER WH IN ' . ($detailData['wh_code2'] ?? '') . ' ' . $headerData['tr_code'];
                 }
                 break;
             case 'IA':
                 $qty = $detailData['qty'];
-                $trDesc = 'ADJUSTMENT ' . $headerData['tr_code'];
+                $trDesc = 'ADJUSTMENT ' . ($detailData['wh_code'] ?? '') . ' ' . $headerData['tr_code'];
                 break;
         }
 

@@ -212,11 +212,9 @@ class DeliveryService
 
                 $detail['id'] = $picking->id;
 
-                // Untuk ivt_logs, gunakan tr_seq dari packing
                 $packingTrSeq = DelivPacking::where('id', $detailData['id'])->value('tr_seq');
                 $detail['tr_seq'] = $packingTrSeq;
 
-                // Untuk ivt_logs, gunakan tr_seq2 dari picking
                 $pickingTrSeq = $picking->tr_seq;
                 $detail['tr_seq2'] = $pickingTrSeq;
 

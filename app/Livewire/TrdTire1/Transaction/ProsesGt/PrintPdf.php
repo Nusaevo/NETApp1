@@ -119,9 +119,17 @@ class PrintPdf extends BaseComponent
         }
 
         // Urutkan: CUSTOMER LAIN-LAIN muncul terakhir, kemudian berdasarkan nama partner
+        // Untuk CUSTOMER LAIN-LAIN, urutkan berdasarkan nomor nota (tr_code)
         usort($detailsWithCustomer, function($a, $b) {
-            // Jika keduanya LAIN-LAIN atau keduanya bukan LAIN-LAIN, urutkan berdasarkan nama customer
-            if ($a['is_lain_lain'] === $b['is_lain_lain']) {
+            // Jika keduanya LAIN-LAIN, urutkan berdasarkan nomor nota (tr_code)
+            if ($a['is_lain_lain'] && $b['is_lain_lain']) {
+                $trCodeA = $a['order']->tr_code ?? '';
+                $trCodeB = $b['order']->tr_code ?? '';
+                return strcmp($trCodeA, $trCodeB);
+            }
+
+            // Jika keduanya bukan LAIN-LAIN, urutkan berdasarkan nama customer
+            if (!$a['is_lain_lain'] && !$b['is_lain_lain']) {
                 return strcmp($a['customer_name'], $b['customer_name']);
             }
 
