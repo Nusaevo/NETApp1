@@ -330,6 +330,11 @@ class Detail extends BaseComponent
         $this->updateAfterPrintPermission();
         $this->updateButtonStatesByCounter();
         $this->isPanelEnabled = "false"; // Disable panel karena sudah ada data
+        
+        // Dispatch event to refresh partner dropdown with loaded partner_id
+        $this->dispatch('resetSelect2Dropdowns', [
+            'partner_id' => $this->inputs['partner_id'] ?? null
+        ]);
     }
 
     private function updateAfterPrintPermission(): void
@@ -716,24 +721,13 @@ class Detail extends BaseComponent
         }
         $this->dispatch('updateTaxPayerEnabled', !empty($this->inputs['tax_doc_flag']));
 
+        // Dispatch event to refresh partner dropdown with loaded partner_id
+        $this->dispatch('resetSelect2Dropdowns', [
+            'partner_id' => $this->inputs['partner_id'] ?? null
+        ]);
+
         // Sinkronisasi version number dengan object yang di-load
         $this->versionNumber = $this->object->version_number ?? 1;
-    }
-
-    private function setToCreateModeWithTrCode($trCode)
-    {
-        // Set mode ke create dengan tr_code yang sudah diinput
-        $this->actionValue = 'Create';
-        $this->objectIdValue = null;
-        $this->object = new OrderHdr();
-
-        // Reset inputs ke default tapi pertahankan tr_code
-        $this->resetInputsToDefault();
-        $this->inputs['tr_code'] = $trCode;
-        $this->isPanelEnabled = "true"; // Enable panel untuk input baru
-
-        // Reset version number untuk create mode
-        $this->versionNumber = 1;
     }
 
     private function resetToCreateModeInternal()
