@@ -8,9 +8,13 @@ use App\Models\TrdTire1\Master\{Partner, Material};
 use App\Models\Util\GenericExcelExport;
 use Illuminate\Support\Carbon;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use Livewire\WithPagination;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class Index extends BaseComponent
 {
+    use WithPagination;
+
     public $startCode;
     public $endCode;
     public $filterStatus = '';
@@ -19,6 +23,10 @@ class Index extends BaseComponent
     public $filterSalesType = '';
     public $filterTrCode = '';
     public $results = [];
+    public $perPage = 25;
+    public $allResults = []; // Changed to public so Livewire can serialize it
+    public $page = 1;
+    public $totalResults = 0;
 
     public $ddPartner = [
         'placeHolder' => "Ketik untuk cari customer ...",
@@ -53,6 +61,8 @@ class Index extends BaseComponent
         }
 
         $this->resetErrorBag();
+        $this->page = 1;
+        $this->resetPage();
 
         // Jika tanggal kosong, gunakan range yang sangat luas
         if (isNullOrEmptyNumber($this->startCode)) {
@@ -182,8 +192,78 @@ class Index extends BaseComponent
             $groupedResults[] = $notaData;
         }
 
-        // Assign results
-        $this->results = $groupedResults;
+        // Store all results for pagination
+        $this->allResults = $groupedResults;
+
+        // Paginate results
+        $this->paginateResults();
+    }
+
+    protected function paginateResults()
+    {
+        if (empty($this->allResults)) {
+            $this->results = [];
+            $this->totalResults = 0;
+            return;
+        }
+
+        // Always use current page from property
+        $currentPage = $this->page ?: 1;
+        $perPage = $this->perPage;
+        $total = count($this->allResults);
+        $this->totalResults = $total;
+
+        // Ensure page is valid
+        $maxPage = max(1, ceil($total / $perPage));
+        if ($currentPage > $maxPage) {
+            $currentPage = $maxPage;
+            $this->page = $currentPage;
+        }
+
+        // Slice the results for current page
+        $items = array_slice($this->allResults, ($currentPage - 1) * $perPage, $perPage);
+
+        // Assign paginated results (only simple array, not paginator object)
+        $this->results = $items;
+    }
+
+    protected function getPaginator()
+    {
+        // Check if we have results to paginate
+        if (empty($this->allResults) || count($this->allResults) === 0) {
+            return null;
+        }
+
+        // Always use current page from property
+        $currentPage = max(1, (int)($this->page ?: 1));
+        $perPage = max(1, (int)$this->perPage);
+        $total = count($this->allResults);
+
+        // Ensure page is within valid range
+        $maxPage = max(1, ceil($total / $perPage));
+        if ($currentPage > $maxPage) {
+            $currentPage = $maxPage;
+            $this->page = $currentPage;
+        }
+
+        $items = array_slice($this->allResults, ($currentPage - 1) * $perPage, $perPage);
+
+        // Create paginator only for rendering
+        $paginator = new LengthAwarePaginator(
+            $items,
+            $total,
+            $perPage,
+            $currentPage,
+            [
+                'path' => request()->url(),
+                'pageName' => 'page'
+            ]
+        );
+
+        // Set query string for pagination links
+        $paginator->withQueryString();
+
+        return $paginator;
     }
 
     public function resetFilters()
@@ -196,6 +276,29 @@ class Index extends BaseComponent
         $this->filterSalesType = '';
         $this->filterTrCode = '';
         $this->results = [];
+        $this->allResults = [];
+        $this->totalResults = 0;
+        $this->page = 1;
+        $this->resetPage();
+    }
+
+    public function updatedPerPage()
+    {
+        $this->page = 1;
+        $this->resetPage();
+        // Re-paginate existing results with new per page value
+        if (!empty($this->allResults)) {
+            $this->paginateResults();
+        }
+    }
+
+    public function gotoPage($page)
+    {
+        $this->page = max(1, (int) $page);
+        // Re-paginate existing results without re-querying
+        if (!empty($this->allResults)) {
+            $this->paginateResults();
+        }
     }
 
     public function getStatusOptions()
@@ -265,7 +368,32 @@ class Index extends BaseComponent
     public function render()
     {
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
-        return view($renderRoute);
+
+        // Ensure pagination is always up to date before rendering
+        if (!empty($this->allResults) && count($this->allResults) > 0) {
+            // Ensure page is valid
+            $maxPage = max(1, ceil(count($this->allResults) / $this->perPage));
+            if ($this->page > $maxPage) {
+                $this->page = $maxPage;
+            }
+            if ($this->page < 1) {
+                $this->page = 1;
+            }
+            $this->paginateResults();
+        }
+
+        // Create paginator only when rendering, not as a stored property
+        $paginator = $this->getPaginator();
+        return view($renderRoute, [
+            'paginator' => $paginator,
+            'allResults' => $this->allResults ?? [] // Pass allResults to view for print
+        ]);
+    }
+
+    private function getPage()
+    {
+        // Use $this->page property if set, otherwise get from query string
+        return $this->page ?? (int) request()->query('page', 1);
     }
 
     public function resetResult()
@@ -288,7 +416,7 @@ class Index extends BaseComponent
     public function downloadExcel()
     {
         // Validasi: pastikan ada data untuk di-export
-        if (empty($this->results)) {
+        if (empty($this->allResults)) {
             $this->dispatch('notify-swal', [
                 'type' => 'warning',
                 'message' => 'Tidak ada data untuk di-export. Mohon lakukan pencarian terlebih dahulu.'
@@ -302,7 +430,8 @@ class Index extends BaseComponent
             $rowStyles = [];
             $currentRowIndex = 0;
 
-            foreach ($this->results as $nota) {
+            // Export all results, not just current page
+            foreach ($this->allResults as $nota) {
                 $isFirstItem = true;
                 $subTotalQty = 0;
                 $subTotalAmount = 0;

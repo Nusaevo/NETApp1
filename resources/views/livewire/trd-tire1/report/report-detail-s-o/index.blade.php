@@ -74,10 +74,215 @@
         </div>
         {{-- End Filter Frame --}}
 
-        <div id="print">
+        {{-- Normal View (with pagination) - Hidden when printing --}}
+        <div id="normal-view" style="display: block;">
+            <div class="card print-page">
+                <div class="card-body">
+                    <div class="container mb-3">
+                        <div style="max-width:2480px; margin:auto; padding:5px 20px 20px 20px;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <h3 style="font-weight:bold; margin:0;">
+                                    DAFTAR NOTA JUAL
+                                </h3>
+                            </div>
+                            <p style="text-align:left; margin-bottom:5px; font-size: 12px;">
+                                Periode: {{ $startCode ? \Carbon\Carbon::parse($startCode)->format('d-M-Y') : '-' }}
+                                s/d {{ $endCode ? \Carbon\Carbon::parse($endCode)->format('d-M-Y') : '-' }}
+                            </p>
+                            @if ($filterPartner || $filterStatus || $filterMaterialId || $filterSalesType || $filterTrCode)
+                                <p style="text-align:left; margin-bottom:20px; font-size: 12px;">
+                                    @php
+                                        $filters = [];
+                                        if ($filterPartner) {
+                                            $filters[] =
+                                                \App\Models\TrdTire1\Master\Partner::find($filterPartner)->name ??
+                                                'Customer Tidak Ditemukan';
+                                        }
+                                        if ($filterMaterialId) {
+                                            $material = \App\Models\TrdTire1\Master\Material::find(
+                                                $filterMaterialId,
+                                            );
+                                            $filters[] =
+                                                'Kode: ' .
+                                                ($material ? $material->code : 'Material Tidak Ditemukan');
+                                        }
+                                        if ($filterStatus) {
+                                            $filters[] = ucfirst(str_replace('_', ' ', $filterStatus));
+                                        }
+                                        if ($filterTrCode) {
+                                            $filters[] = 'Nota: ' . $filterTrCode;
+                                        }
+                                    @endphp
+                                    {{ implode(' | ', $filters) }}
+                                </p>
+                            @endif
+
+                            @php
+                                // Format tanggal untuk display
+                                function formatDate($date)
+                                {
+                                    if (!$date) {
+                                        return '';
+                                    }
+                                    return \Carbon\Carbon::parse($date)->format('d-M-y');
+                                }
+                            @endphp
+
+                            <table
+                                style="width:100%; border-collapse:collapse; font-family: 'Calibri', Arial, sans-serif;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid #000;">
+                                        <th
+                                            style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px;">
+                                            No. Nota</th>
+                                        <th
+                                            style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px;">
+                                            Tgl Nota</th>
+                                        <th
+                                            style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px;">
+                                            Nama Customer</th>
+                                        <th
+                                            style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px;">
+                                            Kode</th>
+                                        <th
+                                            style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px;">
+                                            Nama Barang</th>
+                                        <th
+                                            style="text-align:right; padding:4px 6px; font-weight:bold; font-size:11px;">
+                                            Qty</th>
+                                        <th
+                                            style="text-align:right; padding:4px 6px; font-weight:bold; font-size:11px;">
+                                            Harga</th>
+                                        <th
+                                            style="text-align:right; padding:4px 6px; font-weight:bold; font-size:11px;">
+                                            % Disc</th>
+                                        <th
+                                            style="text-align:right; padding:4px 6px; font-weight:bold; font-size:11px;">
+                                            Total</th>
+                                        <th
+                                            style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px;">
+                                            S</th>
+                                        <th
+                                            style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px;">
+                                            Wajib Pajak</th>
+                                        <th
+                                            style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px; width: 60px;">
+                                            Tgl Kirim</th>
+                                        <th
+                                            style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px; width: 60px;">
+                                            Tgl Tagih</th>
+                                        <th
+                                            style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px; width: 60px;">
+                                            Tgl Lunas</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($results as $nota)
+                                        @php
+                                            $isFirstItem = true;
+                                            $subTotalQty = 0;
+                                            $subTotalAmount = 0;
+                                        @endphp
+                                        @foreach ($nota['items'] as $item)
+                                            @php
+                                                $subTotalQty += $item['qty'];
+                                                $subTotalAmount += $item['total'];
+                                            @endphp
+                                            <tr>
+                                                @if ($isFirstItem)
+                                                    <td style="text-align:left; padding:4px 6px; font-size:11px;">
+                                                        {{ $nota['no_nota'] }}</td>
+                                                    <td style="text-align:left; padding:4px 6px; font-size:11px;">
+                                                        {{ formatDate($nota['tgl_nota']) }}</td>
+                                                    <td style="text-align:left; padding:4px 6px; font-size:11px;">
+                                                        {{ $item['customer_name'] }}</td>
+                                                @else
+                                                    <td style="padding:4px 6px;"></td>
+                                                    <td style="padding:4px 6px;"></td>
+                                                    <td style="padding:4px 6px;"></td>
+                                                @endif
+                                                <td style="text-align:left; padding:4px 6px; font-size:11px;">
+                                                    {{ $item['kode'] }}</td>
+                                                <td style="text-align:left; padding:4px 6px; font-size:11px;">
+                                                    {{ $item['nama_barang'] }}</td>
+                                                <td style="text-align:right; padding:4px 6px; font-size:11px;">
+                                                    {{ number_format($item['qty'], 0) }}</td>
+                                                <td style="text-align:right; padding:4px 6px; font-size:11px;">
+                                                    {{ number_format($item['harga'], 0, ',', '.') }}</td>
+                                                <td style="text-align:right; padding:4px 6px; font-size:11px;">
+                                                    {{ number_format($item['disc'], 0) }}</td>
+                                                <td style="text-align:right; padding:4px 6px; font-size:11px;">
+                                                    {{ number_format($item['total'], 0, ',', '.') }}</td>
+                                                @if ($isFirstItem)
+                                                    <td style="text-align:left; padding:4px 6px; font-size:11px;">
+                                                        {{ $item['s'] }}</td>
+                                                    <td style="text-align:left; padding:4px 6px; font-size:11px;">
+                                                        {{ $item['wajib_pajak'] }}</td>
+                                                    <td
+                                                        style="text-align:left; padding:4px 6px; font-size:11px; width: 60px;">
+                                                        {{ formatDate($item['t_kirim']) }}</td>
+                                                    <td
+                                                        style="text-align:left; padding:4px 6px; font-size:11px; width: 60px;">
+                                                        {{ formatDate($item['tgl_tagih']) }}</td>
+                                                    <td
+                                                        style="text-align:left; padding:4px 6px; font-size:11px; width: 60px;">
+                                                        {{ formatDate($item['tgl_lunas']) }}</td>
+                                                @else
+                                                    <td style="padding:4px 6px;"></td>
+                                                    <td style="padding:4px 6px;"></td>
+                                                    <td style="padding:4px 6px;"></td>
+                                                    <td style="padding:4px 6px;"></td>
+                                                    <td style="padding:4px 6px;"></td>
+                                                @endif
+                                            </tr>
+                                            @php $isFirstItem = false; @endphp
+                                        @endforeach
+                                        {{-- Sub Total Row --}}
+                                        <tr>
+                                            <td style="padding:4px 6px;"></td>
+                                            <td style="padding:4px 6px;"></td>
+                                            <td style="padding:4px 6px;"></td>
+                                            <td style="padding:4px 6px;"></td>
+                                            <td
+                                                style="text-align:right; padding:4px 6px; font-weight:bold; font-size:11px;">
+                                                Sub Total ({{ $nota['no_nota'] }}):
+                                            </td>
+                                            <td
+                                                style="text-align:right; padding:4px 6px; font-weight:bold; font-size:11px; border-top: 1px solid #000;">
+                                                {{ number_format($subTotalQty, 0) }}</td>
+                                            <td style="padding:4px 6px; border-top: 1px solid #000;"></td>
+                                            <td style="padding:4px 6px; border-top: 1px solid #000;"></td>
+                                            <td
+                                                style="text-align:right; padding:4px 6px; font-weight:bold; font-size:11px; border-top: 1px solid #000;">
+                                                {{ number_format($subTotalAmount, 0, ',', '.') }}</td>
+                                            <td colspan="5" style="padding:4px 6px;"></td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Print View (all data) - Hidden normally, shown when printing --}}
+        <div id="print" style="display: none;">
             <div>
                 <style>
+                    #print {
+                        display: none;
+                    }
+
                     @media print {
+                        #print {
+                            display: block !important;
+                        }
+
+                        #normal-view {
+                            display: none !important;
+                        }
                         body {
                             background: #fff !important;
                             font-family: 'Calibri', Arial, sans-serif !important;
@@ -159,8 +364,13 @@
                         .btn,
                         .card-header,
                         .card-footer,
-                        .page-info {
+                        .page-info,
+                        #normal-view {
                             display: none !important;
+                        }
+
+                        #print {
+                            display: block !important;
                         }
 
                         #print {
@@ -209,9 +419,11 @@
                                     <h3 style="font-weight:bold; margin:0;">
                                         DAFTAR NOTA JUAL
                                     </h3>
+                                    @if (!empty($allResults))
                                     <span style="font-size: 12px; color: #666;">
-                                        Page 1 of 1
+                                            Total: {{ count($allResults) }} Nota
                                     </span>
+                                    @endif
                                 </div>
                                 <p style="text-align:left; margin-bottom:5px; font-size: 12px;">
                                     Periode: {{ $startCode ? \Carbon\Carbon::parse($startCode)->format('d-M-Y') : '-' }}
@@ -247,6 +459,7 @@
 
                                 @php
                                     // Format tanggal untuk display
+                                    if (!function_exists('formatDate')) {
                                     function formatDate($date)
                                     {
                                         if (!$date) {
@@ -254,6 +467,11 @@
                                         }
                                         return \Carbon\Carbon::parse($date)->format('d-M-y');
                                     }
+                                    }
+
+                                    // Use allResults for print area to show all data when printing
+                                    // For normal view, this will be hidden by CSS and use paginated results
+                                    $printData = !empty($allResults) ? $allResults : $results;
                                 @endphp
 
                                 <table
@@ -306,7 +524,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($results as $nota)
+                                        @foreach ($printData as $nota)
                                             @php
                                                 $isFirstItem = true;
                                                 $subTotalQty = 0;
@@ -404,5 +622,109 @@
                 </div>
             </div>
         </div>
+
+        {{-- Pagination Controls --}}
+        @if(isset($paginator) && $paginator && method_exists($paginator, 'hasPages') && $paginator->hasPages())
+            <div class="card mt-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2">
+                                <label for="perPage" class="mb-0">Items per page:</label>
+                                <select wire:model.live="perPage" id="perPage" class="form-select" style="width: auto;">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span class="text-muted">
+                                    Showing {{ $paginator->firstItem() ?? 0 }} to {{ $paginator->lastItem() ?? 0 }} of {{ $paginator->total() }} results
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination justify-content-end mb-0">
+                                    {{-- Previous Page Link --}}
+                                    @if ($paginator->onFirstPage())
+                                        <li class="page-item disabled">
+                                            <span class="page-link">&laquo;</span>
+                                        </li>
+                                    @else
+                                        <li class="page-item">
+                                            <button type="button" class="page-link" wire:click="gotoPage({{ $paginator->currentPage() - 1 }})" rel="prev">&laquo;</button>
+                                        </li>
+                                    @endif
+
+                                    {{-- Pagination Elements --}}
+                                    @php
+                                        $currentPage = $paginator->currentPage();
+                                        $lastPage = $paginator->lastPage();
+                                        $window = 2;
+
+                                        $start = max(1, $currentPage - $window);
+                                        $end = min($lastPage, $currentPage + $window);
+
+                                        if ($currentPage <= $window + 1) {
+                                            $end = min($lastPage, (2 * $window) + 2);
+                                        } elseif ($currentPage >= $lastPage - $window) {
+                                            $start = max(1, $lastPage - (2 * $window) - 1);
+                                        }
+                                    @endphp
+
+                                    {{-- First Page --}}
+                                    @if ($start > 1)
+                                        <li class="page-item">
+                                            <button type="button" class="page-link" wire:click="gotoPage(1)">1</button>
+                                        </li>
+                                        @if ($start > 2)
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                        @endif
+                                    @endif
+
+                                    {{-- Page Numbers in Window --}}
+                                    @for ($page = $start; $page <= $end; $page++)
+                                        @if ($page == $currentPage)
+                                            <li class="page-item active" aria-current="page">
+                                                <span class="page-link">{{ $page }}</span>
+                                            </li>
+                                        @else
+                                            <li class="page-item">
+                                                <button type="button" class="page-link" wire:click="gotoPage({{ $page }})">{{ $page }}</button>
+                                            </li>
+                                        @endif
+                                    @endfor
+
+                                    {{-- Last Page --}}
+                                    @if ($end < $lastPage)
+                                        @if ($end < $lastPage - 1)
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                        @endif
+                                        <li class="page-item">
+                                            <button type="button" class="page-link" wire:click="gotoPage({{ $lastPage }})">{{ $lastPage }}</button>
+                                        </li>
+                                    @endif
+
+                                    {{-- Next Page Link --}}
+                                    @if ($paginator->hasMorePages())
+                                        <li class="page-item">
+                                            <button type="button" class="page-link" wire:click="gotoPage({{ $paginator->currentPage() + 1 }})" rel="next">&raquo;</button>
+                                        </li>
+                                    @else
+                                        <li class="page-item disabled">
+                                            <span class="page-link">&raquo;</span>
+                                        </li>
+                                    @endif
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
     </x-ui-page-card>
 </div>
