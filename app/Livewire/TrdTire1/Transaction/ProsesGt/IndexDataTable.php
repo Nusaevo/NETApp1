@@ -278,9 +278,9 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function setNotaGT()
     {
-        // Validasi: semua pilihan harus dari customer yang sama
+        // Validasi: semua pilihan harus dari customer yang sama atau semua adalah "customer lain-lain"
         if (!$this->validateSameCustomerForSelection()) {
-            $this->dispatch('error', 'Customer berbeda. Pilih data dengan customer yang sama.');
+            $this->dispatch('error', 'Customer berbeda. Pilih data dengan customer yang sama atau semua adalah customer lain-lain.');
             return;
         }
 
@@ -345,9 +345,9 @@ class IndexDataTable extends BaseDataTableComponent
     public function prosesNotadanPoint()
     {
         if (count($this->getSelected()) > 0) {
-            // Validasi: semua pilihan harus dari customer yang sama
+            // Validasi: semua pilihan harus dari customer yang sama atau semua adalah "customer lain-lain"
             if (!$this->validateSameCustomerForSelection()) {
-                $this->dispatch('error', 'Customer berbeda. Pilih data dengan customer yang sama.');
+                $this->dispatch('error', 'Customer berbeda. Pilih data dengan customer yang sama atau semua adalah customer lain-lain.');
                 return;
             }
 
@@ -433,15 +433,71 @@ class IndexDataTable extends BaseDataTableComponent
             return false;
         }
 
-        $partnerIds = OrderDtl::whereIn('id', $selectedIds)
-            ->with('OrderHdr')
-            ->get()
+        // Load OrderDtl dengan relasi yang diperlukan
+        $orderDetails = OrderDtl::whereIn('id', $selectedIds)
+            ->with(['OrderHdr.Partner', 'SalesReward'])
+            ->get();
+
+        // Cek apakah semua adalah "customer lain-lain"
+        $allLainLain = true;
+        foreach ($orderDetails as $detail) {
+            if (!$this->isCustomerLainLain($detail)) {
+                $allLainLain = false;
+                break;
+            }
+        }
+
+        // Jika semua adalah "customer lain-lain", izinkan set nota barengan
+        if ($allLainLain) {
+            return true;
+        }
+
+        // Jika tidak semua "customer lain-lain", validasi partner harus sama
+        $partnerIds = $orderDetails
             ->pluck('OrderHdr.partner_id')
             ->filter()
             ->unique()
             ->values();
 
         return $partnerIds->count() <= 1;
+    }
+
+    /**
+     * Cek apakah OrderDtl adalah "customer lain-lain"
+     * berdasarkan brand dan partner_chars
+     */
+    private function isCustomerLainLain($orderDtl): bool
+    {
+        if (!$orderDtl->OrderHdr || !$orderDtl->OrderHdr->Partner || !$orderDtl->SalesReward) {
+            return false;
+        }
+
+        $partner = $orderDtl->OrderHdr->Partner;
+        $salesReward = $orderDtl->SalesReward;
+        $partnerChars = is_string($partner->partner_chars)
+            ? json_decode($partner->partner_chars, true)
+            : $partner->partner_chars;
+
+        // Logika CUSTOMER LAIN-LAIN berdasarkan brand
+        if ($salesReward->brand && $partnerChars && is_array($partnerChars)) {
+            // GT RADIAL atau GAJAH TUNGGAL
+            if (in_array($salesReward->brand, ['GT RADIAL', 'GAJAH TUNGGAL']) &&
+                (($partnerChars['GT'] ?? null) === false || ($partnerChars['GT'] ?? null) === null)) {
+                return true;
+            }
+            // IRC
+            if ($salesReward->brand === 'IRC' &&
+                (($partnerChars['IRC'] ?? null) === false || ($partnerChars['IRC'] ?? null) === null)) {
+                return true;
+            }
+            // ZENEOS
+            if ($salesReward->brand === 'ZENEOS' &&
+                (($partnerChars['ZN'] ?? null) === false || ($partnerChars['ZN'] ?? null) === null)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // protected function isFirstFilterApplied(Builder $query): bool
