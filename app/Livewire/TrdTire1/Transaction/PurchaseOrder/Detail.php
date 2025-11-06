@@ -340,11 +340,26 @@ class Detail extends BaseComponent
 
      public function trCodeOnClick()
     {
-        // Reset ke mode create
-        $this->resetToCreateModeInternal();
+        // Reset ke mode create hanya jika sedang dalam mode edit
+        if ($this->actionValue !== 'Create') {
+            $this->resetToCreateModeInternal();
+        }
 
-        // Generate new tr_code
-        $this->inputs['tr_code'] = app(MasterService::class)->getNewTrCode($this->trType,"","");
+        // Tambahkan pengecekan sales_type
+        if (empty($this->inputs['sales_type'])) {
+            $this->dispatch('error', 'Silakan pilih Tipe Kendaraan terlebih dahulu sebelum generate Nomor.');
+            return;
+        }
+
+        // Tambahkan pengecekan tr_date
+        if (empty($this->inputs['tr_date'])) {
+            $this->dispatch('error', 'Silakan pilih Tanggal Transaksi terlebih dahulu sebelum generate Nomor.');
+            return;
+        }
+
+        $salesType = $this->inputs['sales_type'];
+        $trDate = $this->inputs['tr_date'];
+        $this->inputs['tr_code'] = app(MasterService::class)->getNewTrCode($this->trType, $salesType, "", $trDate);
     }
 
     public function onTrCodeChanged()

@@ -597,7 +597,11 @@ class Detail extends BaseComponent
 
     public function trCodeOnClick()
     {
-        $this->resetToCreateModeInternal();
+        // Reset ke mode create hanya jika sedang dalam mode edit
+        if ($this->actionValue !== 'Create') {
+            $this->resetToCreateModeInternal();
+        }
+        
         // Tambahkan pengecekan sales_type
         if (empty($this->inputs['sales_type'])) {
             $this->dispatch('error', 'Silakan pilih Tipe Kendaraan terlebih dahulu sebelum generate Nomor.');
