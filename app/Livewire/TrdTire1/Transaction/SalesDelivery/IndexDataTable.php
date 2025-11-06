@@ -9,6 +9,7 @@ use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
 use App\Models\TrdTire1\Master\MatlUom;
+use App\Models\TrdTire1\Inventories\IvtBal;
 use App\Services\TrdTire1\{AuditLogService, BillingService, DeliveryService};
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Livewire; // pastikan namespace ini diimport
@@ -407,10 +408,19 @@ class IndexDataTable extends BaseDataTableComponent
             })->get();
 
             foreach ($orderDtls as $orderDtl) {
-                $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)->first();
-                if ($matlUom) {
-                    $matlUom->qty_fgi -= $orderDtl->qty;
-                    $matlUom->save();
+                // Kembalikan qty_fgi ke IvtBal dengan batch_code null
+                $ivtBal = IvtBal::where('matl_id', $orderDtl->matl_id)
+                    ->where('matl_uom', $orderDtl->matl_uom)
+                    ->where('wh_id', 0)
+                    ->where(function($query) {
+                        $query->whereNull('batch_code')
+                              ->orWhere('batch_code', '');
+                    })
+                    ->first();
+
+                if ($ivtBal) {
+                    $ivtBal->qty_fgi -= $orderDtl->qty;
+                    $ivtBal->save();
                 }
             }
 
@@ -444,11 +454,19 @@ class IndexDataTable extends BaseDataTableComponent
             })->get();
 
             foreach ($orderDtls as $orderDtl) {
-                // Cari matl_id pada MatlUom dan tambahkan qty_fgi
-                $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)->first();
-                if ($matlUom) {
-                    $matlUom->qty_fgi += $orderDtl->qty;
-                    $matlUom->save();
+                // Kembalikan qty_fgi ke IvtBal dengan batch_code null
+                $ivtBal = IvtBal::where('matl_id', $orderDtl->matl_id)
+                    ->where('matl_uom', $orderDtl->matl_uom)
+                    ->where('wh_id', 0)
+                    ->where(function($query) {
+                        $query->whereNull('batch_code')
+                              ->orWhere('batch_code', '');
+                    })
+                    ->first();
+
+                if ($ivtBal) {
+                    $ivtBal->qty_fgi += $orderDtl->qty;
+                    $ivtBal->save();
                 }
             }
             OrderHdr::whereIn('id', $this->getSelected())->update(['status_code' => Status::PRINT]);

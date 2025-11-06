@@ -199,7 +199,11 @@
             <div class="report-container">
                 <div class="report-title">
                     <h3>Laporan Order Barang</h3>
-                    <span style="font-size:12px;color:#666;">Page 1 of 1</span>
+                    @if (!empty($allResults))
+                        <span id="print-total" style="font-size:12px;color:#666; display: none;">
+                            Total: {{ count($allResults) }} Nota
+                        </span>
+                    @endif
                 </div>
 
                 <p class="period">
@@ -317,11 +321,220 @@
                 --}}
             </div>
         </div>
+
+        {{-- Pagination Controls --}}
+        @if(isset($paginator) && $paginator && method_exists($paginator, 'hasPages') && $paginator->hasPages())
+            <div class="card mt-4 pagination-controls">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2">
+                                <label for="perPage" class="mb-0">Items per page:</label>
+                                <select wire:model.live="perPage" id="perPage" class="form-select" style="width: auto;">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span class="text-muted">
+                                    Showing {{ $paginator->firstItem() ?? 0 }} to {{ $paginator->lastItem() ?? 0 }} of {{ $paginator->total() }} results
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination justify-content-end mb-0">
+                                    {{-- Previous Page Link --}}
+                                    @if ($paginator->onFirstPage())
+                                        <li class="page-item disabled">
+                                            <span class="page-link">&laquo;</span>
+                                        </li>
+                                    @else
+                                        <li class="page-item">
+                                            <button type="button" class="page-link" wire:click="gotoPage({{ $paginator->currentPage() - 1 }})" rel="prev">&laquo;</button>
+                                        </li>
+                                    @endif
+
+                                    {{-- Pagination Elements --}}
+                                    @php
+                                        $currentPage = $paginator->currentPage();
+                                        $lastPage = $paginator->lastPage();
+                                        $window = 2;
+
+                                        $start = max(1, $currentPage - $window);
+                                        $end = min($lastPage, $currentPage + $window);
+
+                                        if ($currentPage <= $window + 1) {
+                                            $end = min($lastPage, (2 * $window) + 2);
+                                        } elseif ($currentPage >= $lastPage - $window) {
+                                            $start = max(1, $lastPage - (2 * $window) - 1);
+                                        }
+                                    @endphp
+
+                                    {{-- First Page --}}
+                                    @if ($start > 1)
+                                        <li class="page-item">
+                                            <button type="button" class="page-link" wire:click="gotoPage(1)">1</button>
+                                        </li>
+                                        @if ($start > 2)
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                        @endif
+                                    @endif
+
+                                    {{-- Page Numbers in Window --}}
+                                    @for ($page = $start; $page <= $end; $page++)
+                                        @if ($page == $currentPage)
+                                            <li class="page-item active" aria-current="page">
+                                                <span class="page-link">{{ $page }}</span>
+                                            </li>
+                                        @else
+                                            <li class="page-item">
+                                                <button type="button" class="page-link" wire:click="gotoPage({{ $page }})">{{ $page }}</button>
+                                            </li>
+                                        @endif
+                                    @endfor
+
+                                    {{-- Last Page --}}
+                                    @if ($end < $lastPage)
+                                        @if ($end < $lastPage - 1)
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                        @endif
+                                        <li class="page-item">
+                                            <button type="button" class="page-link" wire:click="gotoPage({{ $lastPage }})">{{ $lastPage }}</button>
+                                        </li>
+                                    @endif
+
+                                    {{-- Next Page Link --}}
+                                    @if ($paginator->hasMorePages())
+                                        <li class="page-item">
+                                            <button type="button" class="page-link" wire:click="gotoPage({{ $paginator->currentPage() + 1 }})" rel="next">&raquo;</button>
+                                        </li>
+                                    @else
+                                        <li class="page-item disabled">
+                                            <span class="page-link">&raquo;</span>
+                                        </li>
+                                    @endif
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
     </x-ui-page-card>
 
-    <script>
-        function printReport() {
-            window.print();
-        }
-    </script>
+    {{-- Store all data for print and modify print function --}}
+    @if (!empty($allResults))
+        <script>
+            // Store all results for print
+            window.reportAllDataPO = @json($allResults);
+
+            function printReport() {
+                const reportContainer = document.querySelector('#print .report-container');
+                const printTotal = document.querySelector('#print .report-title span');
+
+                if (!reportContainer || !window.reportAllDataPO) {
+                    window.print();
+                    return;
+                }
+
+                // Save current HTML
+                const currentHtml = reportContainer.innerHTML;
+
+                // Replace with all data for print
+                let html = `
+                    <div class="report-title">
+                        <h3>Laporan Order Barang</h3>
+                        <span style="font-size:12px;color:#666;">Total: ${window.reportAllDataPO.length} Nota</span>
+                    </div>
+                    <p class="period">
+                        Periode: {{ $startCode ? \Carbon\Carbon::parse($startCode)->format('d-M-Y') : '-' }}
+                        s/d {{ $endCode ? \Carbon\Carbon::parse($endCode)->format('d-M-Y') : '-' }}
+                    </p>
+                    @if ($filterPartner || $filterBrand)
+                        <p class="filters-line">
+                            @php
+                                $filters = [];
+                                if ($filterPartner) {
+                                    $filters[] = \App\Models\TrdTire1\Master\Partner::find($filterPartner)->name ?? 'Supplier Tidak Ditemukan';
+                                }
+                                if ($filterBrand) {
+                                    $filters[] = 'Brand: ' . $filterBrand;
+                                }
+                            @endphp
+                            {{ implode(' | ', $filters) }}
+                        </p>
+                    @endif
+                `;
+
+                window.reportAllDataPO.forEach(nota => {
+                    let subTotalAmount = 0;
+                    nota.items.forEach(item => {
+                        subTotalAmount += parseFloat(item.total) || 0;
+                    });
+                    const ppn = Math.round(subTotalAmount * 0.11);
+                    const grand = subTotalAmount + ppn;
+
+                    html += '<div class="nota-block"><table><thead>';
+                    html += '<tr style="border-top:1px solid #000; border-right:1px solid #000; border-left:1px solid #000; border-bottom:none;">';
+                    html += '<td class="head-yellow" style="min-width:110px;">No. Nota</td>';
+                    html += '<td class="head-yellow" style="min-width:110px;">T. Order</td>';
+                    html += '<td class="head-yellow" colspan="3">Nama Supplier</td>';
+                    html += '<td class="head-yellow">Total</td>';
+                    html += '<td class="head-yellow">PPN</td>';
+                    html += '<td class="head-yellow">Total Nota</td>';
+                    html += '</tr>';
+
+                    html += '<tr style="border-top:none; border-right:1px solid #000; border-left:1px solid #000; border-bottom:1px solid #000;">';
+                    html += '<td class="head-yellow value text-center">' + nota.no_nota + '</td>';
+                    html += '<td class="head-yellow value text-center">' + (nota.tgl_nota ? new Date(nota.tgl_nota).toLocaleDateString('id-ID', {day: '2-digit', month: 'short', year: 'numeric'}) : '') + '</td>';
+                    html += '<td class="head-yellow value text-center" colspan="3">' + nota.nama_customer + '</td>';
+                    html += '<td class="head-yellow value text-right">' + subTotalAmount.toLocaleString('id-ID') + '</td>';
+                    html += '<td class="head-yellow value text-right">' + ppn.toLocaleString('id-ID') + '</td>';
+                    html += '<td class="head-yellow value text-right">' + grand.toLocaleString('id-ID') + '</td>';
+                    html += '</tr>';
+
+                    html += '<tr class="detail-head" style="border-bottom:1px solid #000;">';
+                    html += '<th class="text-left">Kode Brg.</th>';
+                    html += '<th class="text-left">Nama Barang</th>';
+                    html += '<th class="text-right">Order</th>';
+                    html += '<th class="text-right">Harga</th>';
+                    html += '<th class="text-right">Disc.</th>';
+                    html += '<th class="text-right">Total</th>';
+                    html += '</tr></thead><tbody>';
+
+                    nota.items.forEach(item => {
+                        html += '<tr>';
+                        html += '<td class="text-left">' + item.kode + '</td>';
+                        html += '<td class="text-left">' + item.nama_barang + '</td>';
+                        html += '<td class="text-right">' + parseFloat(item.qty).toLocaleString('id-ID') + '</td>';
+                        html += '<td class="text-right">' + parseFloat(item.harga).toLocaleString('id-ID') + '</td>';
+                        html += '<td class="text-right">' + parseFloat(item.disc).toFixed(2).replace('.', ',') + '</td>';
+                        html += '<td class="text-right">' + parseFloat(item.total).toLocaleString('id-ID') + '</td>';
+                        html += '</tr>';
+                    });
+
+                    html += '</tbody></table></div>';
+                });
+
+                reportContainer.innerHTML = html;
+                window.print();
+
+                // Restore paginated data after print
+                setTimeout(() => {
+                    reportContainer.innerHTML = currentHtml;
+                }, 100);
+            }
+        </script>
+    @else
+        <script>
+            function printReport() {
+                window.print();
+            }
+        </script>
+    @endif
 </div>
