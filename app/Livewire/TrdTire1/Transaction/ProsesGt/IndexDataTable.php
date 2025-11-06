@@ -259,6 +259,7 @@ class IndexDataTable extends BaseDataTableComponent
             $this->removeDefaultNoDataCondition($builder);
 
             // Add custom sorting to make CUSTOMER LAIN-LAIN appear last
+            // For CUSTOMER LAIN-LAIN, sort by invoice number (tr_code)
             $builder->orderByRaw("
                 CASE
                     WHEN sales_rewards.brand IN ('GT RADIAL', 'GAJAH TUNGGAL') AND (partners.partner_chars->>'GT' = 'false' OR partners.partner_chars->>'GT' IS NULL)
@@ -270,7 +271,15 @@ class IndexDataTable extends BaseDataTableComponent
                     ELSE 0
                 END,
                 order_dtls.gt_process_date DESC,
-                partners.name,
+                CASE
+                    WHEN sales_rewards.brand IN ('GT RADIAL', 'GAJAH TUNGGAL') AND (partners.partner_chars->>'GT' = 'false' OR partners.partner_chars->>'GT' IS NULL)
+                    THEN NULL
+                    WHEN sales_rewards.brand = 'IRC' AND (partners.partner_chars->>'IRC' = 'false' OR partners.partner_chars->>'IRC' IS NULL)
+                    THEN NULL
+                    WHEN sales_rewards.brand = 'ZENEOS' AND (partners.partner_chars->>'ZN' = 'false' OR partners.partner_chars->>'ZN' IS NULL)
+                    THEN NULL
+                    ELSE partners.name
+                END,
                 order_hdrs.tr_code
             ");
         }

@@ -8,14 +8,20 @@ use App\Models\TrdTire1\Master\Partner;
 use App\Models\Util\GenericExcelExport;
 use Illuminate\Support\Carbon;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use Livewire\WithPagination;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class Index extends BaseComponent
 {
+    use WithPagination;
+
     public $startCode;
     public $endCode;
     public $filterPartner = '';
     public $filterBrand = '';
-    public $results = [];
+    public $perPage = 25;
+    public $page = 1;
+    public $allResults = [];
 
     public $ddPartner = [
         'placeHolder' => "Ketik untuk cari supplier ...",
@@ -49,6 +55,8 @@ class Index extends BaseComponent
         }
 
         $this->resetErrorBag();
+        $this->page = 1;
+        $this->resetPage();
 
         // Jika tanggal kosong, gunakan range yang sangat luas
         if (isNullOrEmptyNumber($this->startCode)) {
@@ -147,8 +155,52 @@ class Index extends BaseComponent
             $groupedResults[] = $notaData;
         }
 
-        // Assign results
-        $this->results = $groupedResults;
+        // Store all results for pagination
+        $this->allResults = $groupedResults;
+    }
+
+    /**
+     * Get paginated results and paginator in one call
+     */
+    protected function getPaginatedData()
+    {
+        if (empty($this->allResults)) {
+            return [
+                'results' => [],
+                'paginator' => null,
+                'total' => 0
+            ];
+        }
+
+        $currentPage = max(1, (int)($this->page ?: 1));
+        $perPage = max(1, (int)$this->perPage);
+        $total = count($this->allResults);
+        $maxPage = max(1, ceil($total / $perPage));
+
+        // Validate and adjust page
+        if ($currentPage > $maxPage) {
+            $currentPage = $maxPage;
+            $this->page = $currentPage;
+        }
+
+        // Get paginated items
+        $items = array_slice($this->allResults, ($currentPage - 1) * $perPage, $perPage);
+
+        // Create paginator
+        $paginator = new LengthAwarePaginator(
+            $items,
+            $total,
+            $perPage,
+            $currentPage,
+            ['path' => request()->url(), 'pageName' => 'page']
+        );
+        $paginator->withQueryString();
+
+        return [
+            'results' => $items,
+            'paginator' => $paginator,
+            'total' => $total
+        ];
     }
 
     public function resetFilters()
@@ -157,7 +209,20 @@ class Index extends BaseComponent
         $this->endCode = '';
         $this->filterPartner = '';
         $this->filterBrand = '';
-        $this->results = [];
+        $this->allResults = [];
+        $this->page = 1;
+        $this->resetPage();
+    }
+
+    public function updatedPerPage()
+    {
+        $this->page = 1;
+        $this->resetPage();
+    }
+
+    public function gotoPage($page)
+    {
+        $this->page = max(1, (int) $page);
     }
 
 
@@ -212,12 +277,14 @@ class Index extends BaseComponent
     public function render()
     {
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
-        return view($renderRoute);
-    }
+        $paginated = $this->getPaginatedData();
 
-    public function resetResult()
-    {
-        $this->results = [];
+        return view($renderRoute, [
+            'results' => $paginated['results'],
+            'paginator' => $paginated['paginator'],
+            'totalResults' => $paginated['total'],
+            'allResults' => $this->allResults ?? []
+        ]);
     }
 
     public function onPartnerChanged()
@@ -229,7 +296,7 @@ class Index extends BaseComponent
     public function downloadExcel()
     {
         // Validasi: pastikan ada data untuk di-export
-        if (empty($this->results)) {
+        if (empty($this->allResults)) {
             $this->dispatch('notify-swal', [
                 'type' => 'warning',
                 'message' => 'Tidak ada data untuk di-export. Mohon lakukan pencarian terlebih dahulu.'
@@ -243,7 +310,8 @@ class Index extends BaseComponent
             $rowStyles = [];
             $currentRowIndex = 0;
 
-            foreach ($this->results as $nota) {
+            // Export all results, not just current page
+            foreach ($this->allResults as $nota) {
                 // Hitung subtotal untuk nota ini
                 $subTotalAmount = 0;
                 foreach ($nota['items'] as $item) {
