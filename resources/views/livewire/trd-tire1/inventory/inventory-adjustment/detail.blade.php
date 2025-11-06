@@ -1,7 +1,7 @@
 <div>
-    <div>
+    {{-- <div>
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
-    </div>
+    </div> --}}
     <x-ui-page-card isForm="true"
         title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->tr_code ? ' (Nomor #' . $this->object->tr_code . ')' : '' }}"
         status="{{ $this->trans($status) }}">
@@ -68,7 +68,13 @@
                                         <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                                             <td style="text-align: center;">{{ $loop->iteration }}</td>
                                             <td>
-                                                @if ($actionValue === 'Create')
+                                                @php
+                                                    $isItemEditable = isset($input_detail['is_editable']) && $input_detail['is_editable'];
+                                                    $itemEnabled = $actionValue === 'Create' ? true : $isItemEditable;
+                                                    // Gunakan dropdown search untuk item baru atau mode create
+                                                    $useDropdownSearch = $actionValue === 'Create' || $isItemEditable;
+                                                @endphp
+                                                @if ($useDropdownSearch)
                                                     <x-ui-dropdown-search label=""
                                                         model="input_details.{{ $key }}.matl_id"
                                                         :query="$materialQuery" optionValue="id" optionLabel="{code};{name}"
@@ -80,15 +86,19 @@
                                                     <x-ui-dropdown-select type="int" label=""
                                                         model="input_details.{{ $key }}.matl_id"
                                                         :selectedValue="$input_detail['matl_id']" :options="$filteredMaterials" required="true"
-                                                        :action="$actionValue" :enabled="$isPanelEnabled"
+                                                        :action="$actionValue" enabled="false"
                                                         onChanged="onMaterialChanged({{ $key }})" />
                                                 @endif
                                             </td>
                                             <td style="text-align: center;">
+                                                @php
+                                                    $isItemEditable = isset($input_detail['is_editable']) && $input_detail['is_editable'];
+                                                    $itemEnabled = $actionValue === 'Create' ? true : $isItemEditable;
+                                                @endphp
                                                 <x-ui-dropdown-select type="int" label=""
                                                     :options="$filteredBatchCode[$key] ?? []"
                                                     model="input_details.{{ $key }}.batch_code"
-                                                    :selectedValue="$input_detail['batch_code'] ?? null" :enabled="$isPanelEnabled" :action="$actionValue"
+                                                    :selectedValue="$input_detail['batch_code'] ?? null" :enabled="$itemEnabled" :action="$actionValue"
                                                     required="true"
                                                     onChanged="onBatchCodeChanged({{ $key }})" />
                                             </td>
@@ -98,8 +108,12 @@
                                                     required="true" enabled="false" />
                                             </td>
                                             <td style="text-align: center;">
+                                                @php
+                                                    $isItemEditable = isset($input_detail['is_editable']) && $input_detail['is_editable'];
+                                                    $itemEnabled = $actionValue === 'Create' ? true : $isItemEditable;
+                                                @endphp
                                                 <x-ui-text-field model="input_details.{{ $key }}.qty"
-                                                    label="" :enabled="$isPanelEnabled" :action="$actionValue" type="text"
+                                                    label="" :enabled="$itemEnabled" :action="$actionValue" type="text"
                                                     required="true" onChanged="onQtyChanged({{ $key }})" />
                                             </td>
                                             <td style="text-align: center;">
@@ -111,7 +125,7 @@
                                                 @if (isset($input_detail['is_editable']) && $input_detail['is_editable'])
                                                     <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true"
                                                         :action="$actionValue" cssClass="btn-danger text-danger"
-                                                        iconPath="delete.svg" :enabled="true" />
+                                                        iconPath="delete.svg" enabled="true" />
                                                 @else
                                                     <!-- Misal, jika tidak editable, tombol delete bisa disembunyikan atau non-aktif -->
                                                     <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true"

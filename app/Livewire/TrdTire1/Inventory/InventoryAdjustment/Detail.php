@@ -172,10 +172,25 @@ class Detail extends BaseComponent
 
             // Load material details
             $this->loadDetails();
+
+            // Di mode edit, juga perlu memuat batchOptions untuk semua material di warehouse
+            // agar item baru bisa memilih batch code
+            if (!empty($this->inputs['wh_code'])) {
+                $this->loadBatchOptionsForWarehouse($this->inputs['wh_code']);
+            }
         }
 
         if (!$this->isEditOrView()) {
             $this->isPanelEnabled = "true";
+            if (isset($this->inputs['tr_type']) && $this->inputs['tr_type'] === 'TW') {
+                $this->isEditWhCode2 = 'true';
+            } else {
+                $this->isEditWhCode2 = 'false';
+            }
+        } else {
+            // Di mode edit, set isPanelEnabled ke true agar item baru bisa di-edit
+            $this->isPanelEnabled = "true";
+            // Set isEditWhCode2 berdasarkan tr_type
             if (isset($this->inputs['tr_type']) && $this->inputs['tr_type'] === 'TW') {
                 $this->isEditWhCode2 = 'true';
             } else {
@@ -360,6 +375,114 @@ class Detail extends BaseComponent
         }
     }
 
+    protected function loadBatchOptionsForWarehouse($whCode)
+    {
+        $tr_type = $this->inputs['tr_type'] ?? null;
+        $existingBatchOptions = $this->batchOptions ?? [];
+
+        if ($tr_type === 'IA') {
+            // Untuk IA, ambil batch dari IvtBal dan tambahkan default 240101 untuk material yang tidak ada
+            $ivtBals = IvtBal::where('wh_code', $whCode)->get();
+
+            // Jika batchOptions sudah ada (dari loadDetails), jangan reset, tapi merge
+            if (empty($existingBatchOptions)) {
+                $this->batchOptions = [];
+            }
+
+            // Ambil semua material yang ada di ivt_bal
+            $materialsInIvtBal = $ivtBals->pluck('matl_id')->unique();
+
+            foreach ($ivtBals as $bal) {
+                $matl_id = $bal->matl_id;
+                // Jika batchOptions untuk material ini belum ada, tambahkan
+                if (!isset($this->batchOptions[$matl_id])) {
+                    $this->batchOptions[$matl_id] = [];
+                }
+
+                // Cek apakah batch code ini sudah ada
+                $batchExists = false;
+                foreach ($this->batchOptions[$matl_id] as $existingBatch) {
+                    if ($existingBatch['value'] == $bal->batch_code) {
+                        $batchExists = true;
+                        break;
+                    }
+                }
+
+                // Jika belum ada, tambahkan
+                if (!$batchExists) {
+                    $this->batchOptions[$matl_id][] = [
+                        'value' => $bal->batch_code,
+                        'label' => $bal->batch_code,
+                        'qty_oh' => $bal->qty_oh,
+                    ];
+                }
+            }
+
+            // Untuk material yang tidak ada di ivt_bal, tambahkan default batch 240101
+            $allMaterials = Material::where('status_code', 'A')
+                ->where('deleted_at', null)
+                ->whereNotIn('id', $materialsInIvtBal)
+                ->get();
+
+            foreach ($allMaterials as $material) {
+                if (!isset($this->batchOptions[$material->id])) {
+                    $this->batchOptions[$material->id] = [];
+                }
+
+                // Cek apakah batch 240101 sudah ada
+                $batchExists = false;
+                foreach ($this->batchOptions[$material->id] as $existingBatch) {
+                    if ($existingBatch['value'] == '240101') {
+                        $batchExists = true;
+                        break;
+                    }
+                }
+
+                if (!$batchExists) {
+                    $this->batchOptions[$material->id][] = [
+                        'value' => '240101',
+                        'label' => '240101',
+                        'qty_oh' => 0,
+                    ];
+                }
+            }
+        } else {
+            // Untuk TW, ambil semua kombinasi matl_id dan batch_code dari IvtBal untuk whCode
+            $ivtBals = IvtBal::where('wh_code', $whCode)->get();
+
+            // Jika batchOptions sudah ada (dari loadDetails), jangan reset, tapi merge
+            if (empty($existingBatchOptions)) {
+                $this->batchOptions = [];
+            }
+
+            foreach ($ivtBals as $bal) {
+                $matl_id = $bal->matl_id;
+                // Jika batchOptions untuk material ini belum ada, tambahkan
+                if (!isset($this->batchOptions[$matl_id])) {
+                    $this->batchOptions[$matl_id] = [];
+                }
+
+                // Cek apakah batch code ini sudah ada
+                $batchExists = false;
+                foreach ($this->batchOptions[$matl_id] as $existingBatch) {
+                    if ($existingBatch['value'] == $bal->batch_code) {
+                        $batchExists = true;
+                        break;
+                    }
+                }
+
+                // Jika belum ada, tambahkan
+                if (!$batchExists) {
+                    $this->batchOptions[$matl_id][] = [
+                        'value' => $bal->batch_code,
+                        'label' => $bal->batch_code,
+                        'qty_oh' => $bal->qty_oh,
+                    ];
+                }
+            }
+        }
+    }
+
     public function onWarehouseChanged($whCode)
     {
         $this->inputs['wh_code'] = $whCode;
@@ -506,13 +629,19 @@ class Detail extends BaseComponent
 
         $matl_id = $this->input_details[$index]['matl_id'];
         $tr_type = $this->inputs['tr_type'] ?? null;
+        $wh_code = $this->inputs['wh_code'] ?? null;
+
+        // Jika batchOptions belum ada untuk material ini, load terlebih dahulu
+        if ($wh_code && !isset($this->batchOptions[$matl_id])) {
+            // Load batchOptions untuk material ini
+            $this->loadBatchOptionsForMaterial($matl_id, $wh_code);
+        }
 
         if ($tr_type === 'IA') {
             // Untuk IA, cek apakah ada batch di ivt_bal
-            $wh_code = $this->inputs['wh_code'] ?? null;
             $hasBatch = false;
 
-            if ($wh_code && isset($this->batchOptions[$matl_id])) {
+            if ($wh_code && isset($this->batchOptions[$matl_id]) && !empty($this->batchOptions[$matl_id])) {
                 // Ada batch di ivt_bal, reset untuk dipilih user
                 $this->input_details[$index]['batch_code'] = null;
                 $this->input_details[$index]['qty_oh'] = null;
@@ -528,6 +657,86 @@ class Detail extends BaseComponent
             // Untuk TW, reset batch_code dan qty_oh, akan diisi oleh onBatchCodeChanged
             $this->input_details[$index]['batch_code'] = null;
             $this->input_details[$index]['qty_oh'] = null;
+        }
+    }
+
+    protected function loadBatchOptionsForMaterial($matl_id, $wh_code)
+    {
+        $tr_type = $this->inputs['tr_type'] ?? null;
+
+        if (!isset($this->batchOptions[$matl_id])) {
+            $this->batchOptions[$matl_id] = [];
+        }
+
+        if ($tr_type === 'IA') {
+            // Ambil batch dari IvtBal untuk material ini
+            $ivtBals = IvtBal::where('wh_code', $wh_code)
+                ->where('matl_id', $matl_id)
+                ->get();
+
+            foreach ($ivtBals as $bal) {
+                // Cek apakah batch code ini sudah ada
+                $batchExists = false;
+                foreach ($this->batchOptions[$matl_id] as $existingBatch) {
+                    if ($existingBatch['value'] == $bal->batch_code) {
+                        $batchExists = true;
+                        break;
+                    }
+                }
+
+                // Jika belum ada, tambahkan
+                if (!$batchExists) {
+                    $this->batchOptions[$matl_id][] = [
+                        'value' => $bal->batch_code,
+                        'label' => $bal->batch_code,
+                        'qty_oh' => $bal->qty_oh,
+                    ];
+                }
+            }
+
+            // Jika tidak ada batch di ivt_bal, tambahkan default batch 240101
+            if (empty($ivtBals) || count($this->batchOptions[$matl_id]) === 0) {
+                $batchExists = false;
+                foreach ($this->batchOptions[$matl_id] as $existingBatch) {
+                    if ($existingBatch['value'] == '240101') {
+                        $batchExists = true;
+                        break;
+                    }
+                }
+
+                if (!$batchExists) {
+                    $this->batchOptions[$matl_id][] = [
+                        'value' => '240101',
+                        'label' => '240101',
+                        'qty_oh' => 0,
+                    ];
+                }
+            }
+        } else {
+            // Untuk TW, ambil batch dari IvtBal untuk material ini
+            $ivtBals = IvtBal::where('wh_code', $wh_code)
+                ->where('matl_id', $matl_id)
+                ->get();
+
+            foreach ($ivtBals as $bal) {
+                // Cek apakah batch code ini sudah ada
+                $batchExists = false;
+                foreach ($this->batchOptions[$matl_id] as $existingBatch) {
+                    if ($existingBatch['value'] == $bal->batch_code) {
+                        $batchExists = true;
+                        break;
+                    }
+                }
+
+                // Jika belum ada, tambahkan
+                if (!$batchExists) {
+                    $this->batchOptions[$matl_id][] = [
+                        'value' => $bal->batch_code,
+                        'label' => $bal->batch_code,
+                        'qty_oh' => $bal->qty_oh,
+                    ];
+                }
+            }
         }
     }
 
@@ -650,12 +859,29 @@ class Detail extends BaseComponent
             app(InventoryService::class)->saveInventoryTrx($this->inputs, $detailData);
 
         }
+
         if ($this->actionValue == 'Create') {
             return redirect()->route($this->appCode . '.Inventory.InventoryAdjustment.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);
+        } else {
+            // Mode Edit: Redirect untuk refresh halaman seperti sales order
+            $this->redirectToEdit();
         }
+    }
+
+    private function redirectToEdit()
+    {
+        $objectId = $this->object->id;
+
+        return redirect()->route(
+            $this->appCode . '.Inventory.InventoryAdjustment.Detail',
+            [
+                'action'   => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($objectId),
+            ]
+        );
     }
 
 
@@ -701,6 +927,7 @@ class Detail extends BaseComponent
     {
         $this->inputs['tr_type'] = $value;
         $enabled = $value === 'TW';
+        $this->isEditWhCode2 = $enabled ? 'true' : 'false';
         $this->dispatch('toggleWarehouseDropdown', $enabled);
     }
 

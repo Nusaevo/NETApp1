@@ -93,12 +93,13 @@
                                     @endforeach
                                 </x-slot>
 
-                                {{-- <x-slot name="button">
-                                        <x-ui-button clickEvent="addItem" cssClass="btn btn-primary"
-                                            iconPath="add.svg" button-name="Tambah" :enabled="isset($inputs['reffhdrtr_code']) && $inputs['reffhdrtr_code']
-                                                ? true
-                                                : false" />
-                                    </x-slot> --}}
+                                <x-slot name="button">
+                                    @if ($actionValue === 'Edit' && $hasNewItems)
+                                        <x-ui-button clickEvent="addNewItemsFromPurchaseOrder" cssClass="btn btn-primary"
+                                            iconPath="add.svg" button-name="Tambah" loading="true"
+                                            :action="$actionValue" />
+                                    @endif
+                                </x-slot>
                             </x-ui-table>
                         </x-ui-card>
 
