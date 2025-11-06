@@ -377,28 +377,48 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function cetakNota()
     {
-        $selectedProcessDate = $this->filters['gt_process_date'] ?? null;
+        $selectedProcessDate = $this->appliedFilters['gt_process_date'] ?? $this->filters['gt_process_date'] ?? null;
+        $selectedSrCode = $this->appliedFilters['sr_code'] ?? null;
 
-        if ($selectedProcessDate) {
-            $orderIds = OrderDtl::where('gt_process_date', $selectedProcessDate)
-                ->where('tr_type', 'SO')
-                ->pluck('id')
-                ->toArray();
-
-            if (empty($orderIds)) {
-                logger()->info('No data found for the selected process date.', ['gt_process_date' => $selectedProcessDate]);
-                $this->dispatch('error', 'Tidak ada data untuk dicetak.');
-                return;
-            }
-
-            return redirect()->route($this->appCode . '.Transaction.ProsesGt.PrintPdf', [
-                'action' => encryptWithSessionKey('Print'),
-                'objectId' => encryptWithSessionKey(json_encode($orderIds)),
-                'additionalParam' => $selectedProcessDate,
-            ]);
+        if (!$selectedProcessDate) {
+            $this->dispatch('error', 'Tanggal proses belum dipilih.');
+            return;
         }
 
-        $this->dispatch('error', 'Tanggal proses belum dipilih.');
+        if (!$selectedSrCode) {
+            $this->dispatch('error', 'SR Code belum dipilih.');
+            return;
+        }
+
+        // Query sesuai dengan filter yang ada di tabel index
+        $query = OrderDtl::whereDate('gt_process_date', $selectedProcessDate)
+            ->where('tr_type', 'SO')
+            ->whereHas('SalesReward', function ($query) use ($selectedSrCode) {
+                $query->where('code', $selectedSrCode);
+            });
+
+        $orderIds = $query->pluck('id')->toArray();
+
+        if (empty($orderIds)) {
+            logger()->info('No data found for the selected filters.', [
+                'gt_process_date' => $selectedProcessDate,
+                'sr_code' => $selectedSrCode
+            ]);
+            $this->dispatch('error', 'Tidak ada data untuk dicetak.');
+            return;
+        }
+
+        // Pass both date and sr_code as encrypted JSON (like TaxInvoice pattern)
+        $paramArray = [
+            'gt_process_date' => $selectedProcessDate,
+            'sr_code' => $selectedSrCode
+        ];
+
+        return redirect()->route($this->appCode . '.Transaction.ProsesGt.PrintPdf', [
+            'action' => encryptWithSessionKey('Print'),
+            'objectId' => encryptWithSessionKey(json_encode($orderIds)),
+            'additionalParam' => encryptWithSessionKey(json_encode($paramArray)),
+        ]);
     }
 
     public function clearSelections()

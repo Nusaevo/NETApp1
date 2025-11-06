@@ -12,6 +12,7 @@ class PrintPdf extends BaseComponent
 {
     public $orderIds;
     public $selectedProcessDate;
+    public $selectedSrCode;
     public $orders = [];
 
     protected function onPreRender()
@@ -22,19 +23,66 @@ class PrintPdf extends BaseComponent
             return;
         }
 
-        // Ambil tanggal proses dari parameter
-        $this->selectedProcessDate = $this->additionalParam;
+        // Ambil parameter dari additionalParam (decrypt jika di-encrypt)
+        $params = $this->additionalParam;
 
-        // Ambil OrderHdr beserta OrderDtl yang gt_process_date = selectedProcessDate
+        // Coba decrypt dulu (jika di-encrypt)
+        try {
+            $decryptedParam = decryptWithSessionKey($params);
+            $params = $decryptedParam;
+        } catch (\Exception $e) {
+            // Jika gagal decrypt, berarti tidak di-encrypt, gunakan langsung
+        }
+
+        // Parse JSON jika string JSON
+        if (is_string($params) && json_decode($params) !== null) {
+            $decodedParams = json_decode($params, true);
+            if (is_array($decodedParams)) {
+                $this->selectedProcessDate = $decodedParams['gt_process_date'] ?? null;
+                $this->selectedSrCode = $decodedParams['sr_code'] ?? null;
+            } else {
+                // Fallback: jika JSON decode success tapi bukan array
+                $this->selectedProcessDate = $params;
+                $this->selectedSrCode = null;
+            }
+        } else {
+            // Fallback untuk kompatibilitas: jika hanya string tanggal saja
+            $this->selectedProcessDate = $params;
+            $this->selectedSrCode = null;
+        }
+
+        if (!$this->selectedProcessDate) {
+            $this->dispatch('error', 'Tanggal proses tidak valid');
+            return;
+        }
+
+        // Ambil OrderHdr beserta OrderDtl yang sesuai dengan filter tanggal dan SR code
         // Load SalesReward untuk setiap OrderDtl
         $orders = OrderHdr::with([
                 'OrderDtl' => function($q) {
-                    $q->where('gt_process_date', $this->selectedProcessDate)
-                      ->with('SalesReward');
+                    $q->whereDate('gt_process_date', $this->selectedProcessDate);
+
+                    // Filter berdasarkan SR code jika ada
+                    if ($this->selectedSrCode) {
+                        $q->whereHas('SalesReward', function($query) {
+                            $query->where('code', $this->selectedSrCode);
+                        });
+                    }
+
+                    $q->with('SalesReward');
                 },
                 'Partner'
             ])
-            ->whereHas('OrderDtl', fn($q) => $q->where('gt_process_date', $this->selectedProcessDate))
+            ->whereHas('OrderDtl', function($q) {
+                $q->whereDate('gt_process_date', $this->selectedProcessDate);
+
+                // Filter berdasarkan SR code jika ada
+                if ($this->selectedSrCode) {
+                    $q->whereHas('SalesReward', function($query) {
+                        $query->where('code', $this->selectedSrCode);
+                    });
+                }
+            })
             ->get();
 
         // Ambil semua gt_partner_code yang unik untuk eager loading partner
