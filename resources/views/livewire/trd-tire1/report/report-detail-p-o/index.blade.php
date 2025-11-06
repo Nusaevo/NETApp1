@@ -17,13 +17,14 @@
                             <x-ui-text-field label="Tanggal Akhir:" model="endCode" type="date" action="Edit" />
                         </div>
                         <div class="col-md-2">
-                            <x-ui-dropdown-search label="Supplier" model="filterPartner"
-                                optionValue="id" :query="$ddPartner['query']" :optionLabel="$ddPartner['optionLabel']" :placeHolder="$ddPartner['placeHolder']"
-                                :selectedValue="$filterPartner" required="false" action="Edit" enabled="true"
-                                type="int" onChanged="onPartnerChanged"/>
+                            <x-ui-dropdown-search label="Supplier" model="filterPartner" optionValue="id"
+                                :query="$ddPartner['query']" :optionLabel="$ddPartner['optionLabel']" :placeHolder="$ddPartner['placeHolder']" :selectedValue="$filterPartner" required="false"
+                                action="Edit" enabled="true" type="int" onChanged="onPartnerChanged" />
                         </div>
                         <div class="col-md-2">
-                            <x-ui-dropdown-select label="Brand" model="filterBrand" :options="$this->getBrandOptions()" action="Edit" />
+                            <x-ui-dropdown-search label="Brand" model="filterBrand" optionValue="brand"
+                                :query="$ddBrand['query']" optionLabel="{brand}" :placeHolder="$ddBrand['placeHolder']" :selectedValue="$filterBrand"
+                                required="false" action="Edit" enabled="true" type="string" searchOnSpace="true" />
                         </div>
                         <div class="col-md-2">
                             <x-ui-button clickEvent="search" button-name="View" loading="true" action="Edit"
@@ -32,8 +33,8 @@
                                 onclick="printReport()">
                                 <i class="fas fa-print text-primary"></i> Print
                             </button>
-                            <x-ui-button clickEvent="downloadExcel" button-name="Download Excel" loading="true" action="Edit"
-                                cssClass="btn-success w-100" />
+                            <x-ui-button clickEvent="downloadExcel" button-name="Download Excel" loading="true"
+                                action="Edit" cssClass="btn-success w-100" />
                         </div>
                     </div>
                 </div>
@@ -236,7 +237,6 @@
                     }
                 @endphp
 
-                {{-- ============================ LOOP NOTA ============================ --}}
                 @foreach ($results ?? [] as $nota)
                     @php
                         $subTotalAmount = 0;
@@ -251,7 +251,8 @@
                         <table>
                             <thead>
                                 <!-- Baris judul kolom header kuning (8 kolom total) -->
-                                <tr style="border-top:1px solid #000; border-right:1px solid #000; border-left:1px solid #000; border-bottom:none;">
+                                <tr
+                                    style="border-top:1px solid #000; border-right:1px solid #000; border-left:1px solid #000; border-bottom:none;">
                                     <td class="head-yellow" style="min-width:110px;">No. Nota</td>
                                     <td class="head-yellow" style="min-width:110px;">T. Order</td>
                                     <td class="head-yellow" colspan="3">Nama Supplier</td>
@@ -261,7 +262,8 @@
                                 </tr>
 
                                 <!-- Baris nilai header kuning (8 kolom total, sama persis) -->
-                                <tr style="border-top:none; border-right:1px solid #000; border-left:1px solid #000; border-bottom:1px solid #000;">
+                                <tr
+                                    style="border-top:none; border-right:1px solid #000; border-left:1px solid #000; border-bottom:1px solid #000;">
                                     <td class="head-yellow value text-center">{{ $nota['no_nota'] ?? '-' }}</td>
                                     <td class="head-yellow value text-center">
                                         {{ isset($nota['tgl_nota']) ? formatDate($nota['tgl_nota']) : '' }}</td>
@@ -283,8 +285,6 @@
                                     <th class="text-right">Harga</th>
                                     <th class="text-right">Disc.</th>
                                     <th class="text-right">Total</th>
-                                    <th class="text-right">Kirim</th>
-                                    <th class="text-right">Sisa</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -295,13 +295,9 @@
                                         <td class="text-right">{{ number_format($item['qty'] ?? 0, 0, ',', '.') }}</td>
                                         <td class="text-right">{{ number_format($item['harga'] ?? 0, 0, ',', '.') }}
                                         </td>
-                                        <td class="text-right">{{ number_format($item['disc'] ?? 0, 1, ',', '.') }}
+                                        <td class="text-right">{{ number_format($item['disc'] ?? 0, 2, ',', '.') }}
                                         </td>
                                         <td class="text-right">{{ number_format($item['total'] ?? 0, 0, ',', '.') }}
-                                        </td>
-                                        <td class="text-right">{{ number_format($item['kirim'] ?? 0, 0, ',', '.') }}
-                                        </td>
-                                        <td class="text-right">{{ number_format($item['sisa'] ?? 0, 0, ',', '.') }}
                                         </td>
                                     </tr>
                                 @endforeach
@@ -309,7 +305,6 @@
                         </table>
                     </div>
                 @endforeach
-                {{-- ============================ /LOOP NOTA ============================ --}}
 
                 {{-- Footer Crystal Report style (opsional) --}}
                 {{--
@@ -322,14 +317,11 @@
                 --}}
             </div>
         </div>
-        {{-- ============================ /REPORT AREA ============================ --}}
     </x-ui-page-card>
 
-    {{-- ============================ SCRIPTS ============================ --}}
     <script>
         function printReport() {
             window.print();
         }
     </script>
-    {{-- ============================ /SCRIPTS ============================ --}}
 </div>

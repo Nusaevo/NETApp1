@@ -27,9 +27,9 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return OrderHdr::with(['OrderDtl', 'Partner'])
             ->where('order_hdrs.tr_type', 'SO')
-            ->orderBy('order_hdrs.tr_date', 'desc');
+            ->orderBy('order_hdrs.tr_date', 'desc')
+            ->orderBy('order_hdrs.tr_code', 'desc');
             // ->orderBy('order_hdrs.updated_at', 'desc');
-            // ->orderBy('order_hdrs.tr_code', 'desc');
     }
     public function columns(): array
     {
@@ -91,7 +91,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("Status"), "status_code")
                 ->format(function ($value, $row) {
                     $statusMap = [
-                        Status::OPEN => 'Open',
+                        Status::OPEN => 'Belum Cetak',
                         Status::PRINT => 'Tercetak',
                         Status::SHIP => 'Terkirim',
                         Status::CANCEL => 'Batal',
@@ -129,10 +129,16 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return [
             DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
-                $builder->where('order_hdrs.tr_date', '>=', $value);
+                $builder->where('order_hdrs.tr_date', '>=', $value)
+                    ->reorder()
+                    ->orderBy('order_hdrs.tr_date', 'asc')
+                    ->orderBy('order_hdrs.tr_code', 'asc');
             }),
             DateFilter::make('Tanggal Akhir')->filter(function (Builder $builder, string $value) {
-                $builder->where('order_hdrs.tr_date', '<=', $value);
+                $builder->where('order_hdrs.tr_date', '<=', $value)
+                    ->reorder()
+                    ->orderBy('order_hdrs.tr_date', 'asc')
+                    ->orderBy('order_hdrs.tr_code', 'asc');
             }),
             $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(order_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
@@ -162,15 +168,21 @@ class IndexDataTable extends BaseDataTableComponent
             SelectFilter::make('Status', 'status_code')
                 ->options([
                     '' => 'All', // Tambahkan opsi "All" dengan nilai kosong
-                    Status::OPEN => 'Open',
+                    Status::OPEN => 'Belum Cetak',
                     Status::PRINT => 'Tercetak',
+                    'belum_kirim' => 'Belum Kirim', // Gabungan Status::PRINT dan Status::OPEN
                     Status::SHIP => 'Terkirim',
                     Status::CANCEL => 'Batal Nota',
                     Status::BILL => 'Lunas',
                 ])
                 ->filter(function ($builder, $value) {
                     if ($value !== '') { // Jika nilai tidak kosong, filter berdasarkan status_code
-                        $builder->where('order_hdrs.status_code', $value);
+                        if ($value === 'belum_kirim') {
+                            // Filter untuk status PRINT atau OPEN (belum kirim)
+                            $builder->whereIn('order_hdrs.status_code', [Status::PRINT, Status::OPEN]);
+                        } else {
+                            $builder->where('order_hdrs.status_code', $value);
+                        }
                     }
                 }),
             // DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
