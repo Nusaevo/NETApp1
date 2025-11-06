@@ -70,6 +70,7 @@ class Detail extends BaseComponent
     ];
 
     public $isDeliv;
+    public $hasNewItems = false; // Flag untuk menandai ada item baru dari PO
 
     protected $rules = [
         'inputs.tr_code' => 'required',
@@ -154,6 +155,9 @@ class Detail extends BaseComponent
 
             // Set panel enabled state based on whether there are items
             $this->isPanelEnabled = !empty($this->input_details) ? "false" : "true";
+
+            // Check if there are new items from purchase order
+            $this->checkForNewItems();
         }
     }
 
@@ -235,6 +239,11 @@ class Detail extends BaseComponent
             } else {
                 // $this->isPanelEnabled = "false";
             }
+
+            // Check for new items after deletion
+            if ($this->isEditOrView()) {
+                $this->checkForNewItems();
+            }
             // $this->dispatch('success', 'Item berhasil dihapus.');
         } catch (Exception $e) {
             $this->dispatch('error', 'Gagal menghapus item: ' . $e->getMessage());
@@ -245,76 +254,170 @@ class Detail extends BaseComponent
     {
         $this->input_details = [];
 
-        if ($value) {
-            // $this->loadPurchaseOrderDetails($value);
-            $orderDetail = OrderDtl::selectRaw('
-                order_hdrs.partner_id,
-                order_hdrs.partner_code,
+        if (empty($value)) {
+            $this->inputs['partner_id'] = null;
+            $this->inputs['partner_name'] = null;
+            $this->inputs['partner_code'] = null;
+            return;
+        }
+
+        $orderDetails = OrderDtl::selectRaw('
+                order_hdrs.partner_id, order_hdrs.partner_code, order_hdrs.tr_date as order_date,
+                partners.name, partners.city,
+                order_dtls.id as reffdtl_id, order_dtls.trhdr_id as reffhdr_id,
+                order_dtls.tr_type as reffhdrtr_type, order_dtls.tr_code as reffhdrtr_code,
+                order_dtls.tr_seq as reffdtltr_seq, order_dtls.matl_id, order_dtls.matl_code,
+                order_dtls.matl_uom, order_dtls.matl_descr, order_dtls.qty, order_dtls.qty_reff
+            ')
+            ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
+            ->join('partners', 'order_hdrs.partner_id', '=', 'partners.id')
+            ->where('order_hdrs.tr_type', 'PO')
+            ->where('order_hdrs.tr_code', $value)
+            ->get();
+
+        if ($orderDetails->isEmpty()) {
+            $this->dispatch('error', 'Tidak ada detail order yang ditemukan untuk kode pembelian ini.');
+            return;
+        }
+
+        $firstOrder = $orderDetails->first();
+        $this->inputs['partner_id'] = $firstOrder->partner_id;
+        $this->inputs['partner_name'] = $firstOrder->name . ' - ' . $firstOrder->city;
+        $this->inputs['partner_code'] = $firstOrder->partner_code;
+
+        $baseModel = populateArrayFromModel(new DelivPacking());
+        foreach ($orderDetails as $detail) {
+            $qtyRemaining = $detail->qty - $detail->qty_reff;
+            if ($qtyRemaining > 0) {
+                $this->input_details[] = array_merge($baseModel, [
+                    'reffdtl_id' => $detail->reffdtl_id,
+                    'reffhdr_id' => $detail->reffhdr_id,
+                    'reffhdrtr_type' => $detail->reffhdrtr_type,
+                    'reffhdrtr_code' => $detail->reffhdrtr_code,
+                    'reffdtltr_seq' => $detail->reffdtltr_seq,
+                    'matl_id' => $detail->matl_id,
+                    'matl_code' => $detail->matl_code,
+                    'matl_uom' => $detail->matl_uom,
+                    'matl_descr' => $detail->matl_descr,
+                    'qty' => 0,
+                    'qty_order' => $qtyRemaining,
+                    'wh_id' => $this->inputs['wh_id'] ?? 0,
+                    'wh_code' => $this->inputs['wh_code'] ?? '',
+                    'order_date' => $detail->order_date,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Check if there are new items from purchase order that haven't been added to this delivery
+     */
+    public function checkForNewItems()
+    {
+        $this->hasNewItems = false;
+
+        if (!$this->isEditOrView() || empty($this->inputs['reffhdrtr_code'])) {
+            return;
+        }
+
+        $orderDetails = OrderDtl::selectRaw('order_dtls.id as reffdtl_id, order_dtls.qty, order_dtls.qty_reff')
+            ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
+            ->where('order_hdrs.tr_type', 'PO')
+            ->where('order_hdrs.tr_code', $this->inputs['reffhdrtr_code'])
+            ->get();
+
+        $existingIds = array_unique(array_merge(
+            DelivPacking::where('trhdr_id', $this->object->id)
+                ->where('tr_type', $this->trType)
+                ->pluck('reffdtl_id')
+                ->toArray(),
+            array_filter(array_column($this->input_details, 'reffdtl_id'))
+        ));
+
+        foreach ($orderDetails as $orderDetail) {
+            if (($orderDetail->qty - $orderDetail->qty_reff) > 0 && !in_array($orderDetail->reffdtl_id, $existingIds)) {
+                $this->hasNewItems = true;
+                break;
+            }
+        }
+    }
+
+    /**
+     * Add new items from purchase order to existing delivery items
+     */
+    public function addNewItemsFromPurchaseOrder()
+    {
+        try {
+            if (empty($this->inputs['reffhdrtr_code'])) {
+                $this->dispatch('error', 'Tidak ada purchase order yang dipilih.');
+                return;
+            }
+
+            if (empty($this->inputs['wh_code'])) {
+                $this->dispatch('error', 'Mohon pilih gudang terlebih dahulu.');
+                return;
+            }
+
+            $orderDetails = OrderDtl::selectRaw('
                 order_hdrs.tr_date as order_date,
-                partners.name,
-                partners.city,
-                order_dtls.matl_id,
-                order_dtls.matl_code,
-                order_dtls.matl_uom,
-                order_dtls.matl_descr,
-                order_dtls.qty,
-                order_dtls.qty_reff,
-                order_dtls.id as reffdtl_id,
-                order_dtls.trhdr_id as reffhdr_id,
-                order_dtls.tr_type as reffhdrtr_type,
-                order_dtls.tr_code as reffhdrtr_code,
-                order_dtls.tr_seq as reffdtltr_seq
+                order_dtls.id as reffdtl_id, order_dtls.trhdr_id as reffhdr_id,
+                order_dtls.tr_type as reffhdrtr_type, order_dtls.tr_code as reffhdrtr_code,
+                order_dtls.tr_seq as reffdtltr_seq, order_dtls.matl_id, order_dtls.matl_code,
+                order_dtls.matl_uom, order_dtls.matl_descr, order_dtls.qty, order_dtls.qty_reff
             ')
                 ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
-                ->join('partners', 'order_hdrs.partner_id', '=', 'partners.id')
                 ->where('order_hdrs.tr_type', 'PO')
-                ->where('order_hdrs.tr_code', $value)
+                ->where('order_hdrs.tr_code', $this->inputs['reffhdrtr_code'])
                 ->get();
 
-            //     $data = \App\Models\TrdTire1\Transaction\OrderDtl::join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
-            //     ->where('order_hdrs.tr_type', 'PO')
-            //     ->where('order_hdrs.tr_code', 'PO000500')
-            //     ->get();
-            // dd($data->toArray());
-            if ($orderDetail->isEmpty()) {
+            if ($orderDetails->isEmpty()) {
                 $this->dispatch('error', 'Tidak ada detail order yang ditemukan untuk kode pembelian ini.');
                 return;
             }
 
-            $this->inputs['partner_id'] = $orderDetail[0]->partner_id;
-            $this->inputs['partner_name'] = $orderDetail[0]->name . ' - ' . $orderDetail[0]->city;
-            $this->inputs['partner_code'] = $orderDetail[0]->partner_code;
+            $existingIds = array_unique(array_merge(
+                DelivPacking::where('trhdr_id', $this->object->id)
+                    ->where('tr_type', $this->trType)
+                    ->pluck('reffdtl_id')
+                    ->toArray(),
+                array_filter(array_column($this->input_details, 'reffdtl_id'))
+            ));
 
-            // dd($orderDetail);
-            $delivPacking = new DelivPacking();
-            $index = 0;
-            foreach ($orderDetail as $detail) {
-                $qty_remaining = $detail->qty - $detail->qty_reff;
-                if ($qty_remaining > 0) {
-                    $this->input_details[] = populateArrayFromModel($delivPacking);
-                    $this->input_details[$index]['reffdtl_id'] = $detail->reffdtl_id;
-                    $this->input_details[$index]['reffhdr_id'] = $detail->reffhdr_id;
-                    $this->input_details[$index]['reffhdrtr_type'] = $detail->reffhdrtr_type;
-                    $this->input_details[$index]['reffhdrtr_code'] = $detail->reffhdrtr_code;
-                    $this->input_details[$index]['reffdtltr_seq'] = $detail->reffdtltr_seq;
-                    $this->input_details[$index]['matl_descr'] = $detail->matl_descr;
-                    $this->input_details[$index]['qty'] = 0;
-                    // // Tambahan Order Detail
-                    $this->input_details[$index]['qty_order'] = $qty_remaining;
-                    $this->input_details[$index]['matl_id'] = $detail->matl_id;
-                    $this->input_details[$index]['matl_code'] = $detail->matl_code;
-                    $this->input_details[$index]['matl_uom'] = $detail->matl_uom;
-                    $this->input_details[$index]['wh_id'] = $this->inputs['wh_id'];
-                    $this->input_details[$index]['wh_code'] = $this->inputs['wh_code'];
-                    $this->input_details[$index]['order_date'] = $detail->order_date;
-                    $index++;
+            $baseModel = populateArrayFromModel(new DelivPacking());
+            $newItems = [];
+
+            foreach ($orderDetails as $detail) {
+                $qtyRemaining = $detail->qty - $detail->qty_reff;
+                if ($qtyRemaining > 0 && !in_array($detail->reffdtl_id, $existingIds)) {
+                    $newItems[] = array_merge($baseModel, [
+                        'reffdtl_id' => $detail->reffdtl_id,
+                        'reffhdr_id' => $detail->reffhdr_id,
+                        'reffhdrtr_type' => $detail->reffhdrtr_type,
+                        'reffhdrtr_code' => $detail->reffhdrtr_code,
+                        'reffdtltr_seq' => $detail->reffdtltr_seq,
+                        'matl_id' => $detail->matl_id,
+                        'matl_code' => $detail->matl_code,
+                        'matl_uom' => $detail->matl_uom,
+                        'matl_descr' => $detail->matl_descr,
+                        'qty' => 0,
+                        'qty_order' => $qtyRemaining,
+                        'wh_id' => $this->inputs['wh_id'] ?? 0,
+                        'wh_code' => $this->inputs['wh_code'] ?? '',
+                        'order_date' => $detail->order_date,
+                    ]);
                 }
             }
-        } else {
-            // Clear partner information when no purchase order is selected
-            $this->inputs['partner_id'] = null;
-            $this->inputs['partner_name'] = null;
-            $this->inputs['partner_code'] = null;
+
+            if (empty($newItems)) {
+                $this->dispatch('warning', 'Tidak ada item baru yang dapat ditambahkan dari purchase order.');
+                return;
+            }
+
+            $this->input_details = array_merge($this->input_details, $newItems);
+            $this->dispatch('success', "Berhasil menambahkan " . count($newItems) . " item baru dari purchase order.");
+            $this->checkForNewItems();
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Gagal menambahkan item baru: ' . $e->getMessage());
         }
     }
 

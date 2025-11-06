@@ -148,7 +148,7 @@ class Index extends BaseComponent
                 AND dh.reff_date BETWEEN '{$startDate}' AND '{$endDate}'
                 {$brandFilter}
                 {$categoryFilter}
-            ORDER BY p.name, dh.tr_code, dp.matl_descr
+            ORDER BY dh.reff_date, p.name, dh.tr_code, dp.matl_descr
         ";
         $rows = DB::connection(Session::get('app_code'))->select($query);
 

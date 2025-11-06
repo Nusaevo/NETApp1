@@ -25,6 +25,12 @@ class Index extends BaseComponent
                     WHERE deleted_at IS NULL AND grp = 'V'",
     ];
 
+    public $ddBrand = [
+        'placeHolder' => "Ketik untuk cari brand ...",
+        'optionLabel' => "{brand}",
+        'query' => "SELECT DISTINCT brand FROM materials WHERE brand IS NOT NULL AND brand != '' AND deleted_at IS NULL ORDER BY brand",
+    ];
+
     protected function onPreRender()
     {
         $this->resetFilters();
@@ -59,6 +65,8 @@ class Index extends BaseComponent
 
         // Query untuk mendapatkan data Purchase Order
         // Catatan: kolom Kirim/Sisa berasal dari ivt_bals (qty_oh dan qty_fgr) yang dicari berdasarkan matl_code
+        // Menggunakan subquery untuk menjumlahkan qty_oh dan qty_fgr per matl_code agar tidak terjadi duplikasi
+        // karena satu matl_code bisa punya beberapa record di ivt_bals (beda warehouse/batch)
 
         $query = "
             SELECT
@@ -73,13 +81,20 @@ class Index extends BaseComponent
                 od.price,
                 od.disc_pct,
                 od.amt,
-                COALESCE(ib.qty_oh, 0)  AS kirim,
-                COALESCE(ib.qty_fgr, 0) AS sisa
+                COALESCE(ib_summary.kirim, 0)  AS kirim,
+                COALESCE(ib_summary.sisa, 0) AS sisa
             FROM order_hdrs oh
             JOIN order_dtls od ON od.trhdr_id = oh.id
             JOIN partners p ON p.id = oh.partner_id
             LEFT JOIN materials m ON m.code = od.matl_code AND m.deleted_at IS NULL
-            LEFT JOIN ivt_bals ib ON ib.matl_code = od.matl_code
+            LEFT JOIN (
+                SELECT
+                    matl_code,
+                    SUM(COALESCE(qty_oh, 0)) AS kirim,
+                    SUM(COALESCE(qty_fgr, 0)) AS sisa
+                FROM ivt_bals
+                GROUP BY matl_code
+            ) ib_summary ON ib_summary.matl_code = od.matl_code
             WHERE oh.tr_type = 'PO'
                 AND oh.tr_date BETWEEN '{$startDate}' AND '{$endDate}'
                 {$partnerFilter}
@@ -288,9 +303,7 @@ class Index extends BaseComponent
                     'Order',
                     'Harga',
                     'Disc.',
-                    'Total',
-                    'Kirim',
-                    'Sisa'
+                    'Total'
                 ];
 
                 // Styling untuk header kolom detail
@@ -310,14 +323,12 @@ class Index extends BaseComponent
                        $item['harga'],
                        $item['disc'],
                        $item['total'],
-                       $item['kirim'],
-                        $item['sisa'],
                     ];
                     $currentRowIndex++;
                 }
 
                 // Tambahkan baris kosong sebagai pemisah antar nota
-                $excelData[] = ['', '', '', '', '', '', '', ''];
+                $excelData[] = ['', '', '', '', '', ''];
                 $currentRowIndex++;
             }
 
@@ -360,8 +371,6 @@ class Index extends BaseComponent
                     'D' => 15,  // Harga
                     'E' => 10,  // Disc.
                     'F' => 15,  // Total
-                    'G' => 12,  // Kirim
-                    'H' => 12   // Sisa
                 ],
             ]];
 

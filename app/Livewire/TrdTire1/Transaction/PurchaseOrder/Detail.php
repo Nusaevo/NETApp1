@@ -273,27 +273,44 @@ class Detail extends BaseComponent
         }
         return $headerData;
     }
-
     private function prepareDetailData()
     {
         $detailData = $this->input_details;
 
         $trSeq = 1;
-        foreach ($detailData as &$detail) {
-            $detail['price_curr'] = $detail['price'];
+        foreach ($detailData as $i => &$detail) {
+            $detail['tr_seq'] = $trSeq++;
             $detail['qty_uom'] = 'PCS';
             $detail['price_uom'] = 'PCS';
+            $detail['price_curr'] = $detail['price'];
+            $detail['price_base'] = 1;
             $detail['qty_base'] = 1;
-
-            // Set tr_seq untuk item baru (yang belum ada id)
-            if (empty($detail['id'])) {
-                $detail['tr_seq'] = $trSeq;
-                $trSeq++;
+            if ($this->actionValue === 'Create') {
+                $detail['status_code'] = Status::OPEN;
             }
         }
         unset($detail);
         return $detailData;
     }
+
+    // private function prepareDetailData()
+    // {
+    //     $detailData = $this->input_details;
+
+    //     $trSeq = 1;
+    //     foreach ($detailData as &$detail) {
+    //         $detail['price_curr'] = $detail['price'];
+    //         $detail['qty_uom'] = 'PCS';
+    //         $detail['price_uom'] = 'PCS';
+    //         $detail['qty_base'] = 1;
+
+    //         // Set tr_seq untuk SEMUA item (baik yang baru maupun yang sudah ada)
+    //         // Ini mencegah duplicate key violation saat menambah item baru di mode edit
+    //         $detail['tr_seq'] = $trSeq++;
+    //     }
+    //     unset($detail);
+    //     return $detailData;
+    // }
 
    public function addItemOnClick()
     {

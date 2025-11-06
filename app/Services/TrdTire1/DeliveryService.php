@@ -113,6 +113,14 @@ class DeliveryService
         unset($detail);
         foreach ($existingPackings as $existing) {
             if (!in_array($existing->id, $packing_ids)) {
+                // Hapus semua picking terlebih dahulu beserta log-nya
+                $existingPickings = DelivPicking::where('trpacking_id', $existing->id)->get();
+                foreach ($existingPickings as $picking) {
+                    $this->inventoryService->delIvtLog(0, $picking->id);
+                    $picking->delete();
+                }
+
+                // Hapus log reservation (PDR) yang dibuat dengan packing id
                 $this->inventoryService->delIvtLog(0, $existing->id);
                 OrderDtl::updateQtyReff(-$existing->qty, $existing->reffdtl_id);
                 $existing->delete();
@@ -195,8 +203,6 @@ class DeliveryService
             }
 
             if (!$picking) {
-                // tr_seq picking = urutan picking dalam packing yang sama (1, 2, 3, dst)
-                // tr_seq2 picking = urutan picking dalam packing yang sama (1, 2, 3, dst)
                 $detail['tr_seq'] = DelivPicking::getNextTrSeq($detailData['id']);
                 $detail['tr_seq2'] = DelivPicking::getNextTrSeq($detailData['id']);
 
