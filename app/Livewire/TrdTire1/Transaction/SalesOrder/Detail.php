@@ -46,7 +46,6 @@ class Detail extends BaseComponent
     public $isPanelEnabled = "false";
     public $payer = "true";
     public $isDeliv = false; // True jika ada delivery pada salah satu detail
-    public $isTrCodeFormatInvalid = false; // Track if tr_code format is invalid to prevent saving
     public $object;
     public $object_detail;
     public $canUpdateAfterPrint = true; // izin untuk save/print/delete setelah pernah dicetak
@@ -55,6 +54,7 @@ class Detail extends BaseComponent
     public $canPrintSuratJalanButton = true; // enable/disable tombol Cetak Surat Jalan
     public $canSaveButtonEnabled = true; // enable/disable tombol Simpan
     public $originalTrDate = null; // Menyimpan tanggal asli untuk validasi bulan
+    public $generatedTrCode = null; // Store temporary generated tr_code for validation
 
     public $ddPartner = [
         'placeHolder' => "Ketik untuk cari customer ...",
@@ -330,11 +330,14 @@ class Detail extends BaseComponent
         $this->updateAfterPrintPermission();
         $this->updateButtonStatesByCounter();
         $this->isPanelEnabled = "false"; // Disable panel karena sudah ada data
-        
+
         // Dispatch event to refresh partner dropdown with loaded partner_id
         $this->dispatch('resetSelect2Dropdowns', [
             'partner_id' => $this->inputs['partner_id'] ?? null
         ]);
+
+        // Reset generated tr_code karena mode Edit tidak memerlukan validasi generated tr_code
+        $this->generatedTrCode = null;
     }
 
     private function updateAfterPrintPermission(): void
@@ -448,6 +451,9 @@ class Detail extends BaseComponent
             'wp_name' => '',
             'wp_location' => '',
         ];
+
+        // Reset generated tr_code
+        $this->generatedTrCode = null;
     }
 
     public function onValidateAndSave()
@@ -456,13 +462,15 @@ class Detail extends BaseComponent
             $this->orderService = app(OrderService::class);
         }
 
-        // Cek apakah tr_code format invalid untuk mencegah save
-        if ($this->isTrCodeFormatInvalid) {
-            $this->dispatch('error', 'Format nomor nota tidak valid. Perbaiki format nomor nota sebelum menyimpan.');
-            return;
-        }
+
 
         $this->validate();
+
+        // Validasi tr_code sesuai dengan yang di-generate
+        $this->validateGeneratedTrCode();
+
+        // Validasi tr_code sesuai dengan mode dan object
+        $this->validateTrCodeConsistency();
 
         // Validasi duplikasi tr_code
         $this->validateTrCodeDuplicate();
@@ -630,10 +638,11 @@ class Detail extends BaseComponent
         $salesType = $this->inputs['sales_type'];
         $taxDocFlag = !empty($this->inputs['tax_doc_flag']);
         $trDate = $this->inputs['tr_date'];
-        $this->inputs['tr_code'] = app(MasterService::class)->getNewTrCode($this->trType,$salesType,$taxDocFlag,$trDate);
 
-        // Reset flag karena tr_code yang di-generate pasti valid
-        $this->isTrCodeFormatInvalid = false;
+        // Generate new tr_code and store in temporary variable
+        $newTrCode = app(MasterService::class)->getNewTrCode($this->trType,$salesType,$taxDocFlag,$trDate);
+        $this->generatedTrCode = $newTrCode;
+        $this->inputs['tr_code'] = $newTrCode;
     }
 
     public function onTrCodeChanged()
@@ -642,7 +651,6 @@ class Detail extends BaseComponent
 
         if (empty($trCode)) {
             // Jika tr_code kosong, reset ke mode create tanpa object
-            $this->isTrCodeFormatInvalid = false;
             $this->resetToCreateModeInternal();
             return;
         }
@@ -655,19 +663,10 @@ class Detail extends BaseComponent
 
             if ($existingOrder) {
                 // Jika nota ditemukan, load data untuk edit tanpa redirect
-                $this->isTrCodeFormatInvalid = false;
                 $this->loadOrderByTrCode($existingOrder);
                 $this->dispatch('info', "Nota {$trCode} ditemukan. Data telah dimuat untuk edit.");
             } else {
-                // Validasi format tr_code jika tidak ditemukan di database
-                if (!$this->isValidTrCodeFormat($trCode)) {
-                    $this->isTrCodeFormatInvalid = true;
-                    $this->dispatch('error', "Format nomor nota '{$trCode}' tidak valid. Gunakan tombol 'Nomor Baru' untuk generate nomor yang benar atau periksa format yang sesuai.");
-                    return;
-                }
-
-                // Jika format valid tapi tidak ditemukan, biarkan tr_code tetap di field untuk koreksi user
-                $this->isTrCodeFormatInvalid = false;
+                // Jika tidak ditemukan, biarkan tr_code tetap di field untuk koreksi user
                 $this->dispatch('warning', "Nomor nota '{$trCode}' tidak ditemukan. Silakan periksa kembali atau gunakan nomor lain.");
             }
         } catch (Exception $e) {
@@ -728,6 +727,9 @@ class Detail extends BaseComponent
 
         // Sinkronisasi version number dengan object yang di-load
         $this->versionNumber = $this->object->version_number ?? 1;
+
+        // Reset generated tr_code karena mode Edit tidak memerlukan validasi generated tr_code
+        $this->generatedTrCode = null;
     }
 
     private function resetToCreateModeInternal()
@@ -785,43 +787,8 @@ class Detail extends BaseComponent
         $this->total_dpp = 0;
         $this->total_discount = 0;
 
-        // Reset tr_code format validation flag
-        $this->isTrCodeFormatInvalid = false;
-    }
-
-    private function isValidTrCodeFormat($trCode)
-    {
-        // Validasi format tr_code berdasarkan pattern yang digunakan sistem
-        // Contoh format: SO-MBL-I-2024-11-0001 atau SO-MTR-E-2024-11-0001
-
-        if (empty($this->inputs['sales_type'])) {
-            return false;
-        }
-
-        $salesType = $this->inputs['sales_type'];
-        $taxDocFlag = !empty($this->inputs['tax_doc_flag']);
-        $trDate = $this->inputs['tr_date'] ?? date('Y-m-d');
-
-        // Generate expected pattern
-        $expectedPattern = $this->generateTrCodePattern($salesType, $taxDocFlag, $trDate);
-
-        // Check if tr_code matches the expected pattern
-        return preg_match($expectedPattern, $trCode);
-    }
-
-    private function generateTrCodePattern($salesType, $taxDocFlag, $trDate)
-    {
-        // Generate regex pattern berdasarkan format tr_code sistem
-        $year = date('Y', strtotime($trDate));
-        $month = date('m', strtotime($trDate));
-
-        $typeCode = ($salesType === 'MOBIL') ? 'MBL' : 'MTR';
-        $taxCode = $taxDocFlag ? 'I' : 'E';
-
-        // Pattern: SO-MBL-I-2024-11-0001 (dengan nomor sequence 4 digit)
-        $pattern = '/^SO-' . $typeCode . '-' . $taxCode . '-' . $year . '-' . $month . '-\d{4}$/';
-
-        return $pattern;
+        // Reset generated tr_code
+        $this->generatedTrCode = null;
     }
 
     public function resetToCreateMode()
@@ -1653,6 +1620,68 @@ class Detail extends BaseComponent
     }
 
     /**
+     * Validasi tr_code sesuai dengan yang di-generate
+     */
+    private function validateGeneratedTrCode()
+    {
+        // Skip validasi jika dalam mode Edit (tidak perlu validasi generated tr_code)
+        if ($this->actionValue === 'Edit') {
+            return;
+        }
+
+        $currentTrCode = $this->inputs['tr_code'] ?? null;
+        if (empty($currentTrCode)) {
+            throw new Exception('Kode transaksi harus diisi');
+        }
+
+        // Jika ada generated tr_code dan berbeda dengan current tr_code
+        if (!empty($this->generatedTrCode) && $this->generatedTrCode !== $currentTrCode) {
+            throw new Exception("Nomor Sales Order '{$currentTrCode}' berbeda dengan yang di-generate ('{$this->generatedTrCode}'). Silakan gunakan nomor yang di-generate atau klik tombol Generate Nomor lagi.");
+        }
+    }
+
+    /**
+     * Validasi konsistensi tr_code sesuai dengan mode dan object
+     */
+    private function validateTrCodeConsistency()
+    {
+        $trCode = $this->inputs['tr_code'] ?? null;
+        if (empty($trCode)) {
+            throw new Exception('Kode transaksi harus diisi');
+        }
+
+        if ($this->actionValue === 'Edit') {
+            // Mode Edit: pastikan tr_code masih sesuai dengan object yang sedang diedit
+            if (!$this->object || !$this->object->id) {
+                throw new Exception('Data order tidak ditemukan untuk mode edit');
+            }
+
+            // Cari order berdasarkan tr_code
+            $orderByTrCode = OrderHdr::where('tr_code', $trCode)
+                ->where('tr_type', $this->trType)
+                ->first();
+
+            if (!$orderByTrCode) {
+                throw new Exception("Nomor nota '{$trCode}' tidak ditemukan di database");
+            }
+
+            // Pastikan tr_code yang diinput masih merujuk ke object yang sama
+            if ($orderByTrCode->id !== $this->object->id) {
+                throw new Exception("Nomor nota '{$trCode}' tidak sesuai dengan data yang sedang diedit. Silakan refresh halaman atau gunakan nomor nota yang benar.");
+            }
+        } else if ($this->actionValue === 'Create') {
+            // Mode Create: pastikan tr_code belum ada di database
+            $existingOrder = OrderHdr::where('tr_code', $trCode)
+                ->where('tr_type', $this->trType)
+                ->first();
+
+            if ($existingOrder) {
+                throw new Exception("Nomor nota '{$trCode}' sudah ada di database dengan ID: {$existingOrder->id}. Silakan generate nomor baru atau gunakan mode edit untuk mengubah data tersebut.");
+            }
+        }
+    }
+
+    /**
      * Validasi duplikasi tr_code dengan tambahan validasi format
      */
     private function validateTrCodeDuplicate()
@@ -1662,12 +1691,7 @@ class Detail extends BaseComponent
             throw new Exception("Kode transaksi harus diisi.");
         }
 
-        // Validasi format tr_code untuk mode create
-        if ($this->actionValue === 'Create') {
-            if (!$this->isValidTrCodeFormat($trCode)) {
-                throw new Exception("Format kode transaksi '{$trCode}' tidak valid. Gunakan tombol 'Nomor Baru' untuk generate kode yang benar.");
-            }
-        }
+
 
         // Cek duplikasi berdasarkan tr_code
         $query = OrderHdr::where('tr_code', $trCode)->where('tr_type', $this->trType);
