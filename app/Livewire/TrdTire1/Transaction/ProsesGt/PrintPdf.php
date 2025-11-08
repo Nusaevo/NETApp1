@@ -478,4 +478,3 @@ class PrintPdf extends BaseComponent
         return view($renderRoute);
     }
 }
-
