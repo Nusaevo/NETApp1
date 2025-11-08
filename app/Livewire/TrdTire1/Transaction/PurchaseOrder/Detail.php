@@ -55,6 +55,7 @@ class Detail extends BaseComponent
     public $itemEditableStatus = [];
     public $materialCategory = null; // Tambahan: untuk menyimpan category hasil mapping sales_type
     public $materialQuery = "";
+    public $generatedTrCode = null; // Store temporary generated tr_code for validation
 
     // Properties untuk komponen dropdown search multiple select
     public $items = [];
@@ -78,6 +79,8 @@ class Detail extends BaseComponent
         'delete' => 'delete',
         // 'updateAmount' => 'updateAmount',
         'salesTypeOnChanged' => 'salesTypeOnChanged', // tambahkan listener baru
+        'onTrCodeChanged' => 'onTrCodeChanged', // listener untuk perubahan tr_code
+        'resetToCreateMode' => 'resetToCreateMode', // listener untuk reset ke mode create
     ];
 
     // Livewire lifecycle hooks
@@ -163,6 +166,9 @@ class Detail extends BaseComponent
         $this->inputs['curr_rate'] = 1.00;
         $this->inputs['print_date']=null;
         $this->isDeliv = false;
+        
+        // Reset generated tr_code
+        $this->generatedTrCode = null;
     }
 
      public function onValidateAndSave()
@@ -171,6 +177,12 @@ class Detail extends BaseComponent
         if (!$this->orderService) {
             $this->orderService = app(OrderService::class);
         }
+
+        // Validasi tr_code sesuai dengan yang di-generate
+        $this->validateGeneratedTrCode();
+
+        // Validasi tr_code sesuai dengan mode dan object
+        $this->validateTrCodeConsistency();
 
         // Validasi duplikasi tr_code
         $this->validateTrCodeDuplicate();
@@ -338,7 +350,166 @@ class Detail extends BaseComponent
 
      public function trCodeOnClick()
     {
-        $this->inputs['tr_code'] = app(MasterService::class)->getNewTrCode($this->trType,"","");
+        // Reset ke mode create hanya jika sedang dalam mode edit
+        if ($this->actionValue !== 'Create') {
+            $this->resetToCreateModeInternal();
+        }
+
+        // Tambahkan pengecekan sales_type
+        if (empty($this->inputs['sales_type'])) {
+            $this->dispatch('error', 'Silakan pilih Tipe Kendaraan terlebih dahulu sebelum generate Nomor.');
+            return;
+        }
+
+        // Tambahkan pengecekan tr_date
+        if (empty($this->inputs['tr_date'])) {
+            $this->dispatch('error', 'Silakan pilih Tanggal Transaksi terlebih dahulu sebelum generate Nomor.');
+            return;
+        }
+
+        $salesType = $this->inputs['sales_type'];
+        $trDate = $this->inputs['tr_date'];
+        
+        // Generate new tr_code and store in temporary variable
+        $newTrCode = app(MasterService::class)->getNewTrCode($this->trType, $salesType, "", $trDate);
+        $this->generatedTrCode = $newTrCode;
+        $this->inputs['tr_code'] = $newTrCode;
+    }
+
+    public function onTrCodeChanged()
+    {
+        $trCode = trim($this->inputs['tr_code'] ?? '');
+
+        if (empty($trCode)) {
+            // Jika tr_code kosong, reset ke mode create tanpa object
+            $this->resetToCreateModeInternal();
+            return;
+        }
+
+        try {
+            // Cari OrderHdr berdasarkan tr_code dan tr_type
+            $existingOrder = OrderHdr::where('tr_code', $trCode)
+                ->where('tr_type', $this->trType)
+                ->first();
+
+            if ($existingOrder) {
+                // Jika nota ditemukan, load data untuk edit tanpa redirect
+                $this->loadOrderByTrCode($existingOrder);
+                $this->dispatch('info', "Purchase Order {$trCode} ditemukan. Data telah dimuat untuk edit.");
+            } else {
+                // Jika tidak ditemukan, biarkan tr_code tetap di field untuk koreksi user
+                $this->dispatch('warning', "Nomor Purchase Order '{$trCode}' tidak ditemukan. Silakan periksa kembali atau gunakan nomor lain.");
+            }
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Terjadi kesalahan saat mencari Purchase Order: ' . $e->getMessage());
+            // Jangan hapus tr_code, biarkan user bisa perbaiki
+        }
+    }
+
+    private function loadOrderByTrCode($order)
+    {
+        // Set mode ke edit dan load object
+        $this->actionValue = 'Edit';
+        $this->objectIdValue = $order->id;
+        $this->object = $order;
+
+        // Load semua data order
+        $this->inputs = $this->object->toArray();
+        $this->inputs['tr_code'] = $this->object->tr_code;
+        $this->inputs['partner_name'] = $this->object->partner ? $this->object->partner->code : '';
+
+        // Load payment due date
+        $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
+        $paymentDueDays = is_numeric($this->object->payment_due_days) ? (int)$this->object->payment_due_days : 0;
+        $this->inputs['due_date'] = ($trDate && $paymentDueDays > 0)
+            ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
+            : ($trDate ? $trDate->format('Y-m-d') : null);
+
+        // Load related data
+        $this->salesTypeOnChanged();
+        $this->loadDetails();
+        $this->isPanelEnabled = "false"; // Disable panel karena sudah ada data
+
+        // Update tax settings
+        if (!empty($this->inputs['tax_code'])) {
+            $this->taxCodeOnChanged();
+        }
+
+        // Dispatch event to refresh partner dropdown with loaded partner_id
+        $this->dispatch('resetSelect2Dropdowns', [
+            'partner_id' => $this->inputs['partner_id'] ?? null
+        ]);
+
+        // Sinkronisasi version number dengan object yang di-load
+        $this->versionNumber = $this->object->version_number ?? 1;
+        
+        // Reset generated tr_code karena mode Edit tidak memerlukan validasi generated tr_code
+        $this->generatedTrCode = null;
+    }
+
+    private function resetToCreateModeInternal()
+    {
+        // Reset ke mode create murni
+        $this->actionValue = 'Create';
+        $this->objectIdValue = null;
+        $this->object = new OrderHdr();
+        $this->resetInputsToDefault();
+        $this->isPanelEnabled = "true";
+
+        // Reset version number untuk create mode
+        $this->versionNumber = 1;
+
+        // Reset Select2 dropdowns
+        $this->dispatch('resetSelect2Dropdowns');
+    }
+
+    private function resetInputsToDefault()
+    {
+        // Reset semua inputs ke nilai default
+        $this->inputs = populateArrayFromModel(new OrderHdr());
+        $this->inputs['tr_date'] = date('Y-m-d');
+        $this->inputs['due_date'] = date('Y-m-d');
+        $this->inputs['tr_type'] = $this->trType;
+        $this->inputs['curr_code'] = "IDR";
+        $this->inputs['curr_id'] = app(ConfigService::class)->getConstIdByStr1('BASE_CURRENCY', $this->inputs['curr_code']);
+        $this->inputs['curr_rate'] = 1.00;
+
+        // Set default payment term
+        $this->setDefaultPaymentTerm();
+
+        // Reset detail items
+        $this->input_details = [];
+
+        // Reset semua totals
+        $this->total_amount = 0;
+        $this->total_tax = 0;
+        $this->total_dpp = 0;
+        $this->total_discount = 0;
+        
+        // Reset generated tr_code
+        $this->generatedTrCode = null;
+    }
+
+
+
+    public function resetToCreateMode()
+    {
+        // Method untuk reset ke mode create (dipanggil dari tombol "Mode Create")
+        $this->resetToCreateModeInternal();
+        $this->dispatch('info', 'Mode telah direset ke Create. Silakan input data baru.');
+    }
+
+    private function setDefaultPaymentTerm()
+    {
+        $cod = ConfigConst::where('const_group', 'MPAYMENT_TERMS')->where('str1', 'COD')->first();
+        if ($cod) {
+            $this->inputs['payment_term_id'] = $cod->id;
+            $this->inputs['payment_term'] = $cod->str1;
+            $this->inputs['payment_due_days'] = $cod->num1;
+            if (!empty($this->inputs['tr_date'])) {
+                $this->inputs['due_date'] = \Carbon\Carbon::parse($this->inputs['tr_date'])->addDays($cod->num1)->format('Y-m-d');
+            }
+        }
     }
 
     public function taxCodeOnChanged()
@@ -761,12 +932,78 @@ class Detail extends BaseComponent
     }
 
     /**
+     * Validasi tr_code sesuai dengan yang di-generate
+     */
+    private function validateGeneratedTrCode()
+    {
+        // Skip validasi jika dalam mode Edit (tidak perlu validasi generated tr_code)
+        if ($this->actionValue === 'Edit') {
+            return;
+        }
+
+        $currentTrCode = $this->inputs['tr_code'] ?? null;
+        if (empty($currentTrCode)) {
+            throw new Exception('Kode transaksi harus diisi');
+        }
+
+        // Jika ada generated tr_code dan berbeda dengan current tr_code
+        if (!empty($this->generatedTrCode) && $this->generatedTrCode !== $currentTrCode) {
+            throw new Exception("Nomor Purchase Order '{$currentTrCode}' berbeda dengan yang di-generate ('{$this->generatedTrCode}'). Silakan gunakan nomor yang di-generate atau klik tombol Generate Nomor lagi.");
+        }
+    }
+
+    /**
+     * Validasi konsistensi tr_code sesuai dengan mode dan object
+     */
+    private function validateTrCodeConsistency()
+    {
+        $trCode = $this->inputs['tr_code'] ?? null;
+        if (empty($trCode)) {
+            throw new Exception('Kode transaksi harus diisi');
+        }
+
+        if ($this->actionValue === 'Edit') {
+            // Mode Edit: pastikan tr_code masih sesuai dengan object yang sedang diedit
+            if (!$this->object || !$this->object->id) {
+                throw new Exception('Data Purchase Order tidak ditemukan untuk mode edit');
+            }
+
+            // Cari order berdasarkan tr_code
+            $orderByTrCode = OrderHdr::where('tr_code', $trCode)
+                ->where('tr_type', $this->trType)
+                ->first();
+
+            if (!$orderByTrCode) {
+                throw new Exception("Nomor Purchase Order '{$trCode}' tidak ditemukan di database");
+            }
+
+            // Pastikan tr_code yang diinput masih merujuk ke object yang sama
+            if ($orderByTrCode->id !== $this->object->id) {
+                throw new Exception("Nomor Purchase Order '{$trCode}' tidak sesuai dengan data yang sedang diedit. Silakan refresh halaman atau gunakan nomor Purchase Order yang benar.");
+            }
+        } else if ($this->actionValue === 'Create') {
+            // Mode Create: pastikan tr_code belum ada di database
+            $existingOrder = OrderHdr::where('tr_code', $trCode)
+                ->where('tr_type', $this->trType)
+                ->first();
+
+            if ($existingOrder) {
+                throw new Exception("Nomor Purchase Order '{$trCode}' sudah ada di database dengan ID: {$existingOrder->id}. Silakan generate nomor baru atau gunakan mode edit untuk mengubah data tersebut.");
+            }
+        }
+    }
+
+    /**
      * Validasi duplikasi tr_code
      */
     private function validateTrCodeDuplicate()
     {
         $trCode = $this->inputs['tr_code'] ?? null;
-        if (empty($trCode)) return;
+        if (empty($trCode)) {
+            throw new Exception('Kode transaksi harus diisi');
+        }
+
+
 
         $query = OrderHdr::where('tr_code', $trCode)->where('tr_type', $this->trType);
 

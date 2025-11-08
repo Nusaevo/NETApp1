@@ -18,7 +18,7 @@
 <div class="{{ $colClass }}" @if(isset($span)) span="{{ $span }}" @endif @if(isset($visible) && $visible === 'false') style="display: none;" @endif>
 
     <div class="input-group">
-        <div class="{{ !empty($label) ? 'form-floating' : '' }} flex-grow-1">
+        <div class="{{ !empty($label) ? 'form-floating' : '' }} flex-grow-1 position-relative">
             @if(isset($type) && $type === 'textarea')
                 <textarea style="min-height: 80px;" wire:model="{{ $model }}" id="{{ $id }}" rows="{{ isset($rows) ? $rows : '10' }}" class="{{ $textareaClass }} @error($model) is-invalid @enderror"
                           @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
@@ -80,7 +80,7 @@
                                     {{ $currency }}
                             @endswitch
                         </span>
-                        <div class="{{ !empty($label) ? 'form-floating' : '' }} flex-grow-1">
+                        <div class="{{ !empty($label) ? 'form-floating' : '' }} flex-grow-1 position-relative">
                             <input x-data="{
                                 rawValue: @entangle($model).live,
                                 displayValue: '',
@@ -772,7 +772,7 @@
                 <label for="{{ $id }}" class="@if(isset($required) && $required === 'true') required @endif">{{ $label }}</label>
             @endif
             @if(!empty($placeHolder))
-                <div class="placeholder-text">{{ $placeHolder }}</div>
+                <div class="placeholder-text position-absolute text-muted" style="left: .75rem; top: calc(100% + .3rem); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 2.5rem);">{{ $placeHolder }}</div>
             @endif
             @error($model)
                 <div class="error-message" style="position: relative; margin-top: 5px; font-size: 0.875em; color: #dc3545;">{{ $message }}</div>

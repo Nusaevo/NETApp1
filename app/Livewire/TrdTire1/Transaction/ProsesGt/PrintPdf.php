@@ -118,31 +118,155 @@ class PrintPdf extends BaseComponent
             }
         }
 
-        // Urutkan: CUSTOMER LAIN-LAIN muncul terakhir, kemudian berdasarkan nama partner
-        // Untuk CUSTOMER LAIN-LAIN, urutkan berdasarkan nomor nota (tr_code)
+        // Urutkan: CUSTOMER LAIN-LAIN muncul terakhir, kemudian urutkan berdasarkan gt_tr_code
         usort($detailsWithCustomer, function($a, $b) {
-            // Jika keduanya LAIN-LAIN, urutkan berdasarkan nomor nota (tr_code)
-            if ($a['is_lain_lain'] && $b['is_lain_lain']) {
-                $trCodeA = $a['order']->tr_code ?? '';
-                $trCodeB = $b['order']->tr_code ?? '';
-                return strcmp($trCodeA, $trCodeB);
+            // Jika berbeda jenis (satu LAIN-LAIN, satu bukan), LAIN-LAIN muncul terakhir
+            if ($a['is_lain_lain'] && !$b['is_lain_lain']) {
+                return 1; // LAIN-LAIN di bawah
+            }
+            if (!$a['is_lain_lain'] && $b['is_lain_lain']) {
+                return -1; // Bukan LAIN-LAIN di atas
             }
 
-            // Jika keduanya bukan LAIN-LAIN, urutkan berdasarkan nama customer
-            if (!$a['is_lain_lain'] && !$b['is_lain_lain']) {
-                return strcmp($a['customer_name'], $b['customer_name']);
+            // Jika sama jenis (keduanya LAIN-LAIN atau keduanya bukan), urutkan berdasarkan gt_tr_code
+            $gtTrCodeA = $a['detail']->gt_tr_code ?? '';
+            $gtTrCodeB = $b['detail']->gt_tr_code ?? '';
+
+            // Jika gt_tr_code kosong/null, pindahkan ke akhir
+            if (empty($gtTrCodeA) && empty($gtTrCodeB)) {
+                return 0;
+            }
+            if (empty($gtTrCodeA)) {
+                return 1;
+            }
+            if (empty($gtTrCodeB)) {
+                return -1;
             }
 
-            // Jika berbeda, LAIN-LAIN muncul terakhir
-            return $a['is_lain_lain'] ? 1 : -1;
+            // Urutkan berdasarkan gt_tr_code
+            return strcmp($gtTrCodeA, $gtTrCodeB);
         });
 
+        // Group dan aggregate berdasarkan matl_code dan gt_tr_code
+        $aggregatedDetails = [];
+        foreach ($detailsWithCustomer as $item) {
+            $detail = $item['detail'];
+            // Normalisasi key untuk grouping (trim dan handle null/empty)
+            $matlCode = trim($detail->matl_code ?? '');
+            $gtTrCode = trim($detail->gt_tr_code ?? '');
+            // Gunakan '-' untuk empty string agar konsisten
+            $matlCode = $matlCode === '' ? '-' : $matlCode;
+            $gtTrCode = $gtTrCode === '' ? '-' : $gtTrCode;
+            $key = $matlCode . '|' . $gtTrCode;
+
+            if (!isset($aggregatedDetails[$key])) {
+                // Clone detail pertama sebagai base
+                $aggregatedDetail = clone $detail;
+
+                // Pastikan relasi SalesReward tetap ada
+                if ($detail->relationLoaded('SalesReward') && $detail->SalesReward) {
+                    $aggregatedDetail->setRelation('SalesReward', $detail->SalesReward);
+                }
+
+                // Hitung total point untuk detail pertama
+                $initialQty = (float)($detail->qty ?? 0);
+                $initialTotalPoint = 0.0;
+                if ($detail->SalesReward && $detail->SalesReward->qty > 0) {
+                    $initialTotalPoint = ($initialQty / $detail->SalesReward->qty) * $detail->SalesReward->reward;
+                }
+
+                // Simpan informasi aggregate (untuk tracking)
+                $aggregatedDetail->aggregated_qty = $initialQty;
+                $aggregatedDetail->aggregated_total_point = $initialTotalPoint;
+
+                // Update qty asli agar method getAggregatedQty bisa menggunakan nilai yang benar
+                $aggregatedDetail->qty = $initialQty;
+
+                $aggregatedDetails[$key] = [
+                    'detail' => $aggregatedDetail,
+                    'order' => $item['order'],
+                    'customer_name' => $item['customer_name'],
+                    'is_lain_lain' => $item['is_lain_lain']
+                ];
+            } else {
+                // Sum qty dan total point
+                $existing = $aggregatedDetails[$key];
+                $existingDetail = $existing['detail'];
+
+                // Hitung qty dan total point dari detail saat ini
+                $currentQty = (float)($detail->qty ?? 0);
+                $currentTotalPoint = 0.0;
+                if ($detail->SalesReward && $detail->SalesReward->qty > 0) {
+                    $currentTotalPoint = ($currentQty / $detail->SalesReward->qty) * $detail->SalesReward->reward;
+                }
+
+                // Update nilai aggregate
+                $existingDetail->aggregated_qty += $currentQty;
+                $existingDetail->aggregated_total_point += $currentTotalPoint;
+
+                // Update qty asli dengan nilai yang sudah di-aggregate
+                $existingDetail->qty = $existingDetail->aggregated_qty;
+            }
+        }
+
+        // Konversi aggregated details kembali ke array untuk sorting ulang
+        $finalDetails = array_values($aggregatedDetails);
+
+        // Urutkan ulang setelah aggregation (LAIN-LAIN tetap di bawah)
+        usort($finalDetails, function($a, $b) {
+            // Jika berbeda jenis (satu LAIN-LAIN, satu bukan), LAIN-LAIN muncul terakhir
+            if ($a['is_lain_lain'] && !$b['is_lain_lain']) {
+                return 1;
+            }
+            if (!$a['is_lain_lain'] && $b['is_lain_lain']) {
+                return -1;
+            }
+
+            // Urutkan berdasarkan gt_tr_code
+            $gtTrCodeA = $a['detail']->gt_tr_code ?? '';
+            $gtTrCodeB = $b['detail']->gt_tr_code ?? '';
+
+            if (empty($gtTrCodeA) && empty($gtTrCodeB)) {
+                return 0;
+            }
+            if (empty($gtTrCodeA)) {
+                return 1;
+            }
+            if (empty($gtTrCodeB)) {
+                return -1;
+            }
+
+            return strcmp($gtTrCodeA, $gtTrCodeB);
+        });
+
+        // Setelah aggregation, kita perlu memastikan hanya satu detail per kombinasi matl_code + gt_tr_code
+        // Tetapi kita perlu mempertahankan struktur order untuk kompatibilitas view
+        // Solusi: buat collection detail yang sudah di-aggregate, lalu assign ke order pertama yang muncul
+
+        // Buat map untuk tracking detail yang sudah di-aggregate (untuk menghindari duplikasi)
+        $uniqueAggregatedDetails = [];
+        foreach ($finalDetails as $item) {
+            $detail = $item['detail'];
+            $matlCode = trim($detail->matl_code ?? '');
+            $gtTrCode = trim($detail->gt_tr_code ?? '');
+            $matlCode = $matlCode === '' ? '-' : $matlCode;
+            $gtTrCode = $gtTrCode === '' ? '-' : $gtTrCode;
+            $key = $matlCode . '|' . $gtTrCode;
+
+            // Hanya simpan detail pertama untuk setiap key (karena sudah di-aggregate)
+            if (!isset($uniqueAggregatedDetails[$key])) {
+                $uniqueAggregatedDetails[$key] = $item;
+            }
+        }
+
+        // Konversi ke array untuk processing selanjutnya
+        $uniqueFinalDetails = array_values($uniqueAggregatedDetails);
+
         // Group kembali berdasarkan order untuk kompatibilitas dengan view
-        // Urutkan orders berdasarkan urutan detail pertama yang muncul
         $groupedOrders = [];
         $orderDetailsMap = [];
 
-        foreach ($detailsWithCustomer as $item) {
+        foreach ($uniqueFinalDetails as $item) {
             $orderId = $item['order']->id;
             if (!isset($groupedOrders[$orderId])) {
                 // Clone order untuk menghindari modifikasi objek asli
@@ -162,7 +286,7 @@ class PrintPdf extends BaseComponent
         // Urutkan orders berdasarkan urutan detail pertama yang muncul
         $sortedOrderIds = array_unique(array_map(function($item) {
             return $item['order']->id;
-        }, $detailsWithCustomer));
+        }, $uniqueFinalDetails));
 
         $sortedOrders = [];
         foreach ($sortedOrderIds as $orderId) {
@@ -254,6 +378,51 @@ class PrintPdf extends BaseComponent
     }
 
     /**
+     * Get aggregated qty (T. Ban) - menggunakan nilai yang sudah di-sum
+     */
+    public function getAggregatedQty($detail): float
+    {
+        // Cek apakah property aggregated_qty ada (menggunakan multiple method untuk kompatibilitas)
+        if (isset($detail->aggregated_qty)) {
+            return (float)$detail->aggregated_qty;
+        }
+        // Jika qty sudah di-update dengan nilai aggregate (karena kita update qty = aggregated_qty), gunakan qty
+        // Fallback ke qty asli jika belum di-aggregate
+        return (float)($detail->qty ?? 0);
+    }
+
+    /**
+     * Get aggregated point per unit - dihitung dari total point / total qty
+     */
+    public function getAggregatedPoint($detail): float
+    {
+        $aggregatedQty = $this->getAggregatedQty($detail);
+        $aggregatedTotalPoint = $this->getAggregatedTotalPoint($detail);
+
+        if ($aggregatedQty > 0) {
+            return round($aggregatedTotalPoint / $aggregatedQty, 2);
+        }
+        return 0;
+    }
+
+    /**
+     * Get aggregated total point (T. Point) - menggunakan nilai yang sudah di-sum
+     */
+    public function getAggregatedTotalPoint($detail): float
+    {
+        // Cek apakah property aggregated_total_point ada
+        if (isset($detail->aggregated_total_point)) {
+            return round((float)$detail->aggregated_total_point, 2);
+        }
+        // Fallback ke perhitungan asli jika belum di-aggregate
+        if ($detail->SalesReward && $detail->SalesReward->qty > 0) {
+            $qty = $this->getAggregatedQty($detail);
+            return round(($qty / $detail->SalesReward->qty) * $detail->SalesReward->reward, 2);
+        }
+        return 0;
+    }
+
+    /**
      * Get customer point name dengan handle kedua versi:
      * - Jika gt_partner_code adalah code partner, ambil name dari partner
      * - Jika gt_partner_code adalah name langsung, gunakan langsung
@@ -309,4 +478,3 @@ class PrintPdf extends BaseComponent
         return view($renderRoute);
     }
 }
-

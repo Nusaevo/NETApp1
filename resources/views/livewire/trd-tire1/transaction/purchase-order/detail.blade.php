@@ -28,10 +28,16 @@
                                         :enabled="true" />
                                 </div> --}}
                                 <div class="row">
+                                     <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
+                                        type="text" :action="$actionValue" required="true"
+                                        clickEvent="trCodeOnClick"
+                                        buttonName="Nomor PO Baru"
+                                        enabled="true" :buttonEnabled="true"
+                                        onChanged="onTrCodeChanged"
+                                        placeHolder="Edit nomor PO dan tekan enter untuk cari PO lain, klik nomor baru untuk create" />
+                                </div>
+                                <div class="row">
 
-                                    <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
-                                        type="code" :action="$actionValue" required="false" clickEvent="trCodeOnClick"
-                                        buttonName="Nomor Baru" enabled="true" :buttonEnabled="$isPanelEnabled" />
                                     <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" enabled="true" />
                                     <x-ui-dropdown-select label="{{ $this->trans('payment_terms') }}"

@@ -59,22 +59,49 @@
                 margin-bottom: 10px;
             }
 
-            th, td {
+            th {
                 border: 1px solid #000;
                 padding: 3px 5px;
-                font-size: 11px;
+                font-size: 13px;
                 line-height: 1.2;
-            }
-
-            th {
                 background-color: #f0f0f0;
                 font-weight: bold;
                 text-align: center;
             }
 
+            td {
+                padding: 3px 5px;
+                font-size: 13px;
+                line-height: 1.2;
+                border: none;
+            }
+
             .text-left { text-align: left; }
             .text-center { text-align: center; }
             .text-right { text-align: right; }
+        }
+
+        /* Style untuk view screen */
+        .view-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .view-table thead th {
+            border: 1px solid #000;
+            padding: 8px;
+            background-color: #f0f0f0;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .view-table tbody td {
+            padding: 8px;
+            border: none;
+        }
+
+        .view-table tbody tr {
+            border-bottom: none;
         }
     </style>
 
@@ -94,8 +121,8 @@
 
                 <!-- Content untuk View -->
                 <div class="table-responsive">
-                    <table class="table table-striped table-bordered">
-                        <thead class="table-dark">
+                    <table class="view-table">
+                        <thead>
                             <tr>
                                 <th>Nama Pelanggan</th>
                                 <th>No. Nota</th>
@@ -110,25 +137,72 @@
                         </thead>
                         <tbody>
                             @if (!empty($orders) && count($orders) > 0)
-                                @foreach ($orders as $order)
-                                    @foreach ($order->OrderDtl as $detail)
-                                        <tr>
-                                            <td>{{ $this->getCustomerName($order, $detail) }}</td>
-                                            <td>{{ $order->tr_code }}</td>
-                                            <td>{{ $detail->matl_code }}</td>
-                                            <td>{{ $detail->matl_descr }}</td>
-                                            <td class="text-center">{{ ceil($detail->qty) }}</td>
-                                            <td class="text-center">
-                                                {{ $detail->SalesReward ? round($detail->SalesReward->reward / $detail->SalesReward->qty, 2) : 0 }}
-                                            </td>
-                                            <td class="text-center">
-                                                {{ $detail->SalesReward ? round(($detail->qty / $detail->SalesReward->qty) * $detail->SalesReward->reward, 2) : 0 }}
-                                            </td>
-                                            <td>{{ $detail->gt_tr_code ?? '-' }}</td>
-                                             <td>{{ $this->getCustomerPointName($detail, $order->Partner->city ?? '') }}</td>
-                                        </tr>
-                                    @endforeach
+                                @php
+                                    $allDetailsView = [];
+                                    foreach ($orders as $order) {
+                                        foreach ($order->OrderDtl as $detail) {
+                                            $allDetailsView[] = [
+                                                'order' => $order,
+                                                'detail' => $detail
+                                            ];
+                                        }
+                                    }
+                                    // Hitung total untuk view
+                                    $totalQtyView = 0;
+                                    $totalPointView = 0;
+                                    foreach ($allDetailsView as $item) {
+                                        $detail = $item['detail'];
+                                        $qty = $detail->qty ?? 0;
+                                        $totalQtyView += $qty;
+
+                                        if (isset($detail->aggregated_total_point)) {
+                                            $totalPointView += $detail->aggregated_total_point;
+                                        } elseif ($detail->SalesReward && $detail->SalesReward->qty > 0) {
+                                            $totalPointView += ($qty / $detail->SalesReward->qty) * $detail->SalesReward->reward;
+                                        }
+                                    }
+                                @endphp
+                                @foreach ($allDetailsView as $index => $item)
+                                    @php
+                                        $order = $item['order'];
+                                        $detail = $item['detail'];
+                                        $currentGtTrCode = $detail->gt_tr_code ?? '-';
+                                        $isLastRow = $index === count($allDetailsView) - 1;
+                                        $nextGtTrCode = !$isLastRow ? ($allDetailsView[$index + 1]['detail']->gt_tr_code ?? '-') : null;
+                                        $hasBorderBottom = !$isLastRow && $currentGtTrCode !== $nextGtTrCode;
+                                        $borderBottomStyle = $hasBorderBottom ? 'border-bottom: 1px solid #000;' : '';
+                                    @endphp
+                                    <tr>
+                                        <td style="{{ $borderBottomStyle }}">{{ $this->getCustomerName($order, $detail) }}</td>
+                                        <td style="{{ $borderBottomStyle }}"></td>
+                                        <td style="{{ $borderBottomStyle }}">{{ $detail->matl_code }}</td>
+                                        <td style="{{ $borderBottomStyle }}">{{ $detail->matl_descr }}</td>
+                                        <td style="text-align: center; {{ $borderBottomStyle }}">{{ ceil($this->getAggregatedQty($detail)) }}</td>
+                                        <td style="text-align: center; {{ $borderBottomStyle }}">
+                                            {{ $this->getAggregatedPoint($detail) }}
+                                        </td>
+                                        <td style="text-align: center; {{ $borderBottomStyle }}">
+                                            {{ $this->getAggregatedTotalPoint($detail) }}
+                                        </td>
+                                        <td style="{{ $borderBottomStyle }}">{{ $detail->gt_tr_code ?? '-' }}</td>
+                                        <td style="{{ $borderBottomStyle }}">{{ $this->getCustomerPointName($detail, $order->Partner->city ?? '') }}</td>
+                                    </tr>
                                 @endforeach
+                                @if(count($allDetailsView) > 0)
+                                    <tr>
+                                        <td colspan="4" style="padding: 5px; font-weight: bold; text-align: right; border-top: 1px solid #000;"></td>
+                                        <td style="padding: 5px; font-weight: bold; text-align: center; border-top: 1px solid #000;">
+                                            {{ ceil($totalQtyView) }}
+                                        </td>
+                                        <td style="padding: 5px; font-weight: bold; text-align: center; border-top: 1px solid #000;">
+                                            -
+                                        </td>
+                                        <td style="padding: 5px; font-weight: bold; text-align: center; border-top: 1px solid #000;">
+                                            {{ number_format($totalPointView) }}
+                                        </td>
+                                        <td colspan="2" style="padding: 5px; border-top: 1px solid #000;"></td>
+                                    </tr>
+                                @endif
                             @else
                                 <tr>
                                     <td colspan="9" class="text-center">Tidak ada data untuk ditampilkan.</td>
@@ -151,56 +225,109 @@
 
             <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
                 <thead>
-                    <tr style="border-bottom:1px solid #000;">
-                        <th style="border: 1px solid #000; text-align: left; padding: 5px; font-size: 11px;">Nama Pelanggan</th>
-                        <th style="border: 1px solid #000; text-align: left; padding: 5px; font-size: 11px;">No. Nota</th>
-                        <th style="border: 1px solid #000; text-align: left; padding: 5px; font-size: 11px;">Kode Brg.</th>
-                        <th style="border: 1px solid #000; text-align: left; padding: 5px; font-size: 11px;">Nama Barang</th>
-                        <th style="border: 1px solid #000; text-align: center; padding: 5px; font-size: 11px;">T. Ban</th>
-                        <th style="border: 1px solid #000; text-align: center; padding: 5px; font-size: 11px;">Point</th>
-                        <th style="border: 1px solid #000; text-align: center; padding: 5px; font-size: 11px;">T. Point</th>
-                        <th style="border: 1px solid #000; text-align: left; padding: 5px; font-size: 11px;">Nota GT</th>
-                        <th style="border: 1px solid #000; text-align: left; padding: 5px; font-size: 11px;">Customer Point</th>
+                    <tr>
+                        <th style="border: 1px solid #000; text-align: left; padding: 5px; font-size: 13px;">Nama Pelanggan</th>
+                        <th style="border: 1px solid #000; text-align: left; padding: 5px; font-size: 13px;">No. Nota</th>
+                        <th style="border: 1px solid #000; text-align: left; padding: 5px; font-size: 13px;">Kode Brg.</th>
+                        <th style="border: 1px solid #000; text-align: left; padding: 5px; font-size: 13px;">Nama Barang</th>
+                        <th style="border: 1px solid #000; text-align: center; padding: 5px; font-size: 13px;">T. Ban</th>
+                        <th style="border: 1px solid #000; text-align: center; padding: 5px; font-size: 13px;">Point</th>
+                        <th style="border: 1px solid #000; text-align: center; padding: 5px; font-size: 13px;">T. Point</th>
+                        <th style="border: 1px solid #000; text-align: left; padding: 5px; font-size: 13px;">Nota GT</th>
+                        <th style="border: 1px solid #000; text-align: left; padding: 5px; font-size: 13px;">Customer Point</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (!empty($orders) && count($orders) > 0)
-                        @foreach ($orders as $order)
-                            @foreach ($order->OrderDtl as $detail)
-                                <tr>
-                                    <td style="border: 1px solid #000; padding: 3px 5px; font-size: 11px;">
-                                        {{ $this->getCustomerName($order, $detail) }}
-                                    </td>
-                                    <td style="border: 1px solid #000; padding: 3px 5px; font-size: 11px;">
-                                        {{ $order->tr_code }}
-                                    </td>
-                                    <td style="border: 1px solid #000; padding: 3px 5px; font-size: 11px;">
-                                        {{ $detail->matl_code }}
-                                    </td>
-                                    <td style="border: 1px solid #000; padding: 3px 5px; font-size: 11px;">
-                                        {{ $detail->matl_descr }}
-                                    </td>
-                                    <td style="border: 1px solid #000; padding: 3px 5px; font-size: 11px; text-align: center;">
-                                        {{ ceil($detail->qty) }}
-                                    </td>
-                                    <td style="border: 1px solid #000; padding: 3px 5px; font-size: 11px; text-align: center;">
-                                        {{ $detail->SalesReward ? round($detail->SalesReward->reward / $detail->SalesReward->qty, 2) : 0 }}
-                                    </td>
-                                    <td style="border: 1px solid #000; padding: 3px 5px; font-size: 11px; text-align: center;">
-                                        {{ $detail->SalesReward ? round(($detail->qty / $detail->SalesReward->qty) * $detail->SalesReward->reward, 2) : 0 }}
-                                    </td>
-                                    <td style="border: 1px solid #000; padding: 3px 5px; font-size: 11px;">
-                                        {{ $detail->gt_tr_code ?? '-' }}
-                                    </td>
-                                    <td style="border: 1px solid #000; padding: 3px 5px; font-size: 11px;">
-                                        {{ $this->getCustomerPointName($detail, $order->Partner->city ?? '') }}
-                                    </td>
-                                </tr>
-                            @endforeach
+                        @php
+                            $allDetails = [];
+                            foreach ($orders as $order) {
+                                foreach ($order->OrderDtl as $detail) {
+                                    $allDetails[] = [
+                                        'order' => $order,
+                                        'detail' => $detail
+                                    ];
+                                }
+                            }
+                            // Hitung total setelah semua data dikumpulkan
+                            // Karena data sudah di-aggregate, kita cukup sum semua detail yang ada
+                            $totalQty = 0;
+                            $totalPoint = 0;
+                            foreach ($allDetails as $item) {
+                                $detail = $item['detail'];
+                                // Qty sudah di-update dengan nilai aggregate di PrintPdf.php
+                                $qty = $detail->qty ?? 0;
+                                $totalQty += $qty;
+
+                                // Gunakan aggregated_total_point jika ada (sudah di-sum)
+                                if (isset($detail->aggregated_total_point)) {
+                                    $totalPoint += $detail->aggregated_total_point;
+                                } elseif ($detail->SalesReward && $detail->SalesReward->qty > 0) {
+                                    // Fallback: hitung jika property tidak ada
+                                    $totalPoint += ($qty / $detail->SalesReward->qty) * $detail->SalesReward->reward;
+                                }
+                            }
+                        @endphp
+                        @foreach ($allDetails as $index => $item)
+                            @php
+                                $order = $item['order'];
+                                $detail = $item['detail'];
+                                $currentGtTrCode = $detail->gt_tr_code ?? '-';
+                                $isLastRow = $index === count($allDetails) - 1;
+                                $nextGtTrCode = !$isLastRow ? ($allDetails[$index + 1]['detail']->gt_tr_code ?? '-') : null;
+                                $hasBorderBottom = !$isLastRow && $currentGtTrCode !== $nextGtTrCode;
+                                $borderBottomStyle = $hasBorderBottom ? 'border-bottom: 1px solid #000;' : '';
+                            @endphp
+                            <tr>
+                                <td style="padding: 3px 5px; font-size: 13px; {{ $borderBottomStyle }}">
+                                    {{ $this->getCustomerName($order, $detail) }}
+                                </td>
+                                <td style="padding: 3px 5px; font-size: 13px; {{ $borderBottomStyle }}">
+
+                                </td>
+                                <td style="padding: 3px 5px; font-size: 13px; {{ $borderBottomStyle }}">
+                                    {{ $detail->matl_code }}
+                                </td>
+                                <td style="padding: 3px 5px; font-size: 13px; {{ $borderBottomStyle }}">
+                                    {{ $detail->matl_descr }}
+                                </td>
+                                <td style="padding: 3px 5px; font-size: 13px; text-align: center; {{ $borderBottomStyle }}">
+                                    {{ ceil($this->getAggregatedQty($detail)) }}
+                                </td>
+                                <td style="padding: 3px 5px; font-size: 13px; text-align: center; {{ $borderBottomStyle }}">
+                                    {{ $this->getAggregatedPoint($detail) }}
+                                </td>
+                                <td style="padding: 3px 5px; font-size: 13px; text-align: center; {{ $borderBottomStyle }}">
+                                    {{ $this->getAggregatedTotalPoint($detail) }}
+                                </td>
+                                <td style="padding: 3px 5px; font-size: 13px; {{ $borderBottomStyle }}">
+                                    {{ $detail->gt_tr_code ?? '-' }}
+                                </td>
+                                <td style="padding: 3px 5px; font-size: 13px; {{ $borderBottomStyle }}">
+                                    {{ $this->getCustomerPointName($detail, $order->Partner->city ?? '') }}
+                                </td>
+                            </tr>
                         @endforeach
-                    @else
+                        @if(count($allDetails) > 0)
+                            <tr>
+                                <td colspan="4" style="padding: 5px; font-size: 13px; font-weight: bold; text-align: right; border-top: 1px solid #000;">
+
+                                </td>
+                                <td style="padding: 5px; font-size: 13px; font-weight: bold; text-align: center; border-top: 1px solid #000;">
+                                    {{ ceil($totalQty) }}
+                                </td>
+                                <td style="padding: 5px; font-size: 13px; font-weight: bold; text-align: center; border-top: 1px solid #000;">
+                                    -
+                                </td>
+                                <td style="padding: 5px; font-size: 13px; font-weight: bold; text-align: center; border-top: 1px solid #000;">
+                                    {{ number_format($totalPoint) }}
+                                </td>
+                                <td colspan="2" style="padding: 5px; font-size: 13px; border-top: 1px solid #000;">
+                                </td>
+                            </tr>
+                        @endif                    @else
                         <tr>
-                            <td colspan="9" style="border: 1px solid #000; text-align: center; padding: 8px; font-size: 11px;">
+                            <td colspan="9" style="text-align: center; padding: 8px; font-size: 13px;">
                                 Tidak ada data untuk ditampilkan.
                             </td>
                         </tr>

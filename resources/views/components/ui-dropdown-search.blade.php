@@ -430,11 +430,71 @@
 
                 // Add reset functionality - listen for Livewire dispatch events
                 document.addEventListener('livewire:initialized', () => {
-                    Livewire.on('resetSelect2Dropdowns', () => {
+                    Livewire.on('resetSelect2Dropdowns', (event) => {
                         const selectElement = document.getElementById('{{ $id }}');
-                        if (selectElement && $(selectElement).hasClass('select2-hidden-accessible')) {
-                            // Clear the value and trigger change
-                            $(selectElement).val('{{ $blankValue }}').trigger('change');
+                        if (!selectElement || !$(selectElement).hasClass('select2-hidden-accessible')) {
+                            return;
+                        }
+
+                        console.log('resetSelect2Dropdowns triggered for {{ $id }}:', event);
+
+                        // Check if event contains data for this specific field
+                        const modelName = '{{ $model }}';
+                        let targetValue = '{{ $blankValue }}';
+
+                        // Handle different event data structures
+                        if (event) {
+                            // Direct property access (e.g., event.partner_id)
+                            const fieldKey = modelName.replace('inputs.', '');
+                            if (event[fieldKey] !== undefined) {
+                                targetValue = event[fieldKey] || '{{ $blankValue }}';
+                                console.log(`Found value for ${fieldKey}:`, targetValue);
+                            }
+                            // Check if event is an array with data object
+                            else if (Array.isArray(event) && event.length > 0 && event[0][fieldKey] !== undefined) {
+                                targetValue = event[0][fieldKey] || '{{ $blankValue }}';
+                                console.log(`Found value in array for ${fieldKey}:`, targetValue);
+                            }
+                        }
+
+                        // Clear the dropdown first
+                        $(selectElement).val('{{ $blankValue }}').trigger('change');
+
+                        // If we have a target value to set, load it
+                        if (targetValue && targetValue !== '{{ $blankValue }}') {
+                            console.log(`Setting value ${targetValue} for {{ $id }}`);
+
+                            // Fetch display text for the value
+                            const endpoint = '/search-dropdown';
+                            const queryParam = selectElement.getAttribute('data-query');
+
+                            const params = new URLSearchParams();
+                            params.append('connection', '{{ $dbConnection }}');
+                            params.append('query', queryParam);
+                            params.append('option_value', '{{ $optionValue }}');
+                            params.append('option_label', '{{ $optionLabel }}');
+                            params.append('id', targetValue);
+                            params.append('preserve_existing', 'true');
+                            params.append('bypass_filters', 'true');
+
+                            fetch(`${endpoint}?${params.toString()}`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data && data.results && data.results.length > 0) {
+                                        const item = data.results[0];
+                                        const displayText = item.text;
+                                        const option = new Option(displayText, item.id, true, true);
+                                        $(selectElement).append(option).trigger('change');
+
+                                        // Update Livewire model
+                                        @this.set('{{ $model }}', item.id);
+
+                                        console.log(`Successfully set ${item.id} with text: ${displayText}`);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.warn('Failed to load partner data:', error);
+                                });
                         }
                     });
 
