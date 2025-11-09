@@ -1562,13 +1562,25 @@ class Detail extends BaseComponent
             return;
         }
         if ($this->object && $this->object->id) {
-            return redirect()->route(
-                'TrdTire1.Transaction.SalesOrder.PrintPdf',
-                [
-                    'action'   => encryptWithSessionKey('Edit'),
-                    'objectId' => encryptWithSessionKey($this->object->id),
-                ]
-            );
+            // Increment counter untuk preview (belum save ke database)
+            // Pastikan menggunakan fresh copy dari database untuk menghindari side effect
+            $freshObject = OrderHdr::find($this->object->id);
+            if ($freshObject) {
+                $currentCounter = $freshObject->getPrintCounterArray();
+                $previewCounter = $currentCounter;
+                $previewCounter['nota'] = ($previewCounter['nota'] ?? 0) + 1;
+
+                // Simpan counter preview di session (JANGAN simpan ke database)
+                session(['print_counter_preview_' . $this->object->id . '_nota' => $previewCounter]);
+
+                return redirect()->route(
+                    'TrdTire1.Transaction.SalesOrder.PrintPdf',
+                    [
+                        'action'   => encryptWithSessionKey('Edit'),
+                        'objectId' => encryptWithSessionKey($this->object->id),
+                    ]
+                );
+            }
         }
     }
 
@@ -1591,13 +1603,25 @@ class Detail extends BaseComponent
             return;
         }
         if ($this->object && $this->object->id) {
-            return redirect()->route(
-                'TrdTire1.Transaction.SalesDelivery.PrintPdf',
-                [
-                    'action'   => encryptWithSessionKey('Edit'),
-                    'objectId' => encryptWithSessionKey($this->object->id),
-                ]
-            );
+            // Increment counter untuk preview (belum save ke database)
+            // Pastikan menggunakan fresh copy dari database untuk menghindari side effect
+            $freshObject = OrderHdr::find($this->object->id);
+            if ($freshObject) {
+                $currentCounter = $freshObject->getPrintCounterArray();
+                $previewCounter = $currentCounter;
+                $previewCounter['surat_jalan'] = ($previewCounter['surat_jalan'] ?? 0) + 1;
+
+                // Simpan counter preview di session (JANGAN simpan ke database)
+                session(['print_counter_preview_' . $this->object->id . '_surat_jalan' => $previewCounter]);
+
+                return redirect()->route(
+                    'TrdTire1.Transaction.SalesDelivery.PrintPdf',
+                    [
+                        'action'   => encryptWithSessionKey('Edit'),
+                        'objectId' => encryptWithSessionKey($this->object->id),
+                    ]
+                );
+            }
         }
     }
 
