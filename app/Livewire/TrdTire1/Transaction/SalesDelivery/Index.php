@@ -15,6 +15,7 @@ use App\Services\TrdTire1\DeliveryService;
 use App\Services\TrdTire1\AuditLogService;
 use App\Models\TrdTire1\Inventories\IvtBal;
 use App\Services\TrdTire1\Master\MasterService;
+use App\Models\TrdTire1\Master\Material;
 use App\Models\TrdTire1\Transaction\{DelivDtl, DelivHdr, OrderDtl, OrderHdr};
 
 class Index extends BaseComponent
@@ -104,16 +105,22 @@ class Index extends BaseComponent
                 $hasStockError = false;
                 $orderStockErrors = [];
 
-                // Validasi stok untuk order ini
+                // Validasi stok untuk order ini (skip untuk material JASA)
                 foreach ($orderDetails as $detail) {
-                    $totalStock = IvtBal::where('matl_id', $detail->matl_id)
-                        ->where('wh_id', $warehouse->id)
-                        ->sum('qty_oh');
+                    // Skip validasi stok jika material category adalah JASA
+                    $material = Material::find($detail->matl_id);
+                    $isJasa = $material && strtoupper(trim($material->category ?? '')) === 'JASA';
 
-                    if ($totalStock < $detail->qty) {
-                        $stockError = 'Barang: ' . $detail->matl_code . ' - Gudang: ' . $warehouse->str1 . ' - Stok: ' . rtrim(rtrim(number_format($totalStock, 3, '.', ''), '0'), '.') . ' - Dibutuhkan: ' . $detail->qty;
-                        $orderStockErrors[] = $stockError;
-                        $hasStockError = true;
+                    if (!$isJasa) {
+                        $totalStock = IvtBal::where('matl_id', $detail->matl_id)
+                            ->where('wh_id', $warehouse->id)
+                            ->sum('qty_oh');
+
+                        if ($totalStock < $detail->qty) {
+                            $stockError = 'Barang: ' . $detail->matl_code . ' - Gudang: ' . $warehouse->str1 . ' - Stok: ' . rtrim(rtrim(number_format($totalStock, 3, '.', ''), '0'), '.') . ' - Dibutuhkan: ' . $detail->qty;
+                            $orderStockErrors[] = $stockError;
+                            $hasStockError = true;
+                        }
                     }
                 }
 
