@@ -97,7 +97,7 @@
                         /* Hilangkan margin/padding default print */
                         @page {
                             margin: 1cm 0.3cm 1cm 0.3cm;
-                            size: A4 landscape;
+                            /* size: A4 landscape; */
                         }
                         /* Sembunyikan elemen yang tidak perlu di print */
                         .btn, .card-header, .card-footer, .page-info {

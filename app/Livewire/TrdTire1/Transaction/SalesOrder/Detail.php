@@ -1338,12 +1338,16 @@ class Detail extends BaseComponent
                     }, $shipDetail);
 
                     // Set default shipping address to first option
+                    // Pastikan shipOptions sudah ter-set sebelum set ship_to_name
                     $first = reset($this->shipOptions);
                     if ($first) {
                         $this->inputs['ship_to_name'] = $first['value'] ?? '';
                         $this->inputs['ship_to_addr'] = $first['address'] ?? '';
                     }
                 }
+            } else {
+                // Reset shipOptions jika partner tidak memiliki shipping_address
+                $this->shipOptions = [];
             }
 
             // Handle NPWP Options - load wp_details from selected partner

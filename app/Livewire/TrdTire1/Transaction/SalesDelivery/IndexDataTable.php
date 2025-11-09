@@ -276,20 +276,20 @@ class IndexDataTable extends BaseDataTableComponent
                 $billing = BillingHdr::where('tr_code', $delivHdr->tr_code)->first();
 
                 if ($billing) {
-                    if ($billing->print_date) {
-                        // Nota ini tidak bisa dibatalkan karena sudah ditagih
-                        $failedOrders[] = [
-                            'tr_code' => $delivHdr->tr_code,
-                            'reason' => 'Sudah ditagih (Tanggal: ' . $billing->print_date . ')'
-                        ];
-                        continue;
-                    }
+                    // if ($billing->print_date) {
+                    //     // Nota ini tidak bisa dibatalkan karena sudah ditagih
+                    //     $failedOrders[] = [
+                    //         'tr_code' => $delivHdr->tr_code,
+                    //         'reason' => 'Sudah ditagih (Tanggal: ' . $billing->print_date . ')'
+                    //     ];
+                    //     continue;
+                    // }
 
                     if ($billing->amt_reff > 0) {
                         // Nota ini tidak bisa dibatalkan karena sudah ada pembayaran
                         $failedOrders[] = [
                             'tr_code' => $delivHdr->tr_code,
-                            'reason' => 'Sudah ada pembayaran (amt_reff: ' . number_format($billing->amt_reff, 0, ',', '.') . ')'
+                            'reason' => 'Sudah ada pembayaran (Sebanyak: ' . number_format($billing->amt_reff, 0, ',', '.') . ')'
                         ];
                         continue;
                     }
@@ -361,7 +361,7 @@ class IndexDataTable extends BaseDataTableComponent
         } elseif (empty($successOrders) && !empty($failedOrders)) {
             // Semua gagal
             $message = '<strong>Gagal!</strong><br><br>';
-            $message .= 'Semua nota gagal dibatalkan:<br>';
+            $message .= 'Nota gagal dibatalkan:<br>';
             foreach ($failedOrders as $failed) {
                 $message .= '• ' . $failed['tr_code'] . ': ' . $failed['reason'] . '<br>';
             }
