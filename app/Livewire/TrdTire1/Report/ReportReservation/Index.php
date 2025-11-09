@@ -164,6 +164,7 @@ class Index extends BaseComponent
             WHERE od.tr_type = 'SO'
             AND od.qty_reff = 0
             AND oh.status_code != 'X'
+            AND (m.category IS NULL OR UPPER(TRIM(COALESCE(m.category, ''))) <> 'JASA')
         ";
 
         // Add customer filter if selected
@@ -176,8 +177,8 @@ class Index extends BaseComponent
             $sql .= " AND od.matl_code = '{$matlCode}'";
         }
 
-        // Always order by material code, customer, and transaction code
-        $sql .= " ORDER BY oh.tr_date, oh.tr_code";
+        // Order by material code first to group by material, then by date and transaction code
+        $sql .= " ORDER BY od.matl_code, oh.tr_date, oh.tr_code";
 
         $this->results = DB::connection(Session::get('app_code'))->select($sql);
     }

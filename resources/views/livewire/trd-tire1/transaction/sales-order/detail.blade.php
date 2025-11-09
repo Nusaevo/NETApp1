@@ -31,10 +31,10 @@
                                         <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                             :action="$actionValue" required="true" enabled="true"
                                             onChanged="onTrDateChanged" />
-
                                         <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
                                             type="text" :action="$actionValue" required="true"
                                             clickEvent="trCodeOnClick"
+                                            capslockMode="true"
                                             buttonName="Nomor Nota Baru"
                                             enabled="true" :buttonEnabled="true"
                                             onChanged="onTrCodeChanged"
@@ -46,7 +46,7 @@
                                             :selectedValue="$inputs['partner_id']" required="true" :action="$actionValue" enabled="true"
                                             type="int" onChanged="onPartnerChanged" />
                                     </div>
-                                    <div class="row">
+                                    <div class="row" wire:key="ship-to-wrapper-{{ $inputs['partner_id'] ?? 'none' }}">
                                         <x-ui-dropdown-select label="{{ $this->trans('ship_to') }}" clickEvent=""
                                             model="inputs.ship_to_name" :selectedValue="$inputs['ship_to_name']" :options="$shipOptions"
                                             required="true" :action="$actionValue" onChanged="onShipToChanged($event.target.value)" />
@@ -189,7 +189,6 @@
                             <x-ui-button :action="$actionValue" clickEvent="goToPrintNota" cssClass="btn-primary"
                                 loading="true" button-name="Cetak Nota Jual" iconPath="print.svg"
                                 enabled="true || $canPrintNotaButton ? 'true' : 'false'" />
-
                             <x-ui-button :action="$actionValue" clickEvent="goToPrintSuratJalan" cssClass="btn-primary"
                                 loading="true" button-name="Cetak Surat Jalan" iconPath="print.svg"
                                 enabled="true" />

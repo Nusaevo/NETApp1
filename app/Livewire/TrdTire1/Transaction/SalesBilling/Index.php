@@ -19,7 +19,7 @@ class Index extends BaseComponent
     public $warehouses;
 
     protected $listeners = [
-        'autoUpdateTanggalTagih', // Listener untuk auto update
+        'bulkActionExecuted', // Listener untuk bulk action
     ];
 
     public function onPreRender()
@@ -34,65 +34,13 @@ class Index extends BaseComponent
     }
 
     /**
-     * Auto update tanggal tagih ketika row dipilih
+     * Handle bulk action executed event
      */
-    public function autoUpdateTanggalTagih($selectedIds)
+    public function bulkActionExecuted($action, $selectedIds)
     {
-        if (empty($this->tanggalTagih)) {
-            $this->dispatch('showAlert', [
-                'type' => 'warning',
-                'message' => 'Silakan pilih tanggal tagih terlebih dahulu.'
-            ]);
-            return;
-        }
-
-        if (count($selectedIds) > 0) {
-            DB::beginTransaction();
-
-            try {
-                $selectedOrders = BillingHdr::whereIn('id', $selectedIds)->get();
-
-                // Get old print dates before update untuk audit log
-                $oldPrintDates = $selectedOrders->pluck('print_date', 'id')->toArray();
-
-                // Update tanggal tagih
-                foreach ($selectedOrders as $order) {
-                    $order->update([
-                        'print_date' => $this->tanggalTagih,
-                        'status_code' => Status::PAID,
-                    ]);
-                }
-
-                // Create audit logs
-                try {
-                    AuditLogService::createPrintDateAuditLogs(
-                        $selectedIds,
-                        $this->tanggalTagih,
-                        $oldPrintDates[$selectedIds[0]] ?? null
-                    );
-                } catch (\Exception $e) {
-                    Log::error('Failed to create audit logs: ' . $e->getMessage());
-                }
-
-                DB::commit();
-
-                $this->dispatch('showAlert', [
-                    'type' => 'success',
-                    'message' => 'Tanggal tagih berhasil diupdate untuk ' . count($selectedIds) . ' data.'
-                ]);
-
-                // REMOVED: Don't refresh datatable to keep selection intact
-                // $this->dispatch('refreshDatatable');
-
-            } catch (\Exception $e) {
-                DB::rollback();
-                Log::error('Failed to auto update tanggal tagih: ' . $e->getMessage());
-                $this->dispatch('showAlert', [
-                    'type' => 'error',
-                    'message' => 'Gagal mengupdate tanggal tagih: ' . $e->getMessage()
-                ]);
-            }
-        }
+        // This listener can be used for additional processing after bulk actions
+        // The actual bulk action processing is handled in IndexDataTable.php
+        Log::info("Bulk action '{$action}' executed for IDs: " . implode(', ', $selectedIds));
     }
 
     public function render()

@@ -19,6 +19,12 @@ class DeliveryService
         $this->inventoryService = $inventoryService;
     }
 
+    private function isMaterialJasa(int $matlId): bool
+    {
+        $material = Material::find($matlId);
+        return $material && strtoupper(trim($material->category ?? '')) === 'JASA';
+    }
+
     #region Save Delivery
     public function saveDelivery(array $headerData, array $detailData)
     {
@@ -133,7 +139,10 @@ class DeliveryService
     {
         $pickingData = [];
 
-        if ($detailData['tr_type'] === 'PD') {
+        // Untuk JASA, tidak perlu melihat stok - langsung buat picking seperti PD
+        $isJasa = $this->isMaterialJasa($detailData['matl_id']);
+
+        if ($detailData['tr_type'] === 'PD' || ($detailData['tr_type'] === 'SD' && $isJasa)) {
             $pickingData[] = [
                 'id' => null,
                 'trpacking_id' => $detailData['id'],
@@ -142,12 +151,15 @@ class DeliveryService
                 'matl_uom' => $detailData['matl_uom'],
                 'wh_id' => $detailData['wh_id'],
                 'wh_code' => $detailData['wh_code'],
-                'batch_code' => date('ymd', strtotime($detailData['order_date'])),
+                'batch_code' => $detailData['tr_type'] === 'PD'
+                    ? date('ymd', strtotime($detailData['order_date'] ?? 'now'))
+                    : ($detailData['batch_code'] ?? ''),
                 'qty' => $detailData['qty'],
                 'reffdtl_id' => $detailData['reffdtl_id'],
                 'trdtl_id' => $detailData['id'],
             ];
-        } else if ($detailData['tr_type'] === 'SD') {
+        } else if ($detailData['tr_type'] === 'SD' && !$isJasa) {
+            // Untuk SD non-JASA, tetap cek stok dari IvtBal
             $ivtBal = IvtBal::where('matl_id', $detailData['matl_id'])
                 ->where('matl_uom', $detailData['matl_uom'])
                 ->where('wh_id', $detailData['wh_id'])
@@ -176,6 +188,17 @@ class DeliveryService
                     $pickingData[count($pickingData) - 1]['qty'] = $bal->qty_oh;
                     $qty_remaining  -= $bal->qty_oh;
                 }
+            }
+
+            // Validasi: Pastikan stok cukup sebelum membuat picking
+            if ($qty_remaining > 0) {
+                $totalStock = IvtBal::where('matl_id', $detailData['matl_id'])
+                    ->where('matl_uom', $detailData['matl_uom'])
+                    ->where('wh_id', $detailData['wh_id'])
+                    ->sum('qty_oh');
+                throw new Exception('Stok tidak cukup untuk material ' . $detailData['matl_code'] .
+                    ' di gudang ' . $detailData['wh_code'] . '. Stok tersedia: ' . $totalStock .
+                    ', Dibutuhkan: ' . $detailData['qty']);
             }
         }
 

@@ -239,11 +239,11 @@
                                             @endphp
                                         @endforeach
 
-                                        {{-- Subtotal for last group --}}
+                                        {{-- Total for last group --}}
                                         @if ($currentMatlCode !== null)
                                             <tr style="background-color: #f0f0f0;">
                                                 <td colspan="4" style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
-                                                    <strong>Subtotal:</strong>
+                                                    <strong>Total:</strong>
                                                 </td>
                                                 <td style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
                                                     <strong>{{ nfmt($groupQty) }}</strong>

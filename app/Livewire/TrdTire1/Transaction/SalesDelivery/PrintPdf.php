@@ -24,12 +24,24 @@ class PrintPdf extends BaseComponent
             }
             $this->object = OrderHdr::findOrFail($this->objectIdValue);
 
-            // Inisialisasi counter dari array nota
-            $this->notaCounter = $this->object->getPrintCounterArray();
+            // Ambil counter dari session (preview) atau dari database
+            $sessionKey = 'print_counter_preview_' . $this->object->id . '_surat_jalan';
+            if (session()->has($sessionKey)) {
+                // Gunakan counter dari session (sudah di-increment untuk preview)
+                $this->notaCounter = session($sessionKey);
+            } else {
+                // Jika tidak ada di session, ambil dari database dan increment untuk preview
+                $currentCounter = $this->object->getPrintCounterArray();
+                $this->notaCounter = $currentCounter;
+                $this->notaCounter['surat_jalan'] = ($this->notaCounter['surat_jalan'] ?? 0) + 1;
+                // Simpan di session untuk konsistensi
+                session([$sessionKey => $this->notaCounter]);
+            }
 
             // Guard izin cetak ulang untuk Surat Jalan saja (cetakan pertama diizinkan untuk semua)
-            $revData = $this->object->getPrintCounterArray();
-            $hasPrinted = (($revData['surat_jalan'] ?? 0) > 0);
+            // Gunakan counter dari database (bukan preview) untuk pengecekan izin
+            $dbCounter = $this->object->getPrintCounterArray();
+            $hasPrinted = (($dbCounter['surat_jalan'] ?? 0) > 0);
             if ($hasPrinted) {
                 $userId = Auth::id();
                 $allowed = (int) (ConfigConst::where('const_group', 'SEC_LEVEL')
@@ -47,30 +59,46 @@ class PrintPdf extends BaseComponent
                     );
                 }
             }
-            // Update status_code to PRINT
+            // Update status_code to PRINT (belum save counter, hanya status)
+            // Hanya update status_code tanpa menyentuh print_remarks
             $this->object->status_code = Status::PRINT;
-            $this->object->save();
+            // Gunakan update() untuk memastikan hanya status_code yang di-update
+            OrderHdr::where('id', $this->object->id)->update(['status_code' => Status::PRINT]);
+            // Refresh object setelah update
+            $this->object->refresh();
         }
     }
 
     /**
-     * Update print counter untuk surat jalan
+     * Update print counter untuk surat jalan (save ke database)
+     * Dipanggil saat tombol Print diklik di browser
      */
     public function updateDeliveryPrintCounter()
     {
         if ($this->object) {
-            $newVersion = OrderHdr::updateDeliveryPrintCounterStatic($this->object->id);
-            // Update counter di property
-            $this->notaCounter = $this->object->fresh()->getPrintCounterArray();
+            // Ambil counter preview dari session
+            $sessionKey = 'print_counter_preview_' . $this->object->id . '_surat_jalan';
+            $previewCounter = session($sessionKey);
 
-            $this->dispatch('success', 'Print counter surat jalan berhasil diupdate: ' . $newVersion);
-            $this->dispatch('refreshData');
+            if ($previewCounter) {
+                // Save counter preview ke database
+                $this->object->print_remarks = $previewCounter;
+                $this->object->save();
 
-            // Refresh halaman setelah berhasil update counter
-            // $this->redirect(route('TrdTire1.Transaction.SalesOrder.Detail', [
-            //     'action'   => encryptWithSessionKey('Edit'),
-            //     'objectId' => encryptWithSessionKey($this->object->id),
-            // ]), navigate: true);
+                // Hapus session setelah berhasil save
+                session()->forget($sessionKey);
+
+                // Update counter di property dengan data dari database
+                $this->notaCounter = $this->object->fresh()->getPrintCounterArray();
+
+                $newVersion = $this->object->getDisplayFormat();
+                $this->dispatch('success', 'Print counter surat jalan berhasil diupdate: ' . $newVersion);
+            } else {
+                // Fallback: jika tidak ada di session, increment seperti biasa
+                $newVersion = OrderHdr::updateDeliveryPrintCounterStatic($this->object->id);
+                $this->notaCounter = $this->object->fresh()->getPrintCounterArray();
+                $this->dispatch('success', 'Print counter surat jalan berhasil diupdate: ' . $newVersion);
+            }
         }
     }
 

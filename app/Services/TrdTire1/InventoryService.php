@@ -4,17 +4,30 @@ namespace App\Services\TrdTire1;
 
 use Exception;
 use Illuminate\Support\Facades\DB;
-use App\Models\TrdTire1\Master\{MatlUom};
+use App\Models\TrdTire1\Master\{MatlUom, Material};
 use App\Models\TrdTire1\Inventories\IvttrHdr;
 use App\Models\TrdTire1\Inventories\{IvtLog, IvtBal, IvttrDtl};
 use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderDtl, OrderHdr};
 
 class InventoryService
 {
+    private function isMaterialJasa(int $matlId): bool
+    {
+        $material = Material::find($matlId);
+        return $material && strtoupper(trim($material->category ?? '')) === 'JASA';
+    }
+
+    #endregion
+
     #region Reservation Methods
 
     public function addReservation(array $headerData, array $detailData)
     {
+        // Skip reservation jika material category adalah JASA
+        if ($this->isMaterialJasa($detailData['matl_id'])) {
+            return;
+        }
+
         $trQty = $detailData['qty'];
         $qty = 0;
         if ($headerData['tr_type'] === 'PO' || $headerData['tr_type'] === 'SO') {
@@ -80,6 +93,11 @@ class InventoryService
 
     public function addOnhand(array $headerData, array $detailData): int
     {
+        // Skip onhand jika material category adalah JASA
+        if ($this->isMaterialJasa($detailData['matl_id'])) {
+            return 0;
+        }
+
         // dd($detailData);
         $price = 0;
         $qty = 0;

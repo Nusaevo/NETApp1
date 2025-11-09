@@ -11,32 +11,31 @@
     </div>
     <div>
         <button type="button"
-                class="btn btn-primary"
-                wire:click="autoUpdateSelected"
+                class="btn btn-success"
+                wire:click="cetak"
                 wire:loading.attr="disabled"
-                wire:target="autoUpdateSelected">
-            <span wire:loading.remove wire:target="autoUpdateSelected">
-                <i class="fas fa-calendar-check me-1"></i>
-                Update Tanggal Tagih
+                wire:target="cetak">
+            <span wire:loading.remove wire:target="cetak">
+                <i class="fas fa-print me-1"></i>
+                Cetak
             </span>
-            <span wire:loading wire:target="autoUpdateSelected">
+            <span wire:loading wire:target="cetak">
                 <i class="fas fa-spinner fa-spin me-1"></i>
-                Processing...
+                Mencetak...
             </span>
         </button>
     </div>
     <div class="flex-grow-1 d-flex align-items-center">
         <small class="text-muted">
             <i class="fas fa-info-circle me-1"></i>
-            Pilih data lalu klik tombol update
+            Centang checkbox untuk auto-update tanggal tagih, lalu klik "Cetak" untuk mencetak
         </small>
     </div>
 </div>
 
 <script>
-    // Simple functionality - no auto-update to prevent loading states
     document.addEventListener('livewire:initialized', function() {
-        console.log('Tanggal tagih filter initialized - manual submit only');
+        console.log('Custom checkbox system initialized');
 
         // Update Livewire property when date changes
         document.addEventListener('change', function(e) {

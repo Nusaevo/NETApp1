@@ -81,7 +81,6 @@
             .text-right { text-align: right; }
         }
 
-        /* Style untuk view screen */
         .view-table {
             width: 100%;
             border-collapse: collapse;
