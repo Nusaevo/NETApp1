@@ -189,6 +189,17 @@ class DeliveryService
                     $qty_remaining  -= $bal->qty_oh;
                 }
             }
+
+            // Validasi: Pastikan stok cukup sebelum membuat picking
+            if ($qty_remaining > 0) {
+                $totalStock = IvtBal::where('matl_id', $detailData['matl_id'])
+                    ->where('matl_uom', $detailData['matl_uom'])
+                    ->where('wh_id', $detailData['wh_id'])
+                    ->sum('qty_oh');
+                throw new Exception('Stok tidak cukup untuk material ' . $detailData['matl_code'] .
+                    ' di gudang ' . $detailData['wh_code'] . '. Stok tersedia: ' . $totalStock .
+                    ', Dibutuhkan: ' . $detailData['qty']);
+            }
         }
 
         $picking_ids = [];
