@@ -18,15 +18,20 @@ class IndexDataTable extends BaseDataTableComponent
     public $bulkSelectedIds = null;
     public $tanggalTagih; // Field untuk tanggal tagih - specific untuk sales billing
 
+    protected $listeners = [
+        'autoUpdateTanggalTagihFromJs' => 'autoUpdateTanggalTagihFromJs',
+    ];
+
+    public $selectedRows = []; // Array untuk tracking selected rows
+
     public function mount(): void
     {
         $this->setSearchDisabled();
 
-        // Enable bulk selection and actions untuk menampilkan checkbox
-        $this->setBulkActionsStatus(true);
-        $this->setHideBulkActionsWhenEmptyStatus(false);
-        $this->setSelectAllStatus(true);
-        $this->setBulkActionsEnabled();
+        // Disable bulk selection - kita pakai custom checkbox
+        $this->setBulkActionsStatus(false);
+        $this->setHideBulkActionsWhenEmptyStatus(true);
+        $this->setSelectAllStatus(false);
 
         // Initialize tanggal tagih untuk sales billing
         $this->initializeTanggalTagih();
@@ -36,26 +41,114 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setDefaultSort('Partner.name', 'asc');
     }
 
+    /**
+     * Toggle row selection dan auto update tanggal tagih
+     */
+    public function toggleRowSelection($rowId)
+    {
+        if (in_array($rowId, $this->selectedRows)) {
+            // Remove from selection - set tanggal tagih menjadi null
+            $this->selectedRows = array_diff($this->selectedRows, [$rowId]);
+            $this->clearTanggalTagih($rowId);
+        } else {
+            // Add to selection - auto update tanggal tagih
+            $this->selectedRows[] = $rowId;
+            $this->autoUpdateTanggalTagih($rowId);
+        }
+    }
 
     /**
-     * Override selectAll method to only select visible rows on current page
+     * Auto update tanggal tagih ketika row dipilih
      */
-    public function selectAll()
+    private function autoUpdateTanggalTagih($rowId)
     {
+        if (empty($this->tanggalTagih)) {
+            $this->dispatch('warning', 'Silakan pilih tanggal tagih terlebih dahulu');
+            return;
+        }
+
         try {
-            // Get only current page rows
-            $currentPageRows = $this->getRows();
-            $currentPageIds = $currentPageRows->pluck('id')->toArray();
+            DB::beginTransaction();
 
-            // Set selected to only current page IDs
-            $this->setSelected($currentPageIds);
+            $billing = BillingHdr::find($rowId);
+            if (!$billing) {
+                $this->dispatch('error', 'Data tidak ditemukan');
+                return;
+            }
 
-            // Optional: dispatch event for feedback
-            $this->dispatch('info', 'Selected ' . count($currentPageIds) . ' items on current page');
+            // Simpan print_date lama untuk audit log
+            $oldPrintDate = $billing->print_date;
+
+            // Update tanggal tagih dan status
+            $billing->print_date = $this->tanggalTagih;
+            $billing->status_code = Status::PRINT;
+            $billing->updated_at = now();
+            $billing->save();
+
+            // Create audit log
+            try {
+                AuditLogService::createPrintDateAuditLogs(
+                    [$rowId],
+                    $this->tanggalTagih,
+                    $oldPrintDate
+                );
+            } catch (\Exception $e) {
+                Log::error('Failed to create audit logs: ' . $e->getMessage());
+            }
+
+            DB::commit();
+
+            $this->dispatch('success', "Tanggal tagih untuk nota {$billing->tr_code} berhasil diupdate");
 
         } catch (\Exception $e) {
-            Log::error('Error in selectAll: ' . $e->getMessage());
-            $this->dispatch('error', 'Failed to select all items');
+            DB::rollback();
+            Log::error('Failed to auto update tanggal tagih: ' . $e->getMessage());
+            $this->dispatch('error', 'Gagal mengupdate tanggal tagih: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Clear tanggal tagih ketika row di-uncheck
+     */
+    private function clearTanggalTagih($rowId)
+    {
+        try {
+            DB::beginTransaction();
+
+            $billing = BillingHdr::find($rowId);
+            if (!$billing) {
+                $this->dispatch('error', 'Data tidak ditemukan');
+                return;
+            }
+
+            // Simpan print_date lama untuk audit log
+            $oldPrintDate = $billing->print_date;
+
+            // Set tanggal tagih menjadi null dan ubah status kembali ke ACTIVE
+            $billing->print_date = null;
+            $billing->status_code = Status::ACTIVE;
+            $billing->updated_at = now();
+            $billing->save();
+
+            // Create audit log
+            try {
+                AuditLogService::createPrintDateAuditLogs(
+                    [$rowId],
+                    '', // Empty string untuk null
+                    $oldPrintDate
+                );
+            } catch (\Exception $e) {
+                Log::error('Failed to create audit logs: ' . $e->getMessage());
+            }
+
+            DB::commit();
+
+            $this->dispatch('info', "Tanggal tagih untuk nota {$billing->tr_code} berhasil dihapus");
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Failed to clear tanggal tagih: ' . $e->getMessage());
+            $this->dispatch('error', 'Gagal menghapus tanggal tagih: ' . $e->getMessage());
         }
     }
 
@@ -121,6 +214,18 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
+            Column::make("Pilih ", "id")
+                ->format(function ($value, $row) {
+                    $isChecked = in_array($row->id, $this->selectedRows) ? 'checked' : '';
+                    return '
+                        <div class="text-center">
+                            <input type="checkbox"
+                                   class="form-check-input custom-checkbox"
+                                   wire:click="toggleRowSelection(' . $row->id . ')"
+                                   ' . $isChecked . '>
+                        </div>';
+                })
+                ->html(),
             Column::make($this->trans("Nomor Nota"), "DeliveryHdr.tr_code")
                 ->format(function ($value, $row) {
                     if ($row->partner_id && $row->OrderHdr && $row->DeliveryHdr) {
@@ -296,135 +401,67 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function bulkActions(): array
     {
-        return [
-            'print' => 'Cetak',
-        ];
+        return [];
     }
 
-    /**
-     * Bulk action untuk auto update tanggal tagih
-     */
-    public function autoUpdateSelected()
-    {
-        // Early validation - check if any data selected
-        $selectedIds = $this->getSelected();
 
-        if (empty($selectedIds)) {
-            $this->dispatch('warning', 'Pilih data terlebih dahulu untuk diupdate');
+    public function cetak()
+    {
+        if (empty($this->tanggalTagih)) {
+            $this->dispatch('error', 'Silakan pilih tanggal tagih terlebih dahulu');
             return;
         }
 
-        // if (empty($this->tanggalTagih)) {
-        //     $this->dispatch('warning', 'Tanggal tagih tidak boleh kosong');
-        //     return;
-        // }
-
-        try {
-            DB::beginTransaction();
-
-            // Directly validate selected IDs instead of getting all rows
-            // This is more efficient and prevents hang
-            $validRecords = BillingHdr::whereIn('id', $selectedIds)->get();
-
-            if ($validRecords->isEmpty()) {
-                $this->dispatch('warning', 'Data yang dipilih tidak valid');
-                DB::rollback();
-                return;
-            }
-
-            $validSelectedIds = $validRecords->pluck('id')->toArray();
-
-            // Simpan print_date lama untuk audit log
-            $oldPrintDates = $validRecords->pluck('print_date', 'id')->toArray();
-
-            // Update print_date di billing_hdrs menggunakan save() untuk setiap record
-            // Jika tanggalTagih kosong/null, set print_date ke null
-            $updated = 0;
-            foreach ($validRecords as $record) {
-                $record->print_date = !empty($this->tanggalTagih) ? $this->tanggalTagih : null;
-                $record->updated_at = now();
-                if ($record->save()) {
-                    $updated++;
-
-                    // Update OrderHdr juga untuk tracking updated_at
-                    // if ($record->OrderHdr) {
-                    //     $record->OrderHdr->updated_at = now();
-                    //     $record->OrderHdr->save();
-                    // }
-                }
-            }
-
-            // Create audit logs menggunakan method yang sama seperti di Index.php
-            try {
-                AuditLogService::createPrintDateAuditLogs(
-                    $validSelectedIds,
-                    $this->tanggalTagih,
-                    $oldPrintDates[$validSelectedIds[0]] ?? null
-                );
-            } catch (\Exception $e) {
-                Log::error('Failed to create audit logs: ' . $e->getMessage());
-            }
-
-            DB::commit();
-
-            $this->dispatch('success', "Berhasil update tanggal tagih untuk {$updated} data");
-
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error('Error auto-update tanggal tagih: ' . $e->getMessage());
-            $this->dispatch('error', 'Gagal update tanggal tagih: ' . $e->getMessage());
-        }
-    }
-     public function print()
-    {
-        $selectedOrderIds = $this->getSelected();
+        $selectedOrderIds = $this->selectedRows;
         if (count($selectedOrderIds) > 0) {
-            // Validasi tanggal proses sebelum cetak
-            $billingOrders = BillingHdr::with('OrderHdr')
-                ->whereIn('id', $selectedOrderIds)
-                ->get();
+            try {
+                DB::beginTransaction();
 
-            $ordersWithoutProcessDate = [];
-            foreach ($billingOrders as $billing) {
-                if (empty($billing->print_date)) {
-                    $ordersWithoutProcessDate[] = $billing->tr_code;
+                $billingOrders = BillingHdr::whereIn('id', $selectedOrderIds)->get();
+
+                // Simpan print_date lama untuk audit log
+                $oldPrintDates = $billingOrders->pluck('print_date', 'id')->toArray();
+
+                // Update tanggal tagih dan status ke PRINT
+                foreach ($billingOrders as $billing) {
+                    $billing->print_date = $this->tanggalTagih;
+                    $billing->status_code = Status::PRINT;
+                    $billing->updated_at = now();
+                    $billing->save();
                 }
+
+                // Create audit logs
+                try {
+                    AuditLogService::createPrintDateAuditLogs(
+                        $selectedOrderIds,
+                        $this->tanggalTagih,
+                        $oldPrintDates[$selectedOrderIds[0]] ?? null
+                    );
+                } catch (\Exception $e) {
+                    Log::error('Failed to create audit logs: ' . $e->getMessage());
+                }
+
+                DB::commit();
+
+                // Clear selected items
+                $this->selectedRows = [];
+
+                // Dispatch success message
+                $this->dispatch('success', 'Nota berhasil dicetak dengan tanggal tagih ' . $this->tanggalTagih);
+
+                // Redirect to print view
+                return redirect()->route($this->appCode . '.Transaction.SalesBilling.PrintPdf', [
+                    'action' => encryptWithSessionKey('Edit'),
+                    'objectId' => encryptWithSessionKey(json_encode($selectedOrderIds)),
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollback();
+                Log::error('Error printing invoices: ' . $e->getMessage());
+                $this->dispatch('error', 'Gagal mencetak nota: ' . $e->getMessage());
             }
-
-            // Jika ada nota dengan tanggal proses kosong, tampilkan error
-            if (!empty($ordersWithoutProcessDate)) {
-                $this->dispatch('error', 'Tidak dapat mencetak nota. Beberapa nota belum memiliki tanggal tagih: ' . implode(', ', $ordersWithoutProcessDate));
-                return;
-            }
-
-            $selectedOrders = BillingHdr::whereIn('id', $selectedOrderIds)->get();
-
-            // Update status to PRINT
-            BillingHdr::whereIn('id', $selectedOrderIds)->update(['status_code' => \App\Enums\TrdTire1\Status::PRINT]);
-
-            // Create audit logs for print action
-            // try {
-            //     AuditLogService::createPrintAuditLogs($selectedOrderIds);
-            // } catch (\Exception $e) {
-            //     Log::error('Failed to create print audit logs: ' . $e->getMessage());
-            // }
-
-            // Clear selected items
-            $this->clearSelected();
-
-            // Dispatch event to show success message
-            $this->dispatch('showAlert', [
-                'type' => 'success',
-                'message' => 'Nota berhasil dicetak'
-            ]);
-
-            // Redirect to print view
-            return redirect()->route($this->appCode . '.Transaction.SalesBilling.PrintPdf', [
-                'action' => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey(json_encode($selectedOrderIds)),
-            ]);
+        } else {
+            $this->dispatch('error', 'Nota belum dipilih.');
         }
-        $this->dispatch('error', 'Nota belum dipilih.');
-
     }
 }
