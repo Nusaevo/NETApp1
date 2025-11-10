@@ -211,7 +211,7 @@
                                                 <td style="text-align:right; padding:4px 6px; font-size:11px;">
                                                     {{ number_format($item['harga'], 0, ',', '.') }}</td>
                                                 <td style="text-align:right; padding:4px 6px; font-size:11px;">
-                                                    {{ number_format($item['disc'], 0) }}</td>
+                                                    {{ number_format($item['disc'], 2, ',', '.') }}</td>
                                                 <td style="text-align:right; padding:4px 6px; font-size:11px;">
                                                     {{ number_format($item['total'], 0, ',', '.') }}</td>
                                                 @if ($isFirstItem)
@@ -557,7 +557,7 @@
                                                     <td style="text-align:right; padding:4px 6px; font-size:11px;">
                                                         {{ number_format($item['harga'], 0, ',', '.') }}</td>
                                                     <td style="text-align:right; padding:4px 6px; font-size:11px;">
-                                                        {{ number_format($item['disc'], 0) }}</td>
+                                                        {{ number_format($item['disc'], 2, ',', '.') }}</td>
                                                     <td style="text-align:right; padding:4px 6px; font-size:11px;">
                                                         {{ number_format($item['total'], 0, ',', '.') }}</td>
                                                     @if ($isFirstItem)
