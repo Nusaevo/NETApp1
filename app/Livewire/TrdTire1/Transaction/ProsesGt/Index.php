@@ -115,11 +115,54 @@ class Index extends BaseComponent
                 ];
             })
             ->toArray();
-        // Validasi: semua pilihan harus dari customer yang sama atau semua adalah "customer lain-lain"
-        if (!$this->validateSameCustomerForSelection($orderIds)) {
-            $this->dispatch('error', 'Customer berbeda. Pilih data dengan customer yang sama atau semua adalah customer lain-lain.');
-            // Jangan buka modal jika validasi gagal
-            return;
+        // Validasi: untuk customer biasa, partner berbeda tidak boleh
+        // Kecuali untuk "customer lain lain" yang bisa memilih beda partner
+        // Gunakan join untuk memastikan partner_id terambil dengan benar
+        $orderDetails = OrderDtl::whereIn('order_dtls.id', $orderIds)
+            ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
+            ->leftJoin('partners', 'order_hdrs.partner_id', '=', 'partners.id')
+            ->leftJoin('sales_rewards', function($join) {
+                $join->on('order_dtls.matl_id', '=', 'sales_rewards.matl_id')
+                     ->whereNull('sales_rewards.deleted_at')
+                     ->whereRaw('sales_rewards.id = (
+                         SELECT MIN(sr2.id)
+                         FROM sales_rewards sr2
+                         WHERE sr2.matl_id = order_dtls.matl_id
+                         AND sr2.deleted_at IS NULL
+                     )');
+            })
+            ->select(
+                'order_dtls.*',
+                'order_hdrs.partner_id',
+                'partners.partner_chars',
+                'sales_rewards.brand'
+            )
+            ->get();
+
+        // Cek apakah semua adalah "customer lain lain"
+        $allLainLain = true;
+        foreach ($orderDetails as $detail) {
+            if (!$this->isCustomerLainLainFromData($detail)) {
+                $allLainLain = false;
+                break;
+            }
+        }
+
+        // Jika tidak semua adalah "customer lain lain", validasi partner harus sama
+        if (!$allLainLain) {
+            $partnerIds = [];
+            foreach ($orderDetails as $detail) {
+                if ($detail->partner_id) {
+                    $partnerIds[] = $detail->partner_id;
+                }
+            }
+            $partnerIds = array_unique($partnerIds);
+
+            // Jika partner berbeda, tidak boleh buka modal (kecuali customer lain lain)
+            if (count($partnerIds) > 1) {
+                $this->dispatch('error', 'Customer berbeda. Pilih data dengan customer yang sama atau semua adalah customer lain-lain.');
+                return;
+            }
         }
 
         $this->dispatch('open-modal-proses-gt');
@@ -175,13 +218,10 @@ class Index extends BaseComponent
             'gt_partner_code' => 'nullable', // Allow null values
         ]);
 
-        // Validasi ulang sebelum proses: semua pilihan harus dari customer yang sama atau semua adalah "customer lain-lain"
-        if (!empty($this->selectedOrderIds)) {
-            if (!$this->validateSameCustomerForSelection($this->selectedOrderIds)) {
-                $this->dispatch('error', 'Customer berbeda. Pilih data dengan customer yang sama atau semua adalah customer lain-lain.');
-                return;
-            }
-        }
+        // Validasi ulang sebelum proses: untuk customer biasa, partner berbeda tidak error
+        // Kecuali untuk "customer lain lain" yang bisa memilih beda partner
+        // Jadi tidak perlu validasi partner harus sama, biarkan user memilih partner berbeda
+        // (Validasi hanya untuk "customer lain lain" yang sudah bisa memilih beda partner)
 
         DB::beginTransaction();
 
@@ -412,6 +452,42 @@ class Index extends BaseComponent
             }
             // ZENEOS
             if ($salesReward->brand === 'ZENEOS' &&
+                (($partnerChars['ZN'] ?? null) === false || ($partnerChars['ZN'] ?? null) === null)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Cek apakah OrderDtl adalah "customer lain-lain" dari data join
+     * berdasarkan brand dan partner_chars
+     */
+    private function isCustomerLainLainFromData($orderDtl): bool
+    {
+        if (!$orderDtl->brand || !$orderDtl->partner_chars) {
+            return false;
+        }
+
+        $partnerChars = is_string($orderDtl->partner_chars)
+            ? json_decode($orderDtl->partner_chars, true)
+            : $orderDtl->partner_chars;
+
+        // Logika CUSTOMER LAIN-LAIN berdasarkan brand
+        if ($orderDtl->brand && $partnerChars && is_array($partnerChars)) {
+            // GT RADIAL atau GAJAH TUNGGAL
+            if (in_array($orderDtl->brand, ['GT RADIAL', 'GAJAH TUNGGAL']) &&
+                (($partnerChars['GT'] ?? null) === false || ($partnerChars['GT'] ?? null) === null)) {
+                return true;
+            }
+            // IRC
+            if ($orderDtl->brand === 'IRC' &&
+                (($partnerChars['IRC'] ?? null) === false || ($partnerChars['IRC'] ?? null) === null)) {
+                return true;
+            }
+            // ZENEOS
+            if ($orderDtl->brand === 'ZENEOS' &&
                 (($partnerChars['ZN'] ?? null) === false || ($partnerChars['ZN'] ?? null) === null)) {
                 return true;
             }

@@ -143,8 +143,10 @@ class PrintPdf extends BaseComponent
                 return -1;
             }
 
-            // Urutkan berdasarkan gt_tr_code
-            return strcmp($gtTrCodeA, $gtTrCodeB);
+            // Urutkan berdasarkan gt_tr_code secara numerik
+            $numA = is_numeric($gtTrCodeA) ? (int)$gtTrCodeA : 0;
+            $numB = is_numeric($gtTrCodeB) ? (int)$gtTrCodeB : 0;
+            return $numA <=> $numB;
         });
 
         // Group dan aggregate berdasarkan matl_code dan gt_tr_code
@@ -236,7 +238,10 @@ class PrintPdf extends BaseComponent
                 return -1;
             }
 
-            return strcmp($gtTrCodeA, $gtTrCodeB);
+            // Urutkan berdasarkan gt_tr_code secara numerik
+            $numA = is_numeric($gtTrCodeA) ? (int)$gtTrCodeA : 0;
+            $numB = is_numeric($gtTrCodeB) ? (int)$gtTrCodeB : 0;
+            return $numA <=> $numB;
         });
 
         // Setelah aggregation, kita perlu memastikan hanya satu detail per kombinasi matl_code + gt_tr_code
@@ -278,22 +283,52 @@ class PrintPdf extends BaseComponent
             $orderDetailsMap[$orderId][] = $item['detail'];
         }
 
-        // Set detail ke setiap order dengan urutan yang benar
+        // Set detail ke setiap order dengan urutan yang benar, dan sort detail di dalam setiap order berdasarkan gt_tr_code
         foreach ($groupedOrders as $orderId => $order) {
-            $order->setRelation('OrderDtl', collect($orderDetailsMap[$orderId]));
+            $details = $orderDetailsMap[$orderId];
+            // Sort detail di dalam setiap order berdasarkan gt_tr_code secara numerik
+            usort($details, function($a, $b) {
+                $gtTrCodeA = $a->gt_tr_code ?? '';
+                $gtTrCodeB = $b->gt_tr_code ?? '';
+
+                if (empty($gtTrCodeA) && empty($gtTrCodeB)) {
+                    return 0;
+                }
+                if (empty($gtTrCodeA)) {
+                    return 1;
+                }
+                if (empty($gtTrCodeB)) {
+                    return -1;
+                }
+
+                $numA = is_numeric($gtTrCodeA) ? (int)$gtTrCodeA : 0;
+                $numB = is_numeric($gtTrCodeB) ? (int)$gtTrCodeB : 0;
+                return $numA <=> $numB;
+            });
+            $order->setRelation('OrderDtl', collect($details));
         }
 
-        // Urutkan orders berdasarkan urutan detail pertama yang muncul
-        $sortedOrderIds = array_unique(array_map(function($item) {
-            return $item['order']->id;
-        }, $uniqueFinalDetails));
-
+        // Urutkan orders berdasarkan gt_tr_code dari detail pertama mereka secara numerik
         $sortedOrders = [];
-        foreach ($sortedOrderIds as $orderId) {
-            if (isset($groupedOrders[$orderId])) {
-                $sortedOrders[] = $groupedOrders[$orderId];
-            }
+        foreach ($groupedOrders as $orderId => $order) {
+            $firstDetail = $order->OrderDtl->first();
+            $gtTrCode = $firstDetail ? ($firstDetail->gt_tr_code ?? '') : '';
+            $numValue = is_numeric($gtTrCode) ? (int)$gtTrCode : 0;
+            $sortedOrders[] = [
+                'order' => $order,
+                'sort_value' => $numValue
+            ];
         }
+
+        // Sort berdasarkan sort_value
+        usort($sortedOrders, function($a, $b) {
+            return $a['sort_value'] <=> $b['sort_value'];
+        });
+
+        // Extract hanya orders
+        $sortedOrders = array_map(function($item) {
+            return $item['order'];
+        }, $sortedOrders);
 
         $this->orders = collect($sortedOrders);
 
