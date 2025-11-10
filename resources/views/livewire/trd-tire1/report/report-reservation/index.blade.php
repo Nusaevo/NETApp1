@@ -94,7 +94,7 @@
                         #print th {
                             background: transparent !important;
                             font-weight: bold !important;
-                            text-align: left !important;
+                            /* text-align: left !important; */
                         }
 
                         #print h3,
@@ -158,8 +158,11 @@
                                     <thead>
                                         <tr>
                                             <th
-                                                style="text-align:left; padding:5px 8px; font-weight:bold; font-size:15px; width:40%; border:1px solid #000;">
+                                                style="text-align:left; padding:5px 8px; font-weight:bold; font-size:15px; width:35%; border:1px solid #000;">
                                                 Kode/Nama Barang</th>
+                                            <th
+                                                style="text-align:center; padding:5px 8px; font-weight:bold; font-size:15px; width:10%; border:1px solid #000;">
+                                                Stok</th>
                                             <th
                                                 style="text-align:left; padding:5px 8px; font-weight:bold; font-size:15px; width:12%; border:1px solid #000;">
                                                 Tgl.Nota</th>
@@ -167,10 +170,10 @@
                                                 style="text-align:left; padding:5px 8px; font-weight:bold; font-size:15px; width:18%; border:1px solid #000;">
                                                 Nomor Nota</th>
                                             <th
-                                                style="text-align:left; padding:5px 8px; font-weight:bold; font-size:15px; width:20%; border:1px solid #000;">
+                                                style="text-align:left; padding:5px 8px; font-weight:bold; font-size:15px; width:15%; border:1px solid #000;">
                                                 Customer</th>
                                             <th
-                                                style="text-align:right; padding:5px 8px; font-weight:bold; font-size:15px; width:10%; border:1px solid #000;">
+                                                style="text-align:center; padding:5px 8px; font-weight:bold; font-size:15px; width:10%; border:1px solid #000;">
                                                 Qty</th>
                                         </tr>
                                     </thead>
@@ -185,7 +188,7 @@
                                                 @if ($currentMatlCode !== null)
                                                     {{-- Subtotal for previous group --}}
                                                     <tr style="background-color: #f0f0f0;">
-                                                        <td colspan="4" style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
+                                                        <td colspan="5" style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
                                                             <strong>Total:</strong>
                                                         </td>
                                                         <td style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
@@ -202,6 +205,9 @@
                                                         style="text-align:left; padding:4px 6px; font-size:14px; border:1px solid #000;">
                                                         {{ $row->matl_code ?? '' }} - {{ $row->matl_name ?? '' }}</td>
                                                     <td
+                                                        style="text-align:center; padding:4px 6px; font-size:14px; border:1px solid #000;">
+                                                        {{ nfmt($row->stock_qty ?? 0) }}</td>
+                                                    <td
                                                         style="text-align:left; padding:4px 6px; font-size:14px; border:1px solid #000;">
                                                         {{ fmtDate($row->tr_date) }}</td>
                                                     <td
@@ -211,13 +217,16 @@
                                                         style="text-align:left; padding:4px 6px; font-size:14px; border:1px solid #000;">
                                                         {{ $row->customer_name ?? '' }}</td>
                                                     <td
-                                                        style="text-align:right; padding:4px 6px; font-size:14px; border:1px solid #000;">
+                                                        style="text-align:center; padding:4px 6px; font-size:14px; border:1px solid #000;">
                                                         {{ nfmt($row->qty) }}</td>
                                                 </tr>
                                             @else
                                                 <tr>
                                                     <td
                                                         style="text-align:left; padding:4px 6px; font-size:14px; border:1px solid #000;">
+                                                        </td>
+                                                    <td
+                                                        style="text-align:right; padding:4px 6px; font-size:14px; border:1px solid #000;">
                                                         </td>
                                                     <td
                                                         style="text-align:left; padding:4px 6px; font-size:14px; border:1px solid #000;">
@@ -229,7 +238,7 @@
                                                         style="text-align:left; padding:4px 6px; font-size:14px; border:1px solid #000;">
                                                         {{ $row->customer_name ?? '' }}</td>
                                                     <td
-                                                        style="text-align:right; padding:4px 6px; font-size:14px; border:1px solid #000;">
+                                                        style="text-align:center; padding:4px 6px; font-size:14px; border:1px solid #000;">
                                                         {{ nfmt($row->qty) }}</td>
                                                 </tr>
                                             @endif
@@ -242,10 +251,10 @@
                                         {{-- Total for last group --}}
                                         @if ($currentMatlCode !== null)
                                             <tr style="background-color: #f0f0f0;">
-                                                <td colspan="4" style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
+                                                <td colspan="5" style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
                                                     <strong>Total:</strong>
                                                 </td>
-                                                <td style="text-align:right; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
+                                                <td style="text-align:center; padding:4px 6px; font-size:14px; font-weight:bold; border:1px solid #000;">
                                                     <strong>{{ nfmt($groupQty) }}</strong>
                                                 </td>
                                             </tr>
