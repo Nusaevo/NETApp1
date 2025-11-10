@@ -216,12 +216,12 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 }),
 
-            TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
+            $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(order_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
-            }),
-            TextFilter::make('Nama WP')->filter(function (Builder $builder, string $value) {
+            },true),
+            $this->createTextFilter('Nama WP', 'npwp_name', 'Cari Nama WP', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(order_hdrs.npwp_name)'), 'like', '%' . strtoupper($value) . '%');
-            }),
+            },true),
         ];
     }
     public function bulkActions(): array
