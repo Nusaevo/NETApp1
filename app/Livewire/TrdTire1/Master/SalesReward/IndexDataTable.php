@@ -99,22 +99,22 @@ class IndexDataTable extends BaseDataTableComponent
             // Filter untuk Kode Program
             $this->createTextFilter('Kode Program', 'code', 'Kode Program', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
-            }),
+            }, true),
 
             // Filter untuk Group
             $this->createTextFilter('Group', 'grp', 'Group', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(grp)'), 'like', '%' . strtoupper($value) . '%');
-            }),
+            }, true),
 
             // Filter untuk Kode Barang
             $this->createTextFilter('Kode Barang', 'matl_code', 'Kode Barang', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(matl_code)'), 'like', '%' . strtoupper($value) . '%');
-            }),
+            }, true),
 
             // Filter untuk Nama Program
             $this->createTextFilter('Nama Program', 'descrs', 'Nama Program', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(descrs)'), 'like', '%' . strtoupper($value) . '%');
-            }),
+            }, true),
         ];
     }
 }

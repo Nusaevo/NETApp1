@@ -116,12 +116,12 @@ class IndexDataTable extends BaseDataTableComponent
             }),
             $this->createTextFilter('Nomor Invoice', 'tr_code', 'Cari Nomor Invoice', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
-            }),
+            }, true),
             $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
                 $builder->whereHas('Partner', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });
-            }),
+            }, true),
             $this->createTextFilter('Material', 'matl_descr', 'Cari Kode Material', function (Builder $builder, string $value) {
                 $builder->whereExists(function ($query) use ($value) {
                     $query->select(DB::raw(1))

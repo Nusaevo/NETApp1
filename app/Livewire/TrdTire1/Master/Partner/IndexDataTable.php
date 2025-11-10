@@ -91,10 +91,10 @@ class IndexDataTable extends BaseDataTableComponent
                 }),
             $this->createTextFilter('Kode Partner', 'code', 'Cari Kode Partner', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
-            }),
+            }, true),
             $this->createTextFilter('Nama Partner', 'name', 'Cari Nama Partner', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-            }),
+            }, true),
             SelectFilter::make('Status', 'status_filter')
                 ->options([
                     'active' => 'Active',

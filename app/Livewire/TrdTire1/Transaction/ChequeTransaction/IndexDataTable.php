@@ -95,18 +95,18 @@ class IndexDataTable extends BaseDataTableComponent
             }),
             $this->createTextFilter('Nomor Transaksi', 'tr_code', 'Cari Nomor Transaksi', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(partnertr_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
-            }),
+            }, true),
             $this->createTextFilter('Bank', 'partner_code', 'Cari Bank', function (Builder $builder, string $value) {
                 $builder->whereHas('PartnertrDtl', function ($query) use ($value) {
                     $query->where('tr_seq', '>', 0)
                           ->where(DB::raw('UPPER(partner_code)'), 'like', '%' . strtoupper($value) . '%');
                 });
-            }),
+            }, true),
             $this->createTextFilter('Giro', 'bank_reff', 'Cari Giro', function (Builder $builder, string $value) {
                 $builder->whereHas('PartnertrDtl', function ($query) use ($value) {
                     $query->where('tr_seq', '>', 0);
                 });
-            }),
+            }, true),
             SelectFilter::make('Tipe Transaksi', 'tr_type')
                 ->options([
                     '' => 'All',

@@ -122,11 +122,21 @@ class IndexDataTable extends BaseDataTableComponent
 
             // Filter Nomor Transaksi
             TextFilter::make('Nomor Transaksi')
+                ->config([
+                    'placeholder' => 'Cari Nomor Transaksi',
+                    'maxlength' => '20',
+                ])
+                ->setWireLive()
                 ->filter(function (Builder $builder, string $value) {
                     $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
                 }),
 
             TextFilter::make('Kode Barang')
+                ->config([
+                    'placeholder' => 'Cari Kode Barang',
+                    'maxlength' => '30',
+                ])
+                ->setWireLive()
                 ->filter(function (Builder $builder, string $value) {
                     $builder->whereExists(function ($query) use ($value) {
                         $query->select(DB::raw(1))

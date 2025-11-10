@@ -211,12 +211,23 @@ abstract class BaseDataTableComponent extends DataTableComponent
         $this->permissions = ConfigRight::getPermissionsByMenu($customRoute ? $customRoute : $this->menu_link);
     }
 
-    public function createTextFilter($name, $field, $placeholder, $filterCallback)
+    public function createTextFilter($name, $field, $placeholder, $filterCallback, $isLive = true)
     {
-        return TextFilter::make($name)
+        $filter = TextFilter::make($name)
+            ->config([
+                'placeholder' => $placeholder,
+                'maxlength' => '50',
+            ])
             ->filter(function(\Illuminate\Database\Eloquent\Builder $builder, string $value) use ($filterCallback) {
                 return $filterCallback($builder, $value);
             });
+
+        // Add live search capability
+        if ($isLive) {
+            $filter->setWireLive();
+        }
+
+        return $filter;
     }
 
     protected function notify($type, $message)
