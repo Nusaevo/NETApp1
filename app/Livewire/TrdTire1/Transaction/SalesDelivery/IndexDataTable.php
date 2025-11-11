@@ -162,14 +162,14 @@ class IndexDataTable extends BaseDataTableComponent
                     $builder->whereDate('tr_date', '<=', $value);
                 }),
 
-            TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
+            $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
                 $builder->where('tr_code', 'like', '%' . strtoupper($value) . '%');
-            }),
+            }, true),
             $this->createTextFilter($this->trans("supplier"), 'name', 'Cari Custommer', function (Builder $builder, string $value) {
                 $builder->whereHas('Partner', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });
-            }),
+            }, true),
             SelectFilter::make($this->trans("Tipe Penjualan"), 'sales_type')
                 ->options([
                     ''          => 'Semua',

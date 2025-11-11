@@ -120,11 +120,11 @@ class IndexDataTable extends BaseDataTableComponent
             }),
             $this->createTextFilter('Kode Produk', 'code', 'Kode Produk', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
-            }),
+            }, true),
             // Filter pencarian berdasarkan field tag dengan LIKE
             $this->createTextFilter('Nama Barang', 'tag', 'Nama Barang', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(tag)'), 'like', '%' . strtoupper($value) . '%');
-            }),
+            }, true),
             // Filter status
             SelectFilter::make('Status', 'status_filter')
                 ->options([

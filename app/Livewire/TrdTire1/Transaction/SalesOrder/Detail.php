@@ -730,6 +730,7 @@ class Detail extends BaseComponent
 
         // Reset generated tr_code karena mode Edit tidak memerlukan validasi generated tr_code
         $this->generatedTrCode = null;
+
     }
 
     private function resetToCreateModeInternal()
@@ -743,6 +744,21 @@ class Detail extends BaseComponent
 
         // Reset version number untuk create mode
         $this->versionNumber = 1;
+
+        // Reset button states untuk mode Create
+        $this->canUpdateAfterPrint = true;
+        $this->hasBeenPrinted = false;
+        $this->canPrintNotaButton = true;
+        $this->canPrintSuratJalanButton = true;
+        $this->canSaveButtonEnabled = true;
+    }
+
+    /**
+     * Helper method to check if delete button should be visible
+     */
+    public function canShowDeleteButton()
+    {
+        return $this->actionValue !== 'Create' && !empty($this->object->id);
     }
 
     private function resetInputsToDefault()

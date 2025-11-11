@@ -157,17 +157,108 @@
                                                 $totalG02 += ($row->g02 ?? 0);
                                                 $totalG04 += ($row->g04 ?? 0);
                                                 $totalFGI += ($row->fgi ?? 0);
-                                                $totalPoint += ($row->point ?? 0);
+                                                $rowTotalMinusRsv = $rowTotal - ($row->fgi ?? 0);
+                                                $totalPoint += $rowTotalMinusRsv;
+                                            @endphp
+                                            @php
+                                                $appCode = \Illuminate\Support\Facades\Session::get('app_code', 'TrdTire1');
+                                                $fgiValue = is_numeric($row->fgi ?? null) ? round($row->fgi, 0) : '';
+                                                $materialCode = $row->code ?? '';
+
+                                                // Prepare additionalParam for redirect to reservation
+                                                $paramArrayReservation = [
+                                                    'matl_code' => $materialCode,
+                                                    'type' => 'fromStockMaterial'
+                                                ];
+                                                $encryptedParamReservation = encryptWithSessionKey(json_encode($paramArrayReservation));
+
+                                                // Create link if FGI value exists and is not zero
+                                                $fgiLink = '';
+                                                if ($fgiValue !== '' && $fgiValue != 0) {
+                                                    $fgiLink = route($appCode . '.Report.ReportReservation') . '?additionalParam=' . urlencode($encryptedParamReservation);
+                                                }
+
+                                                // Prepare links for G01, G02, G04 to stock card
+                                                // Start date: beginning of current month
+                                                $startDate = \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d');
+                                                // End date: now
+                                                $endDate = \Carbon\Carbon::now()->format('Y-m-d');
+
+                                                // Create link for G01 - allow all values (positive, negative, zero)
+                                                $g01Link = '';
+                                                if (!empty($materialCode)) {
+                                                    $paramArrayG01 = [
+                                                        'wh_code' => 'G01',
+                                                        'matl_code' => $materialCode,
+                                                        'start_date' => $startDate,
+                                                        'end_date' => $endDate,
+                                                        'type' => 'fromStockMaterial'
+                                                    ];
+                                                    $encryptedParamG01 = encryptWithSessionKey(json_encode($paramArrayG01));
+                                                    $g01Link = route($appCode . '.Report.ReportStockCard') . '?additionalParam=' . urlencode($encryptedParamG01);
+                                                }
+
+                                                // Create link for G02 - allow all values (positive, negative, zero)
+                                                $g02Link = '';
+                                                if (!empty($materialCode)) {
+                                                    $paramArrayG02 = [
+                                                        'wh_code' => 'G02',
+                                                        'matl_code' => $materialCode,
+                                                        'start_date' => $startDate,
+                                                        'end_date' => $endDate,
+                                                        'type' => 'fromStockMaterial'
+                                                    ];
+                                                    $encryptedParamG02 = encryptWithSessionKey(json_encode($paramArrayG02));
+                                                    $g02Link = route($appCode . '.Report.ReportStockCard') . '?additionalParam=' . urlencode($encryptedParamG02);
+                                                }
+
+                                                // Create link for G04 - allow all values (positive, negative, zero)
+                                                $g04Link = '';
+                                                if (!empty($materialCode)) {
+                                                    $paramArrayG04 = [
+                                                        'wh_code' => 'G04',
+                                                        'matl_code' => $materialCode,
+                                                        'start_date' => $startDate,
+                                                        'end_date' => $endDate,
+                                                        'type' => 'fromStockMaterial'
+                                                    ];
+                                                    $encryptedParamG04 = encryptWithSessionKey(json_encode($paramArrayG04));
+                                                    $g04Link = route($appCode . '.Report.ReportStockCard') . '?additionalParam=' . urlencode($encryptedParamG04);
+                                                }
                                             @endphp
                                             <tr>
                                                 <td>{{ $row->code ?? '' }}</td>
                                                 <td class="left">{{ $row->name ?? '' }}</td>
-                                                <td>{{ is_numeric($row->g01 ?? null) ? rtrim(rtrim(number_format($row->g01, 3, '.', ''), '0'), '.') : '' }}</td>
-                                                <td>{{ is_numeric($row->g02 ?? null) ? rtrim(rtrim(number_format($row->g02, 3, '.', ''), '0'), '.') : '' }}</td>
-                                                <td>{{ is_numeric($row->g04 ?? null) ? rtrim(rtrim(number_format($row->g04, 3, '.', ''), '0'), '.') : '' }}</td>
+                                                <td>
+                                                    @if($g01Link)
+                                                        <a href="{{ $g01Link }}" style="color: #007bff; text-decoration: underline; cursor: pointer;">{{ is_numeric($row->g01 ?? null) ? rtrim(rtrim(number_format($row->g01, 3, '.', ''), '0'), '.') : '' }}</a>
+                                                    @else
+                                                        {{ is_numeric($row->g01 ?? null) ? rtrim(rtrim(number_format($row->g01, 3, '.', ''), '0'), '.') : '' }}
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($g02Link)
+                                                        <a href="{{ $g02Link }}" style="color: #007bff; text-decoration: underline; cursor: pointer;">{{ is_numeric($row->g02 ?? null) ? rtrim(rtrim(number_format($row->g02, 3, '.', ''), '0'), '.') : '' }}</a>
+                                                    @else
+                                                        {{ is_numeric($row->g02 ?? null) ? rtrim(rtrim(number_format($row->g02, 3, '.', ''), '0'), '.') : '' }}
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($g04Link)
+                                                        <a href="{{ $g04Link }}" style="color: #007bff; text-decoration: underline; cursor: pointer;">{{ is_numeric($row->g04 ?? null) ? rtrim(rtrim(number_format($row->g04, 3, '.', ''), '0'), '.') : '' }}</a>
+                                                    @else
+                                                        {{ is_numeric($row->g04 ?? null) ? rtrim(rtrim(number_format($row->g04, 3, '.', ''), '0'), '.') : '' }}
+                                                    @endif
+                                                </td>
                                                 <td>{{ is_numeric($rowTotal) ? rtrim(rtrim(number_format($rowTotal, 3, '.', ''), '0'), '.') : '' }}</td>
-                                                <td>{{ is_numeric($row->fgi ?? null) ? round($row->fgi, 0) : '' }}</td>
-                                                <td>{{ is_numeric($row->point ?? null) ? $row->point : '0' }}</td>
+                                                <td>
+                                                    @if($fgiLink)
+                                                        <a href="{{ $fgiLink }}" style="color: #007bff; cursor: pointer;">{{ $fgiValue }}</a>
+                                                    @else
+                                                        {{ $fgiValue }}
+                                                    @endif
+                                                </td>
+                                                <td>{{ is_numeric($rowTotalMinusRsv) ? rtrim(rtrim(number_format($rowTotalMinusRsv, 3, '.', ''), '0'), '.') : '0' }}</td>
                                             </tr>
                                         @empty
                                             <tr>

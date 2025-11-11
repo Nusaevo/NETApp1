@@ -172,7 +172,7 @@ class IndexDataTable extends BaseDataTableComponent
                 }),
             $this->createTextFilter('Nomor Surat Jalan', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
-            }),
+            }, true),
             $this->createTextFilter('Nomor Nota', 'reffhdrtr_code', 'Cari Kode Referensi', function (Builder $builder, string $value) {
                 $builder->whereExists(function ($query) use ($value) {
                     $query->select(DB::raw(1))
@@ -180,7 +180,7 @@ class IndexDataTable extends BaseDataTableComponent
                         ->whereRaw('deliv_packings.trhdr_id = deliv_hdrs.id')
                         ->where(DB::raw('UPPER(reffhdrtr_code)'), 'like', '%' . strtoupper($value) . '%');
                 });
-            }),
+            }, true),
 
             // SelectFilter::make('Tipe Kendaraan', 'vehicle_type')
             //     ->options([
@@ -203,7 +203,7 @@ class IndexDataTable extends BaseDataTableComponent
                 $builder->whereHas('Partner', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });
-            }),
+            }, true),
         ];
     }
 }

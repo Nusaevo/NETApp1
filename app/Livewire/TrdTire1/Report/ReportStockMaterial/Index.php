@@ -118,6 +118,7 @@ class Index extends BaseComponent
 
             foreach ($this->results as $row) {
                 $rowTotal = ($row->g01 ?? 0) + ($row->g02 ?? 0) + ($row->g04 ?? 0);
+                $rowTotalMinusRsv = $rowTotal - ($row->fgi ?? 0);
 
                 $excelData[] = [
                     $row->code ?? '',
@@ -127,7 +128,7 @@ class Index extends BaseComponent
                     is_numeric($row->g04 ?? null) ? rtrim(rtrim(number_format($row->g04, 3, '.', ''), '0'), '.') : '',
                     is_numeric($rowTotal) ? rtrim(rtrim(number_format($rowTotal, 3, '.', ''), '0'), '.') : '',
                     isset($row->fgi) && is_numeric($row->fgi) ? (string)round($row->fgi, 0) : '0',
-                    isset($row->point) && is_numeric($row->point) ? (string)$row->point : '0',
+                    is_numeric($rowTotalMinusRsv) ? rtrim(rtrim(number_format($rowTotalMinusRsv, 3, '.', ''), '0'), '.') : '0',
                 ];
             }
 
@@ -156,8 +157,8 @@ class Index extends BaseComponent
                     'G02',
                     'G04',
                     'Total',
-                    'FGI',
-                    'Point'
+                    'Rsv',
+                    'Total'
                 ],
                 'data' => $excelData,
                 'protectedColumns' => [],

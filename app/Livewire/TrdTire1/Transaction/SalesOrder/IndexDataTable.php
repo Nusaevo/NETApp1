@@ -142,18 +142,18 @@ class IndexDataTable extends BaseDataTableComponent
             }),
             $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(order_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
-            }),
+            }, true),
             $this->createTextFilter('Customer', 'name', 'Cari Customer', function (Builder $builder, string $value) {
                 $builder->whereHas('Partner', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });
-            }),
+            }, true),
             // Tambahkan filter kode barang (matl_code)
             $this->createTextFilter('Kode Barang', 'matl_code', 'Cari Kode Barang', function (Builder $builder, string $value) {
                 $builder->whereHas('OrderDtl', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(matl_code)'), 'like', '%' . strtoupper($value) . '%');
                 });
-            }),
+            }, true),
             SelectFilter::make('Tipe Penjualan', 'sales_type')
                 ->options([
                     '' => 'All',

@@ -463,6 +463,14 @@ class Detail extends BaseComponent
         $this->dispatch('resetSelect2Dropdowns');
     }
 
+    /**
+     * Helper method to check if delete button should be visible
+     */
+    public function canShowDeleteButton()
+    {
+        return $this->actionValue !== 'Create' && !empty($this->object->id);
+    }
+
     private function resetInputsToDefault()
     {
         // Reset semua inputs ke nilai default

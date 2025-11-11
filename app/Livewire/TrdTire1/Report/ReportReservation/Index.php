@@ -5,6 +5,7 @@ namespace App\Livewire\TrdTire1\Report\ReportReservation;
 use App\Livewire\Component\BaseComponent;
 use Illuminate\Support\Facades\{DB, Session, Log};
 use App\Services\TrdTire1\Master\MasterService;
+use App\Models\SysConfig1\{ConfigMenu, ConfigRight};
 
 class Index extends BaseComponent
 {
@@ -71,6 +72,9 @@ class Index extends BaseComponent
                             if ($material) {
                                 $this->matl_id = $material->id;
                                 $this->material_name = $material->name;
+
+                                // Auto-load data when material is set from additionalParam
+                                $this->search();
                             }
                         }
                     }
@@ -153,6 +157,7 @@ class Index extends BaseComponent
             SELECT
                 od.matl_code,
                 m.name as matl_name,
+                COALESCE(stock.stock_qty, 0) as stock_qty,
                 oh.tr_date,
                 oh.tr_code,
                 CONCAT_WS(' - ', p.name, p.address, p.city) as customer_name,
@@ -161,6 +166,13 @@ class Index extends BaseComponent
             JOIN order_hdrs oh ON od.tr_code = oh.tr_code
             LEFT JOIN partners p ON oh.partner_id = p.id
             LEFT JOIN materials m ON od.matl_id = m.id
+            LEFT JOIN (
+                SELECT
+                    matl_code,
+                    SUM(qty_oh) as stock_qty
+                FROM ivt_bals
+                GROUP BY matl_code
+            ) stock ON od.matl_code = stock.matl_code
             WHERE od.tr_type = 'SO'
             AND od.qty_reff = 0
             AND oh.status_code != 'X'
@@ -181,6 +193,36 @@ class Index extends BaseComponent
         $sql .= " ORDER BY od.matl_code, oh.tr_date, oh.tr_code";
 
         $this->results = DB::connection(Session::get('app_code'))->select($sql);
+    }
+
+    public function getRoute()
+    {
+        // Call parent getRoute first
+        parent::getRoute();
+
+        // Filter additionalParam from query string for permission check
+        // This prevents 403 error when additionalParam is in the URL
+        $queryString = request()->getQueryString();
+        if ($queryString && str_contains($queryString, 'additionalParam')) {
+            // Parse query string and remove additionalParam
+            parse_str($queryString, $params);
+            unset($params['additionalParam']);
+
+            // Rebuild query string without additionalParam
+            $filteredQuery = !empty($params) ? http_build_query($params) : '';
+
+            // Rebuild fullUrl without additionalParam for permission check
+            $path = str_replace('.', '/', $this->baseRoute);
+            $fullUrl = $filteredQuery ? $path . '?' . $filteredQuery : $path;
+
+            // Recalculate menu_link and permissions without additionalParam
+            $menu_link = ConfigMenu::getFullPathLink($fullUrl, $this->actionValue, $this->additionalParam);
+            $this->menuName = ConfigMenu::getMenuNameByLink($menu_link);
+
+            // Recalculate permissions with filtered menu_link
+            $this->permissions = ConfigRight::getPermissionsByMenu($menu_link);
+            Session::put($this->permissionSessionKey, $this->permissions);
+        }
     }
 
     public function render()

@@ -150,10 +150,12 @@
                     </x-ui-card>
                     <br>
                     <x-ui-footer>
-                        <x-ui-button clickEvent="delete"
-                            :action="$actionValue"
-                            :enabled="$isDeliv ? 'false' : 'true'"
-                            type="delete" enableConfirmationDialog="true" :permissions="$permissions"/>
+                        @if ($this->canShowDeleteButton())
+                            <x-ui-button clickEvent="delete"
+                                :action="$actionValue"
+                                :enabled="$isDeliv ? 'false' : 'true'"
+                                type="delete" enableConfirmationDialog="true" :permissions="$permissions"/>
+                        @endif
                         {{-- @include('layout.customs.buttons.save') --}}
                         <x-ui-button clickEvent="Save"
                             :action="$actionValue"

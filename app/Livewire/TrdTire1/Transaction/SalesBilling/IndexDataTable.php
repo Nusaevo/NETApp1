@@ -355,7 +355,7 @@ class IndexDataTable extends BaseDataTableComponent
                 $builder->whereHas('Partner', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });
-            }),
+            }, true),
             SelectFilter::make($this->trans("Tipe Penjualan"), 'sales_type')
                 ->options([
                     // '' => 'Semua',
