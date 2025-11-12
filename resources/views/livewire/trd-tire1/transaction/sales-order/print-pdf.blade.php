@@ -348,7 +348,7 @@
 
         @page {
             size: 217mm auto landscape;
-            margin: 5mm 10mm 0mm 5mm;
+            margin: 7mm 11mm 0mm 5mm;
         }
 
         html, body {
