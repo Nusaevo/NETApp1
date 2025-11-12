@@ -71,7 +71,7 @@
                                     <p style="margin-bottom: -9px;">
                                         <strong>{{ $this->object->npwp_name }}</strong>
                                     </p>
-                                    <p style="margin-bottom: -8px;">{{ $this->object->npwp_addr }}</p>
+                                    <p style="margin-bottom: -8px; line-height: 1;">{{ $this->object->npwp_addr }}</p>
                                 @else
                                     <p style="margin-bottom: -8px;">
                                         <strong>{{ $this->object->Partner->name }}</strong>
@@ -348,7 +348,7 @@
 
         @page {
             size: 217mm auto landscape;
-            margin: 1mm 5mm;
+            margin: 5mm 10mm 0mm 5mm;
         }
 
         html, body {
