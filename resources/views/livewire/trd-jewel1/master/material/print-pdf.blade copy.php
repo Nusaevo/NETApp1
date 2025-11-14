@@ -14,14 +14,14 @@
             <div id="print">
                 <!-- Label -->
                 <div class="label-container">
-                    <div class="label-name">{{ $object->name }}</div>
-                    <div class="label-descr" id="label-descr">{{ $object->descr }}</div>
                     <div class="label-code">{{ $object->code }}</div>
                     @if ($object->isOrderedMaterial())
                         <div class="label-price">{{ numberFormat($object->jwl_selling_price_idr) }}</div>
                     @else
                         <div class="label-price">{{ numberFormat($object->jwl_selling_price_usd) }}</div>
                     @endif
+                    <div class="label-name">{{ $object->name }}</div>
+                    <div class="label-descr" id="label-descr">{{ $object->descr }}</div>
                 </div>
             </div>
         </div>
@@ -103,19 +103,19 @@
     .label-code {
         font-size: 16px;
         font-weight: bold;
-        margin-top: 10px;
+        margin-top: -6mm;
         font-family: Arial;
+        /* Geser sedikit ke atas */
     }
 
     .label-price {
         font-size: 12px;
         font-family: Arial;
         font-weight: bold;
-        margin-top: 5px;
     }
 
     .label-name {
-        margin-top: -6mm;
+        margin-top: 5px;
         font-size: 10px; /* Ukuran font lebih besar */
         font-family: Arial;
         font-weight: bold;
