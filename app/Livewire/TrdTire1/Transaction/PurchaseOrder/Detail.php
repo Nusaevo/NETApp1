@@ -166,7 +166,7 @@ class Detail extends BaseComponent
         $this->inputs['curr_rate'] = 1.00;
         $this->inputs['print_date']=null;
         $this->isDeliv = false;
-        
+
         // Reset generated tr_code
         $this->generatedTrCode = null;
     }
@@ -369,7 +369,7 @@ class Detail extends BaseComponent
 
         $salesType = $this->inputs['sales_type'];
         $trDate = $this->inputs['tr_date'];
-        
+
         // Generate new tr_code and store in temporary variable
         $newTrCode = app(MasterService::class)->getNewTrCode($this->trType, $salesType, "", $trDate);
         $this->generatedTrCode = $newTrCode;
@@ -442,7 +442,7 @@ class Detail extends BaseComponent
 
         // Sinkronisasi version number dengan object yang di-load
         $this->versionNumber = $this->object->version_number ?? 1;
-        
+
         // Reset generated tr_code karena mode Edit tidak memerlukan validasi generated tr_code
         $this->generatedTrCode = null;
     }
@@ -493,7 +493,7 @@ class Detail extends BaseComponent
         $this->total_tax = 0;
         $this->total_dpp = 0;
         $this->total_discount = 0;
-        
+
         // Reset generated tr_code
         $this->generatedTrCode = null;
     }
@@ -810,8 +810,6 @@ class Detail extends BaseComponent
                 $this->orderService = app(OrderService::class);
             }
 
-            // 4) Gunakan OrderService untuk menghapus order
-            dd ($this->object->tr_type, $this->object->id);
             $this->orderService->delOrder($this->object->tr_type, $this->object->id);
 
             $this->dispatch('success', __('Data berhasil terhapus'));
