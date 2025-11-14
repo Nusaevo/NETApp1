@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdTire1\Tax\TaxInvoice;
+namespace App\Livewire\TrdTire1\Tax\TaxInvoiceSo;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};

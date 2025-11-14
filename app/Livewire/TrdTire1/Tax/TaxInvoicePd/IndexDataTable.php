@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdTire1\Tax\TaxInvoice;
+namespace App\Livewire\TrdTire1\Tax\TaxInvoicePd;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
@@ -34,9 +34,13 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return OrderHdr::with(['OrderDtl', 'Partner'])
-            ->where('order_hdrs.tr_type', 'SO')
-            ->whereIn('order_hdrs.status_code', [Status::PRINT, Status::OPEN, Status::SHIP, Status::BILL])
-            ->where('order_hdrs.tax_doc_flag', 1);
+            ->join('deliv_hdrs', function($join) {
+                $join->on('order_hdrs.tr_code', '=', 'deliv_hdrs.tr_code')
+                     ->where('deliv_hdrs.tr_type', '=', 'PD');
+            })
+            ->whereIn('deliv_hdrs.status_code', [Status::PRINT, Status::OPEN, Status::SHIP, Status::BILL])
+            // ->where('deliv_hdrs.tax_doc_flag', 1)
+            ->select('order_hdrs.*');
     }
 
     public function clearSelections(): void

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdTire1\Transaction\PurchaseDelivery;
+namespace App\Livewire\TrdTire1\Transfer\PurchaseDelivery;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
@@ -10,6 +10,8 @@ use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use App\Services\TrdTire1\TransferService;
+use Exception;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -68,16 +70,6 @@ class IndexDataTable extends BaseDataTableComponent
                         '<span class="text-muted">Nama tidak tersedia</span>';
                 })
                 ->html(),
-            Column::make($this->trans("gudang"), "warehouse")
-                ->label(function ($row) {
-                    // Mengambil warehouse dari DelivPicking
-                    $delivPicking = DelivPicking::whereHas('DelivPacking', function($query) use ($row) {
-                        $query->where('trhdr_id', $row->id)
-                              ->where('tr_type', 'PD');
-                    })->first();
-                    return $delivPicking ? $delivPicking->wh_code : '-';
-                })
-                ->sortable(),
             Column::make($this->trans('Kode/Nama Barang'), 'kode_barang')
                 ->label(function ($row) {
                     // Ambil semua kode barang dan nama dari DelivPicking melalui relasi DelivPacking
@@ -122,7 +114,6 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
-                        'row' => $row,
                         'row' => $row,
                         'custom_actions' => [
                             // [
@@ -215,5 +206,61 @@ class IndexDataTable extends BaseDataTableComponent
                 });
             }, true),
         ];
+    }
+
+    public function bulkActions(): array
+    {
+        return [
+            'transferKeCTMS' => 'Transfer ke CTMS',
+        ];
+    }
+
+    public function transferKeCTMS()
+    {
+        if (count($this->getSelected()) == 0) {
+            $this->dispatch('error', 'Pilih minimal satu data untuk ditransfer.');
+            return;
+        }
+
+        try {
+            $transferService = new TransferService();
+
+            // Validasi apakah TrdTire2 tersedia
+            if (!$transferService->isTrdTire2Available()) {
+                $this->dispatch('error', 'Aplikasi TrdTire2 tidak tersedia atau tidak aktif.');
+                return;
+            }
+
+            // Transfer Delivery langsung beserta data terkait (Partner, Material, DelivPacking, DelivPicking)
+            $results = $transferService->transferDeliveryToTrdTire2($this->getSelected());
+
+            // Tampilkan hasil
+            if (count($results['success']) > 0) {
+                $successMessage = "Berhasil transfer " . count($results['success']) . " delivery ke CTMS (TrdTire2).";
+                if (count($results['errors']) > 0) {
+                    $successMessage .= " Terdapat " . count($results['errors']) . " error.";
+                }
+                $this->dispatch('success', $successMessage);
+
+                // Refresh page setelah transfer berhasil
+                $this->dispatch('refreshPage');
+            } else {
+                // Jika tidak ada success dan tidak ada error, kemungkinan ada masalah
+                if (count($results['errors']) == 0) {
+                    $this->dispatch('error', 'Transfer tidak menghasilkan data. Periksa log untuk detail lebih lanjut.');
+                }
+            }
+
+            if (count($results['errors']) > 0) {
+                $errorMessage = "Terjadi error pada transfer:\n" . implode("\n", $results['errors']);
+                $this->dispatch('error', $errorMessage);
+            }
+
+            // Refresh table
+            $this->dispatch('refreshTable');
+
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Terjadi kesalahan saat transfer: ' . $e->getMessage());
+        }
     }
 }

@@ -11,9 +11,13 @@ use App\Enums\TrdTire1\Status;
 use App\Models\TrdTire1\Master\MatlUom;
 use App\Models\TrdTire1\Inventories\IvtBal;
 use App\Services\TrdTire1\{AuditLogService, BillingService, DeliveryService};
+use App\Services\TrdTire1\Master\MasterService;
+use App\Models\SysConfig1\ConfigConst;
+use App\Models\TrdTire1\Master\Material;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Livewire; // pastikan namespace ini diimport
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 use Exception;
 use Rappasoft\LaravelLivewireTables\Views\Filters\BooleanFilter;
 
@@ -21,6 +25,9 @@ class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = DelivHdr::class;
     public $bulkSelectedIds = null;
+    public $tanggalKirim; // Field untuk tanggal kirim
+    public $warehouse; // Field untuk warehouse
+    public $warehouses = []; // Array untuk dropdown warehouse
 
     protected $listeners = ['clearSelections'];
 
@@ -36,7 +43,59 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setSearchDisabled();
         $this->setDefaultSort('tr_date', 'asc');
         $this->setDefaultSort('tr_code', 'asc');
+
+        // Initialize tanggal kirim dan warehouse
+        $this->initializeTanggalKirim();
+        $this->loadWarehouses();
     }
+
+    public function configure(): void
+    {
+        // Call parent configure first
+        parent::configure();
+
+        // Enable multiple column sorting
+        $this->setSingleSortingStatus(false);
+
+        // Enable sorting functionality
+        $this->setSortingStatus(true);
+
+        // Hide sorting pills to avoid confusion
+        $this->setSortingPillsStatus(false);
+
+        // Enable custom filters area
+        $this->enableCustomFiltersArea('livewire.trd-tire1.transaction.sales-delivery.custom-filters');
+    }
+
+    /**
+     * Initialize tanggal kirim with current date
+     */
+    private function initializeTanggalKirim(): void
+    {
+        if (empty($this->tanggalKirim)) {
+            $this->tanggalKirim = now()->format('Y-m-d');
+        }
+    }
+
+    /**
+     * Load warehouses from MasterService
+     */
+    private function loadWarehouses(): void
+    {
+        $masterService = new MasterService();
+        $this->warehouses = $masterService->getWarehouse();
+    }
+
+    /**
+     * Enable custom filters area in datatable
+     */
+    private function enableCustomFiltersArea(string $viewPath = 'livewire.custom-filters'): void
+    {
+        $currentAreas = $this->getConfigurableAreas() ?? [];
+        $currentAreas['after-toolbar'] = $viewPath;
+        $this->setConfigurableAreas($currentAreas);
+    }
+
 
     public function builder(): Builder
     {
@@ -216,29 +275,215 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function setDeliveryDate()
     {
-        if (count($this->getSelected()) > 0) {
-            $selectedItems = OrderHdr::whereIn('id', $this->getSelected())
-                ->get(['tr_code as nomor_nota', 'partner_id'])
-                ->map(function ($order) {
-                    $delivery = DelivHdr::where('tr_type', 'SD')
-                        ->where('tr_code', $order->tr_code)
-                        ->first();
-                    return [
-                        'nomor_nota' => $order->nomor_nota,
-                        'nama' => $order->Partner->name,
-                        'kota' => $order->Partner->city,
-                        'tr_date' => $delivery ? $delivery->tr_date : null,
-                    ];
-                })
-                ->sortBy('nomor_nota')
-                ->values()
-                ->toArray();
-
-            OrderHdr::whereIn('id', $this->getSelected())->update(['status_code' => Status::SHIP]);
-
-            $this->dispatch('openDeliveryDateModal', orderIds: $this->getSelected(), selectedItems: $selectedItems);
-            // $this->dispatch('submitDeliveryDate'); // Dihapus agar tidak auto-submit
+        // Validasi tanggal kirim dan warehouse
+        if (empty($this->tanggalKirim)) {
+            $this->dispatch('error', 'Silakan pilih tanggal kirim terlebih dahulu');
+            return;
         }
+
+        if (empty($this->warehouse)) {
+            $this->dispatch('error', 'Silakan pilih warehouse terlebih dahulu');
+            return;
+        }
+
+        // Validasi tanggal kirim tidak boleh lebih besar dari tanggal sekarang
+        $deliveryDate = Carbon::parse($this->tanggalKirim);
+        $today = Carbon::now()->startOfDay();
+
+        if ($deliveryDate->gt($today)) {
+            $this->dispatch('error', 'Tanggal kirim tidak boleh lebih besar dari tanggal sekarang.');
+            return;
+        }
+
+        $selectedOrderIds = $this->getSelected();
+        if (count($selectedOrderIds) === 0) {
+            $this->dispatch('error', 'Silakan pilih minimal satu nota untuk dikirim.');
+            return;
+        }
+
+        $selectedOrders = OrderHdr::whereIn('id', $selectedOrderIds)->get();
+        $warehouse = ConfigConst::where('str1', $this->warehouse)->first();
+
+        if (!$warehouse) {
+            $this->dispatch('error', 'Warehouse tidak ditemukan.');
+            return;
+        }
+
+        $successCount = 0;
+        $successOrders = [];
+        $failedOrders = [];
+
+        // Proses setiap order secara individual
+        foreach ($selectedOrders as $order) {
+            $orderDetails = OrderDtl::where('tr_code', $order->tr_code)->get();
+            $hasStockError = false;
+            $orderStockErrors = [];
+
+            // Validasi stok untuk order ini (skip untuk material JASA)
+            foreach ($orderDetails as $detail) {
+                // Skip validasi stok jika material category adalah JASA
+                $material = Material::find($detail->matl_id);
+                $isJasa = $material && strtoupper(trim($material->category ?? '')) === 'JASA';
+
+                if (!$isJasa) {
+                    $totalStock = IvtBal::where('matl_id', $detail->matl_id)
+                        ->where('matl_uom', $detail->matl_uom)
+                        ->where('wh_id', $warehouse->id)
+                        ->sum('qty_oh');
+
+                    if ($totalStock < $detail->qty) {
+                        $stockError = 'Barang: ' . $detail->matl_code . ' - Gudang: ' . $warehouse->str1 . ' - Stok: ' . rtrim(rtrim(number_format($totalStock, 3, '.', ''), '0'), '.') . ' - Dibutuhkan: ' . $detail->qty;
+                        $orderStockErrors[] = $stockError;
+                        $hasStockError = true;
+                    }
+                }
+            }
+
+            // Jika ada error stok untuk order ini, skip dan catat
+            if ($hasStockError) {
+                $failedOrders[] = [
+                    'tr_code' => $order->tr_code,
+                    'errors' => $orderStockErrors
+                ];
+                continue;
+            }
+
+            // Jika tidak ada error stok, lanjutkan proses delivery untuk order ini
+            // Persiapan array inputs
+            $inputs = [
+                'tr_type' => 'SD',
+                'tr_code' => $order->tr_code,
+                'tr_date' => $this->tanggalKirim,
+                'partner_id' => $order->partner_id,
+                'partner_code' => $order->partner_code,
+                'wh_code' => $warehouse->str1,
+                'wh_id' => $warehouse->id,
+                'payment_term_id' => $order->payment_term_id,
+                'payment_term' => $order->payment_term,
+                'payment_due_days' => $order->payment_due_days,
+                'note' => '',
+                'reff_date' => null,
+                'amt_shipcost' => $order->amt_shipcost ?? 0,
+                'status_code' => Status::OPEN,
+            ];
+
+            // Persiapan array input_details
+            $input_details = [];
+            $orderDetails = OrderDtl::where('tr_code', $order->tr_code)->get();
+
+            foreach ($orderDetails as $detail) {
+                $input_details[] = [
+                    'matl_id' => $detail->matl_id,
+                    'matl_code' => $detail->matl_code,
+                    'matl_descr' => $detail->matl_descr,
+                    'matl_uom' => $detail->matl_uom,
+                    'qty' => $detail->qty,
+                    'wh_id' => $warehouse->id,
+                    'wh_code' => $warehouse->str1,
+                    'reffdtl_id' => $detail->id,
+                    'reffhdr_id' => $order->id,
+                    'reffhdrtr_type' => $detail->OrderHdr->tr_type,
+                    'reffhdrtr_code' => $order->tr_code,
+                    'reffdtltr_seq' => $detail->tr_seq,
+                ];
+            }
+
+            // Panggil DeliveryService dengan array inputs dan input_details
+            if (!empty($input_details)) {
+                $deliveryService = app(DeliveryService::class);
+                $result = $deliveryService->saveDelivery($inputs, $input_details);
+
+                // Persiapan data untuk BillingService
+                $billingHeaderData = [
+                    'id' => 0,
+                    'tr_type' => 'ARB',
+                    'tr_code' => $order->tr_code,
+                    'tr_date' => $this->tanggalKirim,
+                ];
+
+                // Ambil delivery_id dari hasil saveDelivery
+                $deliveryDetails = [];
+                if (!empty($result['header'])) {
+                    $deliveryDetails[] = [
+                        'deliv_id' => $result['header']->id,
+                    ];
+                }
+
+                $billingService = app(BillingService::class);
+                $billingResult = $billingService->saveBilling($billingHeaderData, $deliveryDetails);
+
+                if (!empty($result['header'])) {
+                    AuditLogService::createDeliveryKirim([$result['header']->id]);
+                    // Audit log for Sales Delivery KIRIM
+
+                    // Cek hasil billing
+                    if (!empty($billingResult['billing_hdr'])) {
+                        // Billing berhasil dibuat
+                        $successOrders[] = $order->tr_code;
+                        $successCount++;
+                    } else {
+                        // Billing gagal dibuat
+                        $failedOrders[] = [
+                            'tr_code' => $order->tr_code,
+                            'errors' => ['Gagal membuat Billing']
+                        ];
+                    }
+                } else {
+                    // Delivery gagal dibuat
+                    $failedOrders[] = [
+                        'tr_code' => $order->tr_code,
+                        'errors' => ['Gagal membuat Delivery']
+                    ];
+                }
+            }
+        }
+
+        // Tampilkan hasil dengan detail
+        $this->showProcessResults($successOrders, $failedOrders, $successCount);
+
+        // Clear selections after successful completion
+        $this->clearSelected();
+    }
+
+    /**
+     * Tampilkan hasil proses delivery dengan detail
+     */
+    private function showProcessResults($successOrders, $failedOrders, $successCount)
+    {
+        $message = '';
+        $type = 'info';
+
+        if ($successCount > 0 && empty($failedOrders)) {
+            // Semua berhasil
+            $message = '<strong>Berhasil!</strong><br><br>';
+            $message .= $successCount . ' Sales Delivery berhasil dibuat:<br>';
+            $message .= '• ' . implode('<br>• ', $successOrders);
+            $type = 'success';
+        } elseif ($successCount > 0 && !empty($failedOrders)) {
+            // Sebagian berhasil
+            $message = '<strong>Hasil Proses Delivery</strong><br><br>';
+            $message .= '<strong>✅ Berhasil (' . $successCount . ' nota):</strong><br>';
+            $message .= '• ' . implode('<br>• ', $successOrders) . '<br><br>';
+
+            $message .= '<strong>❌ Gagal (' . count($failedOrders) . ' nota):</strong><br>';
+            foreach ($failedOrders as $failed) {
+                $message .= '• ' . $failed['tr_code'] . ': ' . implode(', ', $failed['errors']) . '<br>';
+            }
+            $type = 'warning';
+        } elseif (empty($successOrders) && !empty($failedOrders)) {
+            // Semua gagal
+            $message = '<strong>Gagal!</strong><br><br>';
+            $message .= 'Semua nota gagal diproses:<br>';
+            foreach ($failedOrders as $failed) {
+                $message .= '• ' . $failed['tr_code'] . ': ' . implode(', ', $failed['errors']) . '<br>';
+            }
+            $type = 'error';
+        }
+
+        $this->dispatch('notify-swal', [
+            'type' => $type,
+            'message' => $message
+        ]);
     }
 
     public function cancelDeliveryDate()
@@ -469,7 +714,7 @@ class IndexDataTable extends BaseDataTableComponent
                     $ivtBal->save();
                 }
             }
-            OrderHdr::whereIn('id', $this->getSelected())->update(['status_code' => Status::PRINT]);
+            OrderHdr::whereIn('id', $selectedOrderIds)->update(['status_code' => Status::PRINT]);
 
             DB::commit();
 

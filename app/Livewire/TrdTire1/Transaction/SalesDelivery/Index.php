@@ -38,12 +38,23 @@ class Index extends BaseComponent
         'inputs.wh_code' => 'required',
     ];
 
-    public function openDeliveryDateModal($orderIds, $selectedItems)
+    public function openDeliveryDateModal($orderIds, $selectedItems, $tanggalKirim = null, $warehouse = null)
     {
         $this->selectedOrderIds = $orderIds;
         $this->selectedItems    = $selectedItems;
-        // Set default tanggal kirim ke hari ini jika belum ada
-        // $this->inputs['tr_date'] = Carbon::now()->format('Y-m-d');
+
+        // Set tanggal kirim dan warehouse dari parameter (yang sudah diisi di bawah filter)
+        if ($tanggalKirim) {
+            $this->inputs['tr_date'] = $tanggalKirim;
+        } else {
+            // Fallback ke hari ini jika tidak ada
+            $this->inputs['tr_date'] = Carbon::now()->format('Y-m-d');
+        }
+
+        if ($warehouse) {
+            $this->inputs['wh_code'] = $warehouse;
+        }
+
         $this->dispatch('open-modal-delivery-date');
     }
 
