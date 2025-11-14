@@ -342,7 +342,6 @@ class Detail extends BaseComponent
                 return;
             }
 
-            dd ($this->object->tr_type, $this->object->id);
             $this->deliveryService->delDelivery($this->object->tr_type,$this->object->id);
 
             $this->dispatch('success', __('generic.string.delete'));
