@@ -811,7 +811,8 @@ class Detail extends BaseComponent
             }
 
             // 4) Gunakan OrderService untuk menghapus order
-            $this->orderService->delOrder($this->object->id);
+            dd ($this->object->tr_type, $this->object->id);
+            $this->orderService->delOrder($this->object->tr_type, $this->object->id);
 
             $this->dispatch('success', __('Data berhasil terhapus'));
             return redirect()->route(str_replace('.Detail', '', $this->baseRoute));

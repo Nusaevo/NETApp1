@@ -178,15 +178,17 @@ class InventoryService
         return $ivtBal->id;
     }
 
-    public function delIvtLog(int $trHdrId, ?int $trDtlId = null)
+    public function delIvtLog(string $trType, int $trHdrId, ?int $trDtlId = null)
     {
         // Hapus log inventory berdasarkan trHdrId dan opsional trdtlId
         if ($trDtlId !== null) {
             // Jika ada trdtlId, cari berdasarkan trdtlId saja
-            $query = IvtLog::where('trdtl_id', $trDtlId);
+            $query = IvtLog::where('tr_type', $trType)
+                ->where('trdtl_id', $trDtlId);
         } else {
             // Jika tidak ada trdtlId, cari berdasarkan trhdrId
-            $query = IvtLog::where('trhdr_id', $trHdrId);
+            $query = IvtLog::where('tr_type', $trType)
+                ->where('trhdr_id', $trHdrId);
         }
 
         $logs = $query->get();
@@ -307,9 +309,9 @@ class InventoryService
 
     }
 
-    public function delInventory(int $ivttrId): void
+    public function delInventory(string $trType, int $ivttrId): void
     {
-        $this->deleteDetails($ivttrId);
+        $this->deleteDetails($trType, $ivttrId);
         $this->deleteHeader($ivttrId);
     }
 
@@ -318,9 +320,9 @@ class InventoryService
         IvttrHdr::where('id', $ivttrId)->forceDelete();
     }
 
-    private function deleteDetails(int $ivttrId): void
+    private function deleteDetails(string $trType, int $ivttrId): void
     {
-        $this->delIvtLog($ivttrId);
+        $this->delIvtLog($trType, $ivttrId);
         IvttrDtl::where('trhdr_id', $ivttrId)->delete();
     }
     #endregion

@@ -101,7 +101,8 @@ class DeliveryService
 
                     $packing->fill($detail);
                     if ($packing->isDirty()) {
-                        $this->inventoryService->delIvtLog(0, $detail['id']);
+                        dd ($headerData['tr_type'] . 'R', 0, $detail['id']);
+                        $this->inventoryService->delIvtLog($headerData['tr_type'] . 'R', 0, $detail['id']);
                         OrderDtl::updateQtyReff(-$originalQty, $detail['reffdtl_id']);
                         $packing->save();
                         OrderDtl::updateQtyReff($detail['qty'], $detail['reffdtl_id']);
@@ -122,12 +123,14 @@ class DeliveryService
                 // Hapus semua picking terlebih dahulu beserta log-nya
                 $existingPickings = DelivPicking::where('trpacking_id', $existing->id)->get();
                 foreach ($existingPickings as $picking) {
-                    $this->inventoryService->delIvtLog(0, $picking->id);
+                    dd ($headerData['tr_type'] . 'R', 0, $picking->id);
+                    $this->inventoryService->delIvtLog($headerData['tr_type'] . 'R', 0, $picking->id);
                     $picking->delete();
                 }
 
                 // Hapus log reservation (PDR) yang dibuat dengan packing id
-                $this->inventoryService->delIvtLog(0, $existing->id);
+                dd($headerData['tr_type'] . 'R', 0, $existing->id);
+                $this->inventoryService->delIvtLog($headerData['tr_type'] . 'R', 0, $existing->id);
                 OrderDtl::updateQtyReff(-$existing->qty, $existing->reffdtl_id);
                 $existing->delete();
             }
@@ -163,6 +166,7 @@ class DeliveryService
             $ivtBal = IvtBal::where('matl_id', $detailData['matl_id'])
                 ->where('matl_uom', $detailData['matl_uom'])
                 ->where('wh_id', $detailData['wh_id'])
+                ->where('qty_oh', '>', 0)
                 ->orderBy('batch_code')
                 ->get();
             $qty_remaining = $detailData['qty'];
@@ -252,7 +256,8 @@ class DeliveryService
 
                 $picking->fill($detail);
                 if ($picking->isDirty()) {
-                    $this->inventoryService->delIvtLog(0, $picking->id);
+                    dd ($detailData['tr_type'], 0, $picking->id);
+                    $this->inventoryService->delIvtLog($detailData['tr_type'], 0, $picking->id);
                     $picking->save();
 
                     // Untuk ivt_logs, gunakan tr_seq dari packing
@@ -275,7 +280,8 @@ class DeliveryService
         }
         foreach ($existingPickings as $existing) {
             if (!in_array($existing->id, $picking_ids)) {
-                $this->inventoryService->delIvtLog(0, $existing->id);
+                dd ($detailData['tr_type'], 0, $picking->id);
+                $this->inventoryService->delIvtLog($detailData['tr_type'], 0, $existing->id);
                 $existing->delete();
             }
         }
@@ -283,10 +289,11 @@ class DeliveryService
     }
 
     #region Delete Delivery
-    public function delDelivery(int $delivId)
+    public function delDelivery(string $trType, int $delivId)
     {
         $this->deleteDetail($delivId);
-        $this->inventoryService->delIvtLog($delivId);
+        dd ($trType, $delivId);
+        $this->inventoryService->delIvtLog($trType, $delivId);
         $this->deleteHeader($delivId);
     }
 
