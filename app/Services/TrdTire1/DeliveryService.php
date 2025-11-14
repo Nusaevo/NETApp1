@@ -101,8 +101,7 @@ class DeliveryService
 
                     $packing->fill($detail);
                     if ($packing->isDirty()) {
-                        dd ($headerData['tr_type'] . 'R', 0, $detail['id']);
-                        $this->inventoryService->delIvtLog($headerData['tr_type'] . 'R', 0, $detail['id']);
+                         $this->inventoryService->delIvtLog($headerData['tr_type'] . 'R', 0, $detail['id']);
                         OrderDtl::updateQtyReff(-$originalQty, $detail['reffdtl_id']);
                         $packing->save();
                         OrderDtl::updateQtyReff($detail['qty'], $detail['reffdtl_id']);
@@ -123,7 +122,6 @@ class DeliveryService
                 // Hapus semua picking terlebih dahulu beserta log-nya
                 $existingPickings = DelivPicking::where('trpacking_id', $existing->id)->get();
                 foreach ($existingPickings as $picking) {
-                    dd ($headerData['tr_type'] . 'R', 0, $picking->id);
                     $this->inventoryService->delIvtLog($headerData['tr_type'] . 'R', 0, $picking->id);
                     $picking->delete();
                 }
@@ -256,8 +254,7 @@ class DeliveryService
 
                 $picking->fill($detail);
                 if ($picking->isDirty()) {
-                    dd ($detailData['tr_type'], 0, $picking->id);
-                    $this->inventoryService->delIvtLog($detailData['tr_type'], 0, $picking->id);
+                     $this->inventoryService->delIvtLog($detailData['tr_type'], 0, $picking->id);
                     $picking->save();
 
                     // Untuk ivt_logs, gunakan tr_seq dari packing
@@ -280,7 +277,6 @@ class DeliveryService
         }
         foreach ($existingPickings as $existing) {
             if (!in_array($existing->id, $picking_ids)) {
-                dd ($detailData['tr_type'], 0, $picking->id);
                 $this->inventoryService->delIvtLog($detailData['tr_type'], 0, $existing->id);
                 $existing->delete();
             }
@@ -292,7 +288,6 @@ class DeliveryService
     public function delDelivery(string $trType, int $delivId)
     {
         $this->deleteDetail($delivId);
-        dd ($trType, $delivId);
         $this->inventoryService->delIvtLog($trType, $delivId);
         $this->deleteHeader($delivId);
     }

@@ -581,13 +581,12 @@ class Detail extends BaseComponent
             }
 
             // Panggil service untuk hapus billing terlebih dahulu
-            $billingService = app(BillingService::class); 
+            $billingService = app(BillingService::class);
             $billingService->delBilling($this->object->billhdr_id);
 
             // Kemudian hapus delivery
             $deliveryService = app(DeliveryService::class);
-            dd ( $this->object->tr_type, $this->object->id);
-            $deliveryService->delDelivery($this->object->tr_type,$this->object->id);
+             $deliveryService->delDelivery($this->object->tr_type,$this->object->id);
 
             $this->dispatch('success', 'Purchase Delivery berhasil dihapus.');
             return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
