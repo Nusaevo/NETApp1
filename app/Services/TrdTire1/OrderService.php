@@ -70,7 +70,8 @@ class OrderService
             ->get();
         foreach ($deletedDetails as $deletedDetail) {
             // Hapus ivt_logs untuk detail yang dihapus
-            $this->inventoryService->delIvtLog(0, $deletedDetail->id);
+            dd ($deletedDetail->tr_type . 'R', 0, $deletedDetail->id);
+            $this->inventoryService->delIvtLog($deletedDetail->tr_type . 'R', 0, $deletedDetail->id);
             $deletedDetail->delete();
         }
 
@@ -100,7 +101,8 @@ class OrderService
                     $existingDetail->fill($detail);
                     // Update hanya jika ada perubahan data
                     if ($existingDetail->isDirty()) {
-                        $this->inventoryService->delIvtLog(0, $existingDetail->id);
+                        dd ($existingDetail->tr_type . 'R', 0, $existingDetail->id);
+                        $this->inventoryService->delIvtLog($existingDetail->tr_type . 'R', 0, $existingDetail->id);
                         $existingDetail->save();
                         $this->inventoryService->addReservation($headerData, $existingDetail->toArray());
                         if ($headerData['tr_code'] == 'PO') {
@@ -120,11 +122,11 @@ class OrderService
     }
 
     #region Delete Order
-    public function delOrder(int $orderId)
+    public function delOrder(string $trType, int $orderId)
     {
         try {
             OrderDtl::where('trhdr_id', $orderId)->delete();
-            $this->inventoryService->delIvtLog($orderId);
+            $this->inventoryService->delIvtLog($trType, $orderId);
             OrderHdr::where('id', $orderId)->forceDelete();
         } catch (Exception $e) {
             throw new Exception('Error deleting order: ' . $e->getMessage());

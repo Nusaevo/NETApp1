@@ -175,7 +175,7 @@
     }
 
     .label-name {
-        margin-top: 5px;
+        margin-top: -2px;
         font-size: 10px; /* Ukuran font lebih besar */
         font-family: Arial;
         font-weight: bold;
@@ -197,6 +197,7 @@
         -webkit-text-stroke: 0.2px black;
         line-height: 1.2;
         overflow: hidden;
+        margin-top: -3px;
     }
 
     /* Dynamic BOM styling */
