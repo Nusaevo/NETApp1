@@ -45,10 +45,70 @@
         return formattedText;
     }
 
+    function detectBOMCount(text) {
+        // Count BOM items dari string kontinyu seperti "1 EM:0.98 35 TP:0.65 74"
+        const bomMatches = text.match(/[A-Z]{2,}:\d+(\.\d+)?/g);
+        return bomMatches ? bomMatches.length : 0;
+    }
+
+    function formatBOMText(text, bomCount) {
+        if (bomCount <= 3) {
+            // Normal vertical layout untuk ≤ 3 items
+            return formatText(text, 14);
+        } else {
+            // Split pada spasi ke-2, ke-4, dst untuk BOM
+            // "1 EM:0.98 35 TP:0.65 74 RD:0.72 1 GD:23 1 GD:1221"
+            const words = text.split(' ');
+            const bomItems = [];
+
+            // Group every 2 words sebagai satu item
+            for (let i = 0; i < words.length; i += 2) {
+                if (words[i] && words[i + 1]) {
+                    bomItems.push(words[i] + ' ' + words[i + 1]);
+                } else if (words[i]) {
+                    bomItems.push(words[i]);
+                }
+            }
+
+            if (bomItems.length === 0) {
+                return formatText(text, 12);
+            }
+
+            let result = '';
+            for (let i = 0; i < bomItems.length; i++) {
+                if (i > 0 && i % 2 === 0) {
+                    result += '\n'; // New line setelah 2 items
+                } else if (i > 0) {
+                    result += ' '; // Spasi antara items di baris yang sama
+                }
+                result += bomItems[i];
+            }
+
+            return result;
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', (event) => {
         const descrElement = document.getElementById('label-descr');
         const originalText = descrElement.innerText;
-        descrElement.innerText = formatText(originalText, 14); // Mengurangi karakter per baris untuk font yang lebih besar
+        const bomCount = detectBOMCount(originalText);
+
+        console.log('Original text:', originalText);
+        console.log('BOM count:', bomCount);
+
+        // Apply dynamic font size based on BOM count
+        if (bomCount > 6) {
+            descrElement.style.fontSize = '7px';
+            descrElement.style.lineHeight = '1.0';
+            descrElement.style.letterSpacing = '-0.2px';
+        } else if (bomCount > 3) {
+            descrElement.style.fontSize = '8px';
+            descrElement.style.lineHeight = '1.1';
+        }
+
+        const formattedText = formatBOMText(originalText, bomCount);
+        console.log('Formatted text:', formattedText);
+        descrElement.innerText = formattedText;
     });
 
     function printInvoice() {
@@ -126,15 +186,29 @@
 
     .label-descr {
         font-family: Arial, sans-serif;
-        font-size: 10px; /* Ukuran font yang sesuai */
+        font-size: 10px; /* Default font size */
         max-width: 100%;
-        word-break: break-all;
-        font-weight: bold; /* Menggunakan bold standar seperti label-code */
-        white-space: pre-wrap; /* Preserve whitespace and wrap as necessary */
-        padding-left: 5px; /* Adjust the value as needed */
-        letter-spacing: -0.1px; /* Sedikit mengurangi jarak antar huruf untuk keterbacaan lebih baik */
-        text-shadow: 0.25px 0px 0px black, -0.25px 0px 0px black; /* Menambahkan shadow untuk efek lebih tebal */
-        -webkit-text-stroke: 0.2px black; /* Memberikan outline tipis untuk menebalkan teks */
+        word-break: break-word;
+        font-weight: bold;
+        white-space: pre-wrap;
+        padding-left: 5px;
+        letter-spacing: -0.1px;
+        text-shadow: 0.25px 0px 0px black, -0.25px 0px 0px black;
+        -webkit-text-stroke: 0.2px black;
+        line-height: 1.2;
+        overflow: hidden;
+    }
+
+    /* Dynamic BOM styling */
+    .label-descr.bom-small {
+        font-size: 8px;
+        line-height: 1.1;
+    }
+
+    .label-descr.bom-tiny {
+        font-size: 7px;
+        line-height: 1.0;
+        letter-spacing: -0.2px;
     }
 
 

@@ -38,12 +38,23 @@ class Index extends BaseComponent
         'inputs.wh_code' => 'required',
     ];
 
-    public function openDeliveryDateModal($orderIds, $selectedItems)
+    public function openDeliveryDateModal($orderIds, $selectedItems, $tanggalKirim = null, $warehouse = null)
     {
         $this->selectedOrderIds = $orderIds;
         $this->selectedItems    = $selectedItems;
-        // Set default tanggal kirim ke hari ini jika belum ada
-        // $this->inputs['tr_date'] = Carbon::now()->format('Y-m-d');
+
+        // Set tanggal kirim dan warehouse dari parameter (yang sudah diisi di bawah filter)
+        if ($tanggalKirim) {
+            $this->inputs['tr_date'] = $tanggalKirim;
+        } else {
+            // Fallback ke hari ini jika tidak ada
+            $this->inputs['tr_date'] = Carbon::now()->format('Y-m-d');
+        }
+
+        if ($warehouse) {
+            $this->inputs['wh_code'] = $warehouse;
+        }
+
         $this->dispatch('open-modal-delivery-date');
     }
 
@@ -115,8 +126,12 @@ class Index extends BaseComponent
                         ->sum('qty_oh');
 
                     if ($totalStock < $detail->qty) {
-                        $stockError = 'Barang: ' . $detail->matl_code . ' - Gudang: ' . $warehouse->str1 . ' - Stok: ' . rtrim(rtrim(number_format($totalStock, 3, '.', ''), '0'), '.') . ' - Dibutuhkan: ' . $detail->qty;
-                        $orderStockErrors[] = $stockError;
+                        $orderStockErrors[] = [
+                            'matl_code' => $detail->matl_code,
+                            'wh_code' => $warehouse->str1,
+                            'stock' => rtrim(rtrim(number_format($totalStock, 3, '.', ''), '0'), '.'),
+                            'required' => $detail->qty
+                        ];
                         $hasStockError = true;
                     }
                 }
@@ -126,7 +141,8 @@ class Index extends BaseComponent
             if ($hasStockError) {
                 $failedOrders[] = [
                     'tr_code' => $order->tr_code,
-                    'errors' => $orderStockErrors
+                    'stock_errors' => $orderStockErrors,
+                    'errors' => [] // Untuk error non-stock
                 ];
                 continue;
             }
@@ -203,12 +219,17 @@ class Index extends BaseComponent
                     // Cek hasil billing
                     if (!empty($billingResult['billing_hdr'])) {
                         // Billing berhasil dibuat
+                        // Update status_code OrderHdr menjadi SHIP
+                        $order->status_code = Status::SHIP;
+                        $order->save();
+
                         $successOrders[] = $order->tr_code;
                         $successCount++;
                     } else {
                         // Billing gagal dibuat
                         $failedOrders[] = [
                             'tr_code' => $order->tr_code,
+                            'stock_errors' => [],
                             'errors' => ['Gagal membuat Billing']
                         ];
                     }
@@ -216,6 +237,7 @@ class Index extends BaseComponent
                     // Delivery gagal dibuat
                     $failedOrders[] = [
                         'tr_code' => $order->tr_code,
+                        'stock_errors' => [],
                         'errors' => ['Gagal membuat Delivery']
                     ];
                 }
@@ -253,23 +275,71 @@ class Index extends BaseComponent
 
             $message .= '<strong>❌ Gagal (' . count($failedOrders) . ' nota):</strong><br>';
             foreach ($failedOrders as $failed) {
-                $message .= '• ' . $failed['tr_code'] . ': ' . implode(', ', $failed['errors']) . '<br>';
+                $message .= $this->formatFailedOrder($failed);
             }
             $type = 'warning';
         } elseif (empty($successOrders) && !empty($failedOrders)) {
             // Semua gagal
             $message = '<strong>Gagal!</strong><br><br>';
-            $message .= 'Semua nota gagal diproses:<br>';
+            $message .= 'Semua nota gagal diproses:<br><br>';
             foreach ($failedOrders as $failed) {
-                $message .= '• ' . $failed['tr_code'] . ': ' . implode(', ', $failed['errors']) . '<br>';
+                $message .= $this->formatFailedOrder($failed);
             }
             $type = 'error';
         }
 
         $this->dispatch('notify-swal', [
             'type' => $type,
-            'message' => $message
+            'message' => $message,
+            'width' => '600px'
         ]);
+    }
+
+    /**
+     * Format failed order dengan tabel untuk stock errors
+     */
+    private function formatFailedOrder($failed)
+    {
+        $output = '<div style="margin-bottom: 20px;">';
+        $output .= '<div style="font-weight: bold; margin-bottom: 10px; color: #dc3545;">• ' . htmlspecialchars($failed['tr_code']) . ':</div>';
+
+        // Tampilkan stock errors dalam tabel
+        if (!empty($failed['stock_errors']) && count($failed['stock_errors']) > 0) {
+            $output .= '<div style="margin-top: 8px;">';
+            $output .= '<table style="width: 100%; border-collapse: collapse; margin: 0; font-size: 0.8rem; border: 1px solid #dee2e6;">';
+            $output .= '<thead>';
+            $output .= '<tr style="background-color: #f8f9fa;">';
+            $output .= '<th style="padding: 6px 8px; text-align: left; border: 1px solid #dee2e6; font-weight: 600; font-size: 0.8rem;">Barang</th>';
+            $output .= '<th style="padding: 6px 8px; text-align: left; border: 1px solid #dee2e6; font-weight: 600; font-size: 0.8rem;">Gudang</th>';
+            $output .= '<th style="padding: 6px 8px; text-align: right; border: 1px solid #dee2e6; font-weight: 600; font-size: 0.8rem;">Stok</th>';
+            $output .= '<th style="padding: 6px 8px; text-align: right; border: 1px solid #dee2e6; font-weight: 600; font-size: 0.8rem;">Butuh</th>';
+            $output .= '</tr>';
+            $output .= '</thead>';
+            $output .= '<tbody>';
+
+            foreach ($failed['stock_errors'] as $error) {
+                $output .= '<tr>';
+                $output .= '<td style="padding: 5px 8px; border: 1px solid #dee2e6; font-size: 0.8rem;">' . htmlspecialchars($error['matl_code']) . '</td>';
+                $output .= '<td style="padding: 5px 8px; border: 1px solid #dee2e6; font-size: 0.8rem;">' . htmlspecialchars($error['wh_code']) . '</td>';
+                $output .= '<td style="padding: 5px 8px; border: 1px solid #dee2e6; text-align: right; font-size: 0.8rem;">' . htmlspecialchars($error['stock']) . '</td>';
+                $output .= '<td style="padding: 5px 8px; border: 1px solid #dee2e6; text-align: right; font-size: 0.8rem;">' . htmlspecialchars($error['required']) . '</td>';
+                $output .= '</tr>';
+            }
+
+            $output .= '</tbody>';
+            $output .= '</table>';
+            $output .= '</div>';
+        }
+
+        // Tampilkan error lainnya (non-stock)
+        if (!empty($failed['errors']) && count($failed['errors']) > 0) {
+            foreach ($failed['errors'] as $error) {
+                $output .= '<div style="margin-top: 8px; color: #dc3545;">' . htmlspecialchars($error) . '</div>';
+            }
+        }
+
+        $output .= '</div>';
+        return $output;
     }
 
     public function onPrerender()

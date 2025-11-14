@@ -506,6 +506,330 @@ class TransferService
 
 
     /**
+     * Transfer Delivery data langsung dari TrdTire1 ke TrdTire2
+     */
+    public function transferDeliveryToTrdTire2(array $delivHdrIds): array
+    {
+        $results = [
+            'success' => [],
+            'errors' => [],
+            'transferred_deliveries' => []
+        ];
+
+        try {
+            // Pastikan koneksi TrdTire2 terdaftar
+            $this->ensureTrdTire2Connection();
+
+            DB::beginTransaction();
+
+            // Ambil data delivery headers dengan relasi lengkap termasuk Order
+            $delivHdrs = DelivHdr::whereIn('id', $delivHdrIds)
+                ->with([
+                    'Partner',
+                    'Partner.PartnerDetail',
+                    'DelivPacking',
+                    'DelivPacking.DelivPickings',
+                    'DelivPacking.DelivPickings.Material',
+                    'DelivPacking.DelivPickings.Material.MatlUom',
+                    'OrderHdr',
+                    'OrderHdr.OrderDtl',
+                    'OrderHdr.OrderDtl.Material',
+                    'OrderHdr.OrderDtl.Material.MatlUom'
+                ])
+                ->get();
+
+            // Validasi data yang ditemukan
+            if ($delivHdrs->isEmpty()) {
+                $errorMsg = "Tidak ada data delivery header yang ditemukan untuk ID: " . implode(', ', $delivHdrIds);
+                $results['errors'][] = $errorMsg;
+                return $results;
+            }
+
+            foreach ($delivHdrs as $delivHdr) {
+                try {
+                    // 1. Transfer/Copy Partner jika belum ada
+                    $partner2Id = $this->transferPartner($delivHdr->Partner);
+
+                    // 2. Transfer Order jika ada (dari reffhdr_id atau reffhdrtr_code di DelivPacking)
+                    $orderHdr2Id = null;
+                    $orderTransferred = false;
+                    $materials2Ids = [];
+                    $processedOrderIds = [];
+
+                    // Ambil OrderHdr dari DelivPacking menggunakan reffhdr_id atau reffhdrtr_code
+                    // Query DelivPacking langsung dari database menggunakan trhdr_id
+                    $delivPackings = DelivPacking::where('trhdr_id', $delivHdr->id)
+                        ->where('tr_type', $delivHdr->tr_type)
+                        ->get();
+
+                    foreach ($delivPackings as $packing) {
+                        $orderHdr = null;
+
+                        try {
+                            // Prioritas 1: Gunakan reffhdr_id jika ada
+                            if ($packing->reffhdr_id) {
+                                // Coba dengan filter tr_type sesuai reffhdrtr_type jika ada
+                                if ($packing->reffhdrtr_type) {
+                                    $orderHdr = OrderHdr::where('id', $packing->reffhdr_id)
+                                        ->where('tr_type', $packing->reffhdrtr_type)
+                                        ->with(['OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom'])
+                                        ->first();
+                                }
+
+                                // Jika tidak ditemukan, coba dengan tr_type PO
+                                if (!$orderHdr) {
+                                    $orderHdr = OrderHdr::where('id', $packing->reffhdr_id)
+                                        ->where('tr_type', 'PO')
+                                        ->with(['OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom'])
+                                        ->first();
+                                }
+
+                                // Jika masih tidak ditemukan, coba tanpa filter tr_type
+                                if (!$orderHdr) {
+                                    $orderHdr = OrderHdr::where('id', $packing->reffhdr_id)
+                                        ->with(['OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom'])
+                                        ->first();
+                                }
+
+                            }
+
+                            // Prioritas 2: Jika tidak ada dari reffhdr_id, gunakan reffhdrtr_code
+                            if (!$orderHdr && $packing->reffhdrtr_code) {
+                                // Coba dengan filter tr_type sesuai reffhdrtr_type jika ada
+                                if ($packing->reffhdrtr_type) {
+                                    $orderHdr = OrderHdr::where('tr_code', $packing->reffhdrtr_code)
+                                        ->where('tr_type', $packing->reffhdrtr_type)
+                                        ->with(['OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom'])
+                                        ->first();
+                                }
+
+                                // Jika tidak ditemukan, coba dengan tr_type PO
+                                if (!$orderHdr) {
+                                    $orderHdr = OrderHdr::where('tr_code', $packing->reffhdrtr_code)
+                                        ->where('tr_type', 'PO')
+                                        ->with(['OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom'])
+                                        ->first();
+                                }
+
+                                // Jika masih tidak ditemukan, coba tanpa filter tr_type
+                                if (!$orderHdr) {
+                                    $orderHdr = OrderHdr::where('tr_code', $packing->reffhdrtr_code)
+                                        ->with(['OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom'])
+                                        ->first();
+                                }
+
+                            }
+
+                            // Transfer Order jika ditemukan dan belum pernah diproses
+                            if ($orderHdr && !in_array($orderHdr->id, $processedOrderIds)) {
+                                $processedOrderIds[] = $orderHdr->id;
+
+                                // Transfer Material dari OrderDtl
+                                $orderMaterials2Ids = $this->transferMaterials($orderHdr->OrderDtl);
+
+                                // Merge materials, hindari duplikasi
+                                foreach ($orderMaterials2Ids as $matlId1 => $matlId2) {
+                                    if (!isset($materials2Ids[$matlId1])) {
+                                        $materials2Ids[$matlId1] = $matlId2;
+                                    }
+                                }
+
+                                // Transfer Order Header
+                                $orderHdr2Id = $this->transferOrderHeader($orderHdr, $partner2Id);
+
+                                // Transfer Order Details
+                                $this->transferOrderDetails($orderHdr->OrderDtl, $orderHdr2Id, $orderMaterials2Ids);
+
+                                $orderTransferred = true;
+                            }
+                        } catch (Exception $e) {
+                            // Continue ke packing berikutnya
+                        }
+                    }
+
+                    // 3. Transfer/Copy Material dari DelivPicking (hanya yang belum ada dari Order)
+                    $delivMaterials2Ids = $this->transferMaterialsFromDelivPicking($delivHdr);
+                    // Merge dengan prioritas: jika sudah ada di materials2Ids, gunakan yang sudah ada
+                    foreach ($delivMaterials2Ids as $matlId1 => $matlId2) {
+                        if (!isset($materials2Ids[$matlId1])) {
+                            $materials2Ids[$matlId1] = $matlId2;
+                        }
+                    }
+
+                    // 4. Transfer Delivery Header
+                    $delivHdr2Id = $this->transferDeliveryHeaderDirect($delivHdr, $partner2Id);
+
+                    // 5. Transfer Delivery Packing dan Picking
+                    $this->transferDeliveryPackingAndPicking($delivHdr, $delivHdr2Id, $materials2Ids);
+
+                    $results['transferred_deliveries'][] = [
+                        'original_tr_code' => $delivHdr->tr_code,
+                        'new_tr_code' => $delivHdr->tr_code,
+                        'partner_name' => $delivHdr->Partner->name ?? 'Unknown',
+                        'order_transferred' => $orderTransferred
+                    ];
+
+                    $successMsg = "Delivery " . ($delivHdr->tr_code ?? 'Unknown') . " berhasil ditransfer ke TrdTire2";
+                    if ($orderTransferred) {
+                        $successMsg .= " (termasuk Order)";
+                    }
+                    $results['success'][] = $successMsg;
+
+                } catch (Exception $e) {
+                    $errorMsg = "Gagal transfer delivery " . ($delivHdr->tr_code ?? 'Unknown') . ": " . $e->getMessage();
+                    $results['errors'][] = $errorMsg;
+                    Log::error('Transfer Delivery Error', [
+                        'deliv_code' => $delivHdr->tr_code ?? 'Unknown',
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                }
+            }
+
+            DB::commit();
+            return $results;
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            $results['errors'][] = "Gagal transfer data: " . $e->getMessage();
+            Log::error('Transfer Delivery Batch Error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return $results;
+        }
+    }
+
+    /**
+     * Transfer/Copy Materials dari DelivPicking
+     */
+    private function transferMaterialsFromDelivPicking(DelivHdr $delivHdr): array
+    {
+        $materials2Ids = [];
+
+        // Query DelivPacking langsung dari database menggunakan trhdr_id
+        $delivPackings = DelivPacking::where('trhdr_id', $delivHdr->id)
+            ->where('tr_type', $delivHdr->tr_type)
+            ->get();
+
+        foreach ($delivPackings as $packing) {
+            // Query DelivPicking langsung dari database menggunakan trpacking_id
+            $delivPickings = DelivPicking::where('trpacking_id', $packing->id)
+                ->with('Material', 'Material.MatlUom')
+                ->get();
+
+            foreach ($delivPickings as $picking) {
+                $material1 = $picking->Material;
+
+                // Validasi material tidak null
+                if (!$material1) {
+                    continue;
+                }
+
+                // Cek apakah material sudah ada di TrdTire2 berdasarkan code
+                $existingMaterial2 = Material2::on('TrdTire2')->where('code', $material1->code)->first();
+
+                if ($existingMaterial2) {
+                    $materials2Ids[$material1->id] = $existingMaterial2->id;
+                    continue;
+                }
+
+                // Copy material dari TrdTire1 ke TrdTire2
+                $material2 = new Material2();
+                $material2->setConnection('TrdTire2');
+                $material2->fill($material1->toArray());
+                $material2->save();
+
+                $materials2Ids[$material1->id] = $material2->id;
+
+                // Copy material UOM jika ada
+                if ($material1->MatlUom) {
+                    $matlUom2 = new MatlUom2();
+                    $matlUom2->setConnection('TrdTire2');
+                    $matlUom2->fill($material1->MatlUom->toArray());
+                    $matlUom2->matl_id = $material2->id;
+                    $matlUom2->save();
+                }
+            }
+        }
+
+        return $materials2Ids;
+    }
+
+    /**
+     * Transfer Delivery Header langsung (tanpa OrderHdr)
+     */
+    private function transferDeliveryHeaderDirect(DelivHdr $delivHdr1, int $partner2Id): int
+    {
+        // Cek apakah delivery header sudah ada di TrdTire2
+        $existingDelivHdr2 = DelivHdr2::on('TrdTire2')->where('tr_code', $delivHdr1->tr_code)->first();
+
+        if ($existingDelivHdr2) {
+            return $existingDelivHdr2->id;
+        }
+
+        // Copy delivery header dari TrdTire1 ke TrdTire2
+        $delivHdr2 = new DelivHdr2();
+        $delivHdr2->setConnection('TrdTire2');
+        $delivHdr2->fill($delivHdr1->toArray());
+        $delivHdr2->partner_id = $partner2Id;
+        $delivHdr2->save();
+
+        return $delivHdr2->id;
+    }
+
+    /**
+     * Transfer Delivery Packing dan Picking
+     */
+    private function transferDeliveryPackingAndPicking(DelivHdr $delivHdr, int $delivHdr2Id, array $materials2Ids): void
+    {
+        // Query DelivPacking langsung dari database menggunakan trhdr_id
+        $delivPackings = DelivPacking::where('trhdr_id', $delivHdr->id)
+            ->where('tr_type', $delivHdr->tr_type)
+            ->get();
+
+        foreach ($delivPackings as $delivPacking) {
+            // Cek apakah delivery packing sudah ada di TrdTire2
+            $existingDelivPacking2 = DelivPacking2::on('TrdTire2')
+                ->where('tr_code', $delivPacking->tr_code)
+                ->where('tr_seq', $delivPacking->tr_seq)
+                ->first();
+
+            if ($existingDelivPacking2) {
+                $delivPacking2Id = $existingDelivPacking2->id;
+            } else {
+                // Copy delivery packing dari TrdTire1 ke TrdTire2
+                $delivPacking2 = new DelivPacking2();
+                $delivPacking2->setConnection('TrdTire2');
+                $delivPacking2->fill($delivPacking->toArray());
+                $delivPacking2->trhdr_id = $delivHdr2Id;
+                $delivPacking2->save();
+                $delivPacking2Id = $delivPacking2->id;
+            }
+
+            // Query DelivPicking langsung dari database menggunakan trpacking_id
+            $delivPickings = DelivPicking::where('trpacking_id', $delivPacking->id)->get();
+
+            // Transfer Delivery Picking
+            foreach ($delivPickings as $delivPicking) {
+                $existingDelivPicking2 = DelivPicking2::on('TrdTire2')
+                    ->where('trpacking_id', $delivPacking2Id)
+                    ->where('tr_seq', $delivPicking->tr_seq)
+                    ->first();
+
+                if (!$existingDelivPicking2) {
+                    $delivPicking2 = new DelivPicking2();
+                    $delivPicking2->setConnection('TrdTire2');
+                    $delivPicking2->fill($delivPicking->toArray());
+                    $delivPicking2->trpacking_id = $delivPacking2Id;
+                    $delivPicking2->matl_id = $materials2Ids[$delivPicking->matl_id] ?? $delivPicking->matl_id;
+                    $delivPicking2->save();
+                }
+            }
+        }
+    }
+
+    /**
      * Pastikan koneksi TrdTire2 terdaftar
      */
     private function ensureTrdTire2Connection(): void
