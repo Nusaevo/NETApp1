@@ -940,7 +940,7 @@ class Detail extends BaseComponent
     {
         if (!empty($this->object->id)) {
             // Hapus log inventory terlebih dahulu
-            app(InventoryService::class)->delIvtLog($this->object->id);
+            app(InventoryService::class)->delIvtLog($this->object->tr_type, $this->object->id);
 
             // Hapus detail inventory
             IvttrDtl::where('trhdr_id', $this->object->id)->delete();

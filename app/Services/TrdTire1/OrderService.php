@@ -70,8 +70,8 @@ class OrderService
             ->get();
         foreach ($deletedDetails as $deletedDetail) {
             // Hapus ivt_logs untuk detail yang dihapus
-            dd ($deletedDetail->tr_type . 'R', 0, $deletedDetail->id);
-            $this->inventoryService->delIvtLog($deletedDetail->tr_type . 'R', 0, $deletedDetail->id);
+            // dd ($deletedDetail->tr_type . 'R', $headerData['id'], $deletedDetail->id);
+            $this->inventoryService->delIvtLog($deletedDetail->tr_type . 'R', $headerData['id'], $deletedDetail->id);
             $deletedDetail->delete();
         }
 
@@ -101,8 +101,8 @@ class OrderService
                     $existingDetail->fill($detail);
                     // Update hanya jika ada perubahan data
                     if ($existingDetail->isDirty()) {
-                        dd ($existingDetail->tr_type . 'R', 0, $existingDetail->id);
-                        $this->inventoryService->delIvtLog($existingDetail->tr_type . 'R', 0, $existingDetail->id);
+                        // dd ($existingDetail->tr_type . 'R', $headerData['id'], $existingDetail->id);
+                        $this->inventoryService->delIvtLog($existingDetail->tr_type . 'R', $headerData['id'], $existingDetail->id);
                         $existingDetail->save();
                         $this->inventoryService->addReservation($headerData, $existingDetail->toArray());
                         if ($headerData['tr_code'] == 'PO') {
