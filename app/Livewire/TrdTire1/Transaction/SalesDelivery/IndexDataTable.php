@@ -424,6 +424,10 @@ class IndexDataTable extends BaseDataTableComponent
                     // Cek hasil billing
                     if (!empty($billingResult['billing_hdr'])) {
                         // Billing berhasil dibuat
+                        // Update status_code OrderHdr menjadi SHIP
+                        $order->status_code = Status::SHIP;
+                        $order->save();
+
                         $successOrders[] = $order->tr_code;
                         $successCount++;
                     } else {
