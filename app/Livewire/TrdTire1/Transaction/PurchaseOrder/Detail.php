@@ -810,6 +810,8 @@ class Detail extends BaseComponent
                 $this->orderService = app(OrderService::class);
             }
 
+            // 4) Gunakan OrderService untuk menghapus order
+            dd ($this->object->tr_type, $this->object->id);
             $this->orderService->delOrder($this->object->tr_type, $this->object->id);
 
             $this->dispatch('success', __('Data berhasil terhapus'));
