@@ -293,7 +293,9 @@ class DeliveryService
     {
         $this->deleteDetail($delivId);
         // dd ($trType, $delivId);
+        $reservationType = $trType . 'R'; // SDR untuk SD, PDR untuk PD
         $this->inventoryService->delIvtLog($trType, $delivId);
+        $this->inventoryService->delIvtLog($reservationType, $delivId);
         $this->deleteHeader($delivId);
     }
 

@@ -289,10 +289,9 @@ class IndexDataTable extends BaseDataTableComponent
                 ->html()
                 ->sortable(),
 
-            Column::make($this->trans('Total Harga'), 'total_amt')
+            Column::make($this->trans('Total Harga'), 'amt')
                 ->label(function ($row) {
-                    // Ambil total_amt dari relasi OrderHdr
-                    return $row->OrderHdr ? rupiah($row->OrderHdr->amt, false) : '-';
+                    return $row->amt ? rupiah($row->amt, false) : '-';
                 })
                 ->sortable(),
 
