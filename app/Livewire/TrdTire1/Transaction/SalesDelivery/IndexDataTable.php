@@ -606,7 +606,7 @@ class IndexDataTable extends BaseDataTableComponent
                     // Audit log for BATAL KIRIM - dibuat SEBELUM penghapusan data
                     AuditLogService::createDeliveryBatalKirim([$delivId]);
 
-                    $deliveryService->delDelivery($delivHdr->id);
+                    $deliveryService->delDelivery($delivHdr->tr_type, $delivHdr->id);
                     $billingService->delBilling($delivHdr->billhdr_id);
 
                     $successOrders[] = $delivHdr->tr_code;
