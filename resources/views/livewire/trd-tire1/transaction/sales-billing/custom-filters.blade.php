@@ -128,6 +128,54 @@
                 }
             }
         });
+
+        // Function to clear all selections and reset UI
+        function clearAllSelections() {
+            console.log('Sales Billing - Clearing all selections and resetting UI');
+
+            // Clear backend selections
+            @this.call('clearSelections');
+
+            // Reset all checkbox UI
+            document.querySelectorAll('.custom-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+
+            // Update Alpine.js immediately
+            window.dispatchEvent(new Event('change'));
+            console.log('Sales Billing - All selections cleared and UI reset');
+        }
+
+        // 1. Deteksi browser back navigation - Multiple methods
+        window.addEventListener('pageshow', function(event) {
+            console.log('Sales Billing Pageshow event:', {
+                persisted: event.persisted,
+                navigationType: performance.navigation ? performance.navigation.type : 'unknown'
+            });
+
+            // Deteksi jika halaman dimuat dari cache (browser back) ATAU navigation type = 2
+            if (event.persisted || (performance.navigation && performance.navigation.type === 2)) {
+                console.log('Sales Billing - Browser back navigation detected');
+                clearAllSelections();
+            }
+        });
+
+        // 2. Deteksi popstate (browser back/forward button)
+        window.addEventListener('popstate', function(event) {
+            console.log('Sales Billing - Popstate detected - browser navigation');
+            setTimeout(() => {
+                clearAllSelections();
+            }, 50);
+        });
+
+        // 3. Deteksi saat component di-mount ulang (fallback)
+        setTimeout(() => {
+            // Check if navigation type indicates back navigation
+            if (performance.navigation && performance.navigation.type === 2) {
+                console.log('Sales Billing - Back navigation detected on load');
+                clearAllSelections();
+            }
+        }, 100);
     });
     </script>
 </div>
