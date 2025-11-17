@@ -57,6 +57,22 @@
             if (e.target.id === 'tanggalTagihInput') {
                 @this.set('tanggalTagih', e.target.value);
             }
+
+            // Handle checkbox changes untuk auto-update tanggal tagih
+            if (e.target.classList.contains('custom-checkbox')) {
+                const rowId = e.target.value;
+                const isChecked = e.target.checked;
+
+                console.log(`Checkbox ${rowId} changed to: ${isChecked}`);
+
+                if (isChecked) {
+                    // Auto update tanggal tagih saat checkbox di-check
+                    @this.call('autoUpdateTanggalTagih', rowId);
+                } else {
+                    // Clear tanggal tagih saat checkbox di-uncheck
+                    @this.call('clearTanggalTagih', rowId);
+                }
+            }
         });
     });
 </script>

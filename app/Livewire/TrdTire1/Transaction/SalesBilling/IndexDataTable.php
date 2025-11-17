@@ -19,7 +19,8 @@ class IndexDataTable extends BaseDataTableComponent
     public $tanggalTagih; // Field untuk tanggal tagih - specific untuk sales billing
 
     protected $listeners = [
-        'autoUpdateTanggalTagihFromJs' => 'autoUpdateTanggalTagihFromJs',
+        'autoUpdateTanggalTagih',
+        'clearTanggalTagih',
         'clearSelections',
     ];
 
@@ -28,21 +29,29 @@ class IndexDataTable extends BaseDataTableComponent
     public function clearSelections()
     {
         $this->selectedRows = [];
-        
+
         // Force refresh the entire component to update checkbox states
         $this->dispatch('$refresh');
-        
+
         // Dispatch event to update the custom filters
         $this->dispatch('selectionUpdated');
     }
 
+
+
     /**
      * Updated when selectedRows changes (automatically by wire:model)
      */
-    public function updatedSelectedRows()
+    public function updatedSelectedRows($value, $name)
     {
         // Dispatch event to update the custom filters
         $this->dispatch('selectionUpdated');
+
+        // Jika ada perubahan pada selectedRows, cek item yang baru ditambah/dihapus
+        if (is_array($this->selectedRows)) {
+            // Logic untuk auto-update tanggal tagih akan dipindah ke view dengan Alpine.js
+            // Karena kita tidak bisa tahu item mana yang baru di-check/uncheck dari sini
+        }
     }
 
     public function mount(): void
@@ -62,26 +71,12 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setDefaultSort('Partner.name', 'asc');
     }
 
-    /**
-     * Toggle row selection dan auto update tanggal tagih
-     */
-    public function toggleRowSelection($rowId)
-    {
-        if (in_array($rowId, $this->selectedRows)) {
-            // Remove from selection - set tanggal tagih menjadi null
-            $this->selectedRows = array_diff($this->selectedRows, [$rowId]);
-            $this->clearTanggalTagih($rowId);
-        } else {
-            // Add to selection - auto update tanggal tagih
-            $this->selectedRows[] = $rowId;
-            $this->autoUpdateTanggalTagih($rowId);
-        }
-    }
+
 
     /**
      * Auto update tanggal tagih ketika row dipilih
      */
-    private function autoUpdateTanggalTagih($rowId)
+    public function autoUpdateTanggalTagih($rowId)
     {
         if (empty($this->tanggalTagih)) {
             $this->dispatch('warning', 'Silakan pilih tanggal tagih terlebih dahulu');
@@ -131,7 +126,7 @@ class IndexDataTable extends BaseDataTableComponent
     /**
      * Clear tanggal tagih ketika row di-uncheck
      */
-    private function clearTanggalTagih($rowId)
+    public function clearTanggalTagih($rowId)
     {
         try {
             DB::beginTransaction();
