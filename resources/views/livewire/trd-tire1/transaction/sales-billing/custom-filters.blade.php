@@ -25,11 +25,26 @@
             </span>
         </button>
     </div>
-    <div class="flex-grow-1 d-flex align-items-center">
+    <div class="flex-grow-1 d-flex align-items-center justify-content-between">
         <small class="text-muted">
             <i class="fas fa-info-circle me-1"></i>
             Centang checkbox untuk auto-update tanggal tagih, lalu klik "Cetak" untuk mencetak
         </small>
+        <div class="d-flex gap-2 align-items-center">
+            @if($this->getSelectedItemsCount() > 0)
+                <span class="badge bg-info">
+                    <i class="fas fa-check-square me-1"></i>
+                    {{ $this->getSelectedItemsCount() }} item dipilih
+                </span>
+                <button type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        wire:click="clearSelections"
+                        title="Clear Selection">
+                    <i class="fas fa-times"></i>
+                    Clear
+                </button>
+            @endif
+        </div>
     </div>
 </div>
 

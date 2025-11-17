@@ -28,6 +28,7 @@ class IndexDataTable extends BaseDataTableComponent
     public $tanggalKirim; // Field untuk tanggal kirim
     public $warehouse; // Field untuk warehouse
     public $warehouses = []; // Array untuk dropdown warehouse
+    public $selectedRows = []; // Array untuk menyimpan ID rows yang dipilih
 
     protected $listeners = ['clearSelections'];
 
@@ -35,9 +36,14 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $this->clearSelected();
         $this->bulkSelectedIds = null;
+        $this->selectedRows = []; // Clear custom selection
+
+        // Force refresh the entire component to update checkbox states
+        $this->dispatch('$refresh');
+
+        // Dispatch event to update the custom filters
+        $this->dispatch('selectionUpdated');
     }
-
-
     public function mount(): void
     {
         $this->setSearchDisabled();
@@ -47,6 +53,9 @@ class IndexDataTable extends BaseDataTableComponent
         // Initialize tanggal kirim dan warehouse
         $this->initializeTanggalKirim();
         $this->loadWarehouses();
+
+        // Debug
+        \Illuminate\Support\Facades\Log::info('SalesDelivery IndexDataTable mounted with warehouses: ', ['count' => count($this->warehouses)]);
     }
 
     public function configure(): void
@@ -63,8 +72,16 @@ class IndexDataTable extends BaseDataTableComponent
         // Hide sorting pills to avoid confusion
         $this->setSortingPillsStatus(false);
 
+        // Disable default bulk actions area
+        $this->setBulkActionsStatus(false);
+
+        // Keep toolbar enabled for configurable areas
+        $this->setToolBarStatus(true);
+
         // Enable custom filters area
-        $this->enableCustomFiltersArea('livewire.trd-tire1.transaction.sales-delivery.custom-filters');
+        $this->setConfigurableAreas([
+            'after-toolbar' => 'livewire.trd-tire1.transaction.sales-delivery.custom-filters',
+        ]);
     }
 
     /**
@@ -86,15 +103,7 @@ class IndexDataTable extends BaseDataTableComponent
         $this->warehouses = $masterService->getWarehouse();
     }
 
-    /**
-     * Enable custom filters area in datatable
-     */
-    private function enableCustomFiltersArea(string $viewPath = 'livewire.custom-filters'): void
-    {
-        $currentAreas = $this->getConfigurableAreas() ?? [];
-        $currentAreas['after-toolbar'] = $viewPath;
-        $this->setConfigurableAreas($currentAreas);
-    }
+
 
 
     public function builder(): Builder
@@ -109,6 +118,18 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
+            Column::make("Pilih ", "id")
+                ->format(function ($value, $row) {
+                    return '
+                        <div class="text-center">
+                            <input type="checkbox"
+                                   class="form-check-input custom-checkbox"
+                                   wire:model.live="selectedRows"
+                                   value="' . $row->id . '"
+                                   id="checkbox-' . $row->id . '">
+                        </div>';
+                })
+                ->html(),
             Column::make($this->trans("Tanggal Nota"), "tr_date")
                 ->format(function ($value) {
                     return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '';
@@ -265,12 +286,42 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function bulkActions(): array
     {
-        return [
-            'setDeliveryDate' => 'Kirim',
-            'cancelDeliveryDate' => 'Batal Kirim',
-            'cancel' => 'Cancel',
-            'unCancel' => 'UnCancel',
-        ];
+        // Bulk actions dipindah ke custom filters
+        return [];
+    }
+
+    /**
+     * Get selected items untuk custom filters
+     */
+    public function getSelectedItems()
+    {
+        return $this->selectedRows;
+    }
+
+    /**
+     * Get selected count untuk custom filters
+     */
+    public function getSelectedItemsCount()
+    {
+        return count($this->selectedRows);
+    }
+
+
+
+    /**
+     * Updated when selectedRows changes (automatically by wire:model)
+     */
+    public function updatedSelectedRows()
+    {
+        // Dispatch event to update the custom filters
+        $this->dispatch('selectionUpdated');
+    }    /**
+     * Method untuk refresh selection count di custom filters
+     */
+    public function refreshCustomFilters()
+    {
+        // Method untuk trigger refresh custom filters area
+        $this->dispatch('refresh-custom-filters');
     }
 
     public function setDeliveryDate()
@@ -295,7 +346,7 @@ class IndexDataTable extends BaseDataTableComponent
             return;
         }
 
-        $selectedOrderIds = $this->getSelected();
+        $selectedOrderIds = $this->selectedRows;
         if (count($selectedOrderIds) === 0) {
             $this->dispatch('error', 'Silakan pilih minimal satu nota untuk dikirim.');
             return;
@@ -453,7 +504,7 @@ class IndexDataTable extends BaseDataTableComponent
         $this->showProcessResults($successOrders, $failedOrders, $successCount);
 
         // Clear selections after successful completion
-        $this->clearSelected();
+        $this->selectedRows = [];
     }
 
     /**
@@ -547,7 +598,7 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function cancelDeliveryDate()
     {
-        $selectedOrderIds = $this->getSelected();
+        $selectedOrderIds = $this->selectedRows;
         if (count($selectedOrderIds) > 0) {
             DB::beginTransaction();
 
@@ -562,9 +613,9 @@ class IndexDataTable extends BaseDataTableComponent
                 ->get();
 
 	            if ($delivHdrs->isEmpty()) {
-	                $this->dispatch('error', 'Tidak ada data pengiriman yang dapat dibatalkan');
-	                $this->clearSelections();
-	                return;
+                $this->dispatch('error', 'Tidak ada data pengiriman yang dapat dibatalkan');
+                $this->selectedRows = [];
+                return;
 	            }
 
             // Proses setiap delivery secara individual
@@ -679,13 +730,13 @@ class IndexDataTable extends BaseDataTableComponent
 
         // Hanya clear selection jika semua berhasil atau semua gagal
         if (empty($failedOrders) || empty($successOrders)) {
-            $this->clearSelected();
+            $this->selectedRows = [];
         }
     }
 
     public function cancel()
     {
-        $selectedOrderIds = $this->getSelected();
+        $selectedOrderIds = $this->selectedRows;
         if (count($selectedOrderIds) > 0) {
             DB::beginTransaction();
 
@@ -733,14 +784,14 @@ class IndexDataTable extends BaseDataTableComponent
 
             DB::commit();
 
-            $this->clearSelected();
+            $this->selectedRows = [];
             $this->dispatch('success', ['Pesanan berhasil dibatalkan']);
         }
     }
 
     public function unCancel()
     {
-        $selectedOrderIds = $this->getSelected();
+        $selectedOrderIds = $this->selectedRows;
         if (count($selectedOrderIds) > 0) {
             DB::beginTransaction();
 
@@ -777,7 +828,7 @@ class IndexDataTable extends BaseDataTableComponent
 
             DB::commit();
 
-            $this->clearSelected();
+            $this->selectedRows = [];
             $this->dispatch('showAlert', [
                 'type' => 'success',
                 'message' => 'Pesanan berhasil dikembalikan dan stok diperbarui'

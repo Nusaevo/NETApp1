@@ -20,9 +20,30 @@ class IndexDataTable extends BaseDataTableComponent
 
     protected $listeners = [
         'autoUpdateTanggalTagihFromJs' => 'autoUpdateTanggalTagihFromJs',
+        'clearSelections',
     ];
 
     public $selectedRows = []; // Array untuk tracking selected rows
+
+    public function clearSelections()
+    {
+        $this->selectedRows = [];
+        
+        // Force refresh the entire component to update checkbox states
+        $this->dispatch('$refresh');
+        
+        // Dispatch event to update the custom filters
+        $this->dispatch('selectionUpdated');
+    }
+
+    /**
+     * Updated when selectedRows changes (automatically by wire:model)
+     */
+    public function updatedSelectedRows()
+    {
+        // Dispatch event to update the custom filters
+        $this->dispatch('selectionUpdated');
+    }
 
     public function mount(): void
     {
@@ -216,13 +237,13 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             Column::make("Pilih ", "id")
                 ->format(function ($value, $row) {
-                    $isChecked = in_array($row->id, $this->selectedRows) ? 'checked' : '';
                     return '
                         <div class="text-center">
                             <input type="checkbox"
                                    class="form-check-input custom-checkbox"
-                                   wire:click="toggleRowSelection(' . $row->id . ')"
-                                   ' . $isChecked . '>
+                                   wire:model.live="selectedRows"
+                                   value="' . $row->id . '"
+                                   id="checkbox-' . $row->id . '">
                         </div>';
                 })
                 ->html(),
@@ -403,6 +424,22 @@ class IndexDataTable extends BaseDataTableComponent
         return [];
     }
 
+
+    /**
+     * Get selected items untuk custom filters
+     */
+    public function getSelectedItems()
+    {
+        return $this->selectedRows;
+    }
+
+    /**
+     * Get selected count untuk custom filters
+     */
+    public function getSelectedItemsCount()
+    {
+        return count($this->selectedRows);
+    }
 
     public function cetak()
     {
