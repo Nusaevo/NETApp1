@@ -2,14 +2,12 @@
     selectedItems: [],
 
     init() {
-        console.log('Sales Billing Alpine.js initialized');
         this.updateSelection();
     },
 
     updateSelection() {
         const checkboxes = document.querySelectorAll('.custom-checkbox:checked');
         this.selectedItems = Array.from(checkboxes).map(cb => cb.value);
-        console.log('Selected items:', this.selectedItems);
     },
 
     getSelectedCount() {
@@ -81,8 +79,6 @@
 
     <script>
     document.addEventListener('livewire:initialized', function() {
-        console.log('Sales Billing - Simple version initialized');
-
         // Listen for Livewire events to update Alpine.js state
         Livewire.on('selectionUpdated', () => {
             // Force Alpine.js to update selection
@@ -102,8 +98,6 @@
                 const rowId = e.target.value;
                 const isChecked = e.target.checked;
 
-                console.log(`Checkbox ${rowId} changed to: ${isChecked}`);
-
                 // Dispatch event for Alpine.js
                 window.dispatchEvent(new Event('change'));
 
@@ -115,7 +109,6 @@
 
                     if (currentTanggalTagih) {
                         // Update ke tanggal tagih baru
-                        console.log(`Updating row ${rowId} dengan tanggal tagih: ${currentTanggalTagih}`);
                         @this.call('updateTanggalTagih', rowId, currentTanggalTagih);
                     } else {
                         // Jika belum ada tanggal tagih, clear dulu
@@ -123,7 +116,6 @@
                     }
                 } else {
                     // Jika checkbox di-uncheck, kosongkan tanggal tagih
-                    console.log(`Clearing tanggal tagih for row ${rowId}`);
                     @this.call('clearTanggalTagih', rowId);
                 }
             }
@@ -131,8 +123,6 @@
 
         // Function to clear all selections and reset UI
         function clearAllSelections() {
-            console.log('Sales Billing - Clearing all selections and resetting UI');
-
             // Clear backend selections
             @this.call('clearSelections');
 
@@ -141,28 +131,34 @@
                 checkbox.checked = false;
             });
 
+            // Reset tanggal tagih to today
+            const tanggalTagihInput = document.getElementById('tanggalTagihInput');
+            if (tanggalTagihInput) {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const formattedDate = `${year}-${month}-${day}`;
+
+                tanggalTagihInput.value = formattedDate;
+                tanggalTagihInput.dispatchEvent(new Event('change', { bubbles: true }));
+                @this.set('tanggalTagih', formattedDate);
+            }
+
             // Update Alpine.js immediately
             window.dispatchEvent(new Event('change'));
-            console.log('Sales Billing - All selections cleared and UI reset');
         }
 
         // 1. Deteksi browser back navigation - Multiple methods
         window.addEventListener('pageshow', function(event) {
-            console.log('Sales Billing Pageshow event:', {
-                persisted: event.persisted,
-                navigationType: performance.navigation ? performance.navigation.type : 'unknown'
-            });
-
             // Deteksi jika halaman dimuat dari cache (browser back) ATAU navigation type = 2
             if (event.persisted || (performance.navigation && performance.navigation.type === 2)) {
-                console.log('Sales Billing - Browser back navigation detected');
                 clearAllSelections();
             }
         });
 
         // 2. Deteksi popstate (browser back/forward button)
         window.addEventListener('popstate', function(event) {
-            console.log('Sales Billing - Popstate detected - browser navigation');
             setTimeout(() => {
                 clearAllSelections();
             }, 50);
@@ -172,7 +168,6 @@
         setTimeout(() => {
             // Check if navigation type indicates back navigation
             if (performance.navigation && performance.navigation.type === 2) {
-                console.log('Sales Billing - Back navigation detected on load');
                 clearAllSelections();
             }
         }, 100);

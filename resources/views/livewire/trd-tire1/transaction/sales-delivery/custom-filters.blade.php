@@ -1,18 +1,14 @@
 <div x-data="{
     selectedItems: [],
-    
+
     init() {
-        console.log('Alpine.js initialized');
         this.updateSelection();
     },
-    
+
     updateSelection() {
         const checkboxes = document.querySelectorAll('.custom-checkbox:checked');
         this.selectedItems = Array.from(checkboxes).map(cb => cb.value);
-        console.log('Selected items:', this.selectedItems);
-    },
-    
-    getSelectedCount() {
+    },    getSelectedCount() {
         return this.selectedItems.length;
     }
 }" @change.window="updateSelection()">
@@ -113,17 +109,15 @@
         font-size: 0.75em !important;
         padding: 0.2em 0.4em;
     }
-    
+
     /* Alpine.js transitions */
-    [x-cloak] { 
-        display: none !important; 
+    [x-cloak] {
+        display: none !important;
     }
     </style>
 
     <script>
     document.addEventListener('livewire:initialized', function() {
-        console.log('Sales Delivery - Simple version initialized');
-        
         // Listen for checkbox changes
         document.addEventListener('change', function(e) {
             if (e.target.classList.contains('custom-checkbox')) {
@@ -131,7 +125,7 @@
                 window.dispatchEvent(new Event('change'));
             }
         });
-        
+
         // Listen for Livewire events to update Alpine.js state
         Livewire.on('selectionUpdated', () => {
             // Force Alpine.js to update selection
@@ -142,38 +136,51 @@
 
         // Function to clear all selections and reset UI
         function clearAllSelections() {
-            console.log('Clearing all selections and resetting UI');
-            
             // Clear backend selections
             @this.call('clearSelections');
-            
+
             // Reset all checkbox UI
             document.querySelectorAll('.custom-checkbox').forEach(checkbox => {
                 checkbox.checked = false;
             });
-            
+
+            // Reset tanggal kirim to today
+            const tanggalKirimInput = document.getElementById('tanggal_kirim');
+            if (tanggalKirimInput) {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const formattedDate = `${year}-${month}-${day}`;
+
+                tanggalKirimInput.value = formattedDate;
+                tanggalKirimInput.dispatchEvent(new Event('change', { bubbles: true }));
+                @this.set('tanggalKirim', formattedDate);
+            }
+
+            // Reset warehouse selection
+            const warehouseSelect = document.querySelector('select[wire\\:model="warehouse"]');
+            if (warehouseSelect) {
+                warehouseSelect.selectedIndex = 0;
+                warehouseSelect.value = '';
+                warehouseSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                @this.set('warehouse', '');
+            }
+
             // Update Alpine.js immediately
             window.dispatchEvent(new Event('change'));
-            console.log('All selections cleared and UI reset');
         }
 
         // 1. Deteksi browser back navigation - Multiple methods
         window.addEventListener('pageshow', function(event) {
-            console.log('Pageshow event:', { 
-                persisted: event.persisted, 
-                navigationType: performance.navigation ? performance.navigation.type : 'unknown'
-            });
-            
             // Deteksi jika halaman dimuat dari cache (browser back) ATAU navigation type = 2
             if (event.persisted || (performance.navigation && performance.navigation.type === 2)) {
-                console.log('Browser back navigation detected');
                 clearAllSelections();
             }
         });
 
         // 2. Deteksi popstate (browser back/forward button)
         window.addEventListener('popstate', function(event) {
-            console.log('Popstate detected - browser navigation');
             setTimeout(() => {
                 clearAllSelections();
             }, 50);
@@ -183,7 +190,6 @@
         setTimeout(() => {
             // Check if navigation type indicates back navigation
             if (performance.navigation && performance.navigation.type === 2) {
-                console.log('Back navigation detected on load');
                 clearAllSelections();
             }
         }, 100);
