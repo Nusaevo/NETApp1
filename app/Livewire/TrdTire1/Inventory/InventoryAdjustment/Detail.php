@@ -71,6 +71,7 @@ class Detail extends BaseComponent
         'updateTotalTax' => 'updateTotalTax',
         'toggleWarehouseDropdown' => 'toggleWarehouseDropdown',
         'onMaterialChanged' => 'onMaterialChanged',
+        'onTrCodeChanged' => 'onTrCodeChanged', // listener untuk perubahan tr_code
     ];
     #endregion
 
@@ -150,34 +151,28 @@ class Detail extends BaseComponent
         // Load tr_type options based on user/group permissions
         $this->loadTrTypeOptions();
 
-        if ($this->isEditOrView()) {
-            if (empty($this->objectIdValue)) {
-                $this->dispatch('error', 'Invalid object ID');
-                return;
-            }
+        if ($this->isEditOrView() && !empty($this->objectIdValue)) {
+            // Load object berdasarkan objectIdValue jika ada
             $this->object = IvttrHdr::with('IvttrDtl')->find($this->objectIdValue);
-            $this->inputs = populateArrayFromModel($this->object);
-            $this->inputs['tr_type'] = $this->object->tr_type;
-            $this->inputs['tr_date'] = $this->object->tr_date ? $this->object->tr_date->format('Y-m-d') : null;
-            $this->inputs['tr_code'] = $this->object->tr_code;
-            $this->inputs['wh_code'] = $this->object->IvttrDtl->first()->wh_code ?? null;
-            $this->inputs['tr_descr'] = $this->object->IvttrDtl->first()->tr_descr ?? null;
-
-            // Tambahkan baris berikut untuk TW
-            if ($this->object->tr_type === 'TW') {
-                // Ambil wh_code2 dari detail dengan tr_seq > 0 (tujuan)
-                $detailTujuan = $this->object->IvttrDtl->where('tr_seq', '>', 0)->first();
-                $this->inputs['wh_code2'] = $detailTujuan->wh_code ?? null;
+            if ($this->object) {
+                $this->loadAdjustmentData();
+            } else {
+                // Jika object tidak ditemukan, buat instance baru dan tampilkan error
+                $this->object = new IvttrHdr();
+                $this->dispatch('error', 'Data tidak ditemukan');
             }
+        } else if ($this->actionValue === 'Edit' && !empty($this->inputs['tr_code'])) {
+            // Untuk mode edit tanpa objectIdValue, cari berdasarkan tr_code
+            $existingAdjustment = IvttrHdr::where('tr_code', $this->inputs['tr_code'])->first();
 
-            // Load material details
-            $this->loadDetails();
-
-            // Di mode edit, juga perlu memuat batchOptions untuk semua material di warehouse
-            // agar item baru bisa memilih batch code
-            if (!empty($this->inputs['wh_code'])) {
-                $this->loadBatchOptionsForWarehouse($this->inputs['wh_code']);
+            if ($existingAdjustment) {
+                $this->object = $existingAdjustment->load('IvttrDtl');
+                $this->objectIdValue = $existingAdjustment->id;
+                $this->loadAdjustmentData();
             }
+        } else {
+            // Mode Create
+            $this->object = new IvttrHdr();
         }
 
         if (!$this->isEditOrView()) {
@@ -206,6 +201,47 @@ class Detail extends BaseComponent
         }
     }
 
+    private function loadAdjustmentData()
+    {
+        // Method untuk load data adjustment yang dipanggil dari berbagai tempat
+        $this->inputs = populateArrayFromModel($this->object);
+        $this->inputs['tr_type'] = $this->object->tr_type;
+        $this->inputs['tr_date'] = $this->object->tr_date ? $this->object->tr_date->format('Y-m-d') : null;
+        $this->inputs['tr_code'] = $this->object->tr_code;
+        $this->inputs['wh_code'] = $this->object->IvttrDtl->first()->wh_code ?? null;
+        $this->inputs['tr_descr'] = $this->object->IvttrDtl->first()->tr_descr ?? null;
+
+        // Tambahkan baris berikut untuk TW
+        if ($this->object->tr_type === 'TW') {
+            // Ambil wh_code2 dari detail dengan tr_seq > 0 (tujuan)
+            $detailTujuan = $this->object->IvttrDtl->where('tr_seq', '>', 0)->first();
+            $this->inputs['wh_code2'] = $detailTujuan->wh_code ?? null;
+        }
+
+        // Load material details
+        $this->loadDetails();
+
+        // Di mode edit, juga perlu memuat batchOptions untuk semua material di warehouse
+        // agar item baru bisa memilih batch code
+        if (!empty($this->inputs['wh_code'])) {
+            $this->loadBatchOptionsForWarehouse($this->inputs['wh_code']);
+        }
+
+        // Set panel enabled state
+        $this->isPanelEnabled = "true";
+        $this->isEdit = "true";
+        if (isset($this->inputs['tr_type']) && $this->inputs['tr_type'] === 'TW') {
+            $this->isEditWhCode2 = 'true';
+        } else {
+            $this->isEditWhCode2 = 'false';
+        }
+
+        // Load materials based on warehouse
+        if (!empty($this->inputs['wh_code'])) {
+            $this->loadMaterialsByWarehouse($this->inputs['wh_code']);
+        }
+    }
+
     public function onReset()
     {
         $this->reset('inputs', 'input_details');
@@ -213,6 +249,80 @@ class Detail extends BaseComponent
         $this->inputs = populateArrayFromModel($this->object);
         $this->inputs['tr_date'] = date('Y-m-d');
         $this->inputs['wh_code'] = "";
+    }
+
+    public function onTrCodeChanged()
+    {
+        $trCode = trim($this->inputs['tr_code'] ?? '');
+
+        if (empty($trCode)) {
+            // Jika tr_code kosong, reset ke mode create tanpa object
+            $this->resetToCreateModeInternal();
+            $this->dispatch('info', 'Mode telah direset ke Create. Silakan input data baru.');
+            return;
+        }
+
+        try {
+            // Cari IvttrHdr berdasarkan tr_code
+            $existingAdjustment = IvttrHdr::where('tr_code', $trCode)->first();
+
+            if ($existingAdjustment) {
+                // Jika adjustment ditemukan, load data untuk edit tanpa redirect
+                $this->loadAdjustmentByTrCode($existingAdjustment);
+                $this->dispatch('info', "Inventory Adjustment {$trCode} ditemukan. Data telah dimuat untuk edit.");
+            } else {
+                // Jika tidak ditemukan, biarkan tr_code tetap di field untuk koreksi user
+                $this->dispatch('warning', "Nomor transaksi '{$trCode}' tidak ditemukan. Silakan periksa kembali atau gunakan nomor lain.");
+            }
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Terjadi kesalahan saat mencari transaksi: ' . $e->getMessage());
+            // Jangan hapus tr_code, biarkan user bisa perbaiki
+        }
+    }
+
+    private function loadAdjustmentByTrCode($adjustment)
+    {
+        // Set mode ke edit dan load object
+        $this->actionValue = 'Edit';
+        $this->objectIdValue = $adjustment->id;
+        $this->object = $adjustment->load('IvttrDtl');
+
+        // Load semua data adjustment menggunakan method yang sama
+        $this->loadAdjustmentData();
+    }
+
+    private function resetToCreateModeInternal()
+    {
+        // Reset ke mode create murni
+        $this->actionValue = 'Create';
+        $this->objectIdValue = null;
+        $this->object = new IvttrHdr();
+        $this->resetInputsToDefault();
+        $this->isPanelEnabled = "true";
+        $this->isEdit = "false";
+    }
+
+    private function resetInputsToDefault()
+    {
+        // Reset semua inputs ke nilai default
+        $this->inputs = populateArrayFromModel(new IvttrHdr());
+        $this->inputs['tr_date'] = date('Y-m-d');
+        $this->inputs['wh_code'] = "";
+        $this->inputs['wh_code2'] = "";
+        $this->inputs['tr_code'] = '';
+        $this->inputs['tr_type'] = '';
+        $this->inputs['remark'] = '';
+
+        // Reset detail items
+        $this->input_details = [];
+
+        // Reset batch options
+        $this->batchOptions = [];
+        $this->materials = [];
+        $this->materialQuery = "";
+
+        // Reset warehouse dropdown state
+        $this->isEditWhCode2 = "false";
     }
 
     public function render()

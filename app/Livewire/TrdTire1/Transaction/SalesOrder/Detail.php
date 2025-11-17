@@ -751,6 +751,7 @@ class Detail extends BaseComponent
         $this->canPrintNotaButton = true;
         $this->canPrintSuratJalanButton = true;
         $this->canSaveButtonEnabled = true;
+        $this->isDeliv = false;
     }
 
     /**

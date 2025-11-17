@@ -19,8 +19,9 @@
                             <x-ui-padding>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
-                                        type="text" :action="$actionValue" required="true" :enabled="$isTrCodeEnabled"
-                                        capslockMode="true" />
+                                        type="text" :action="$actionValue" required="true" enabled="true"
+                                        capslockMode="true" onChanged="onTrCodeChanged"
+                                        placeHolder="Edit nomor surat jalan dan tekan enter untuk cari surat jalan lain, kosongkan untuk create" />
                                     <x-ui-text-field label="Tanggal Surat Jalan" model="inputs.reff_date" type="date"
                                         :action="$actionValue" required="true" enabled="true" />
                                     <x-ui-text-field label="Tanggal Terima Barang" model="inputs.tr_date" type="date"

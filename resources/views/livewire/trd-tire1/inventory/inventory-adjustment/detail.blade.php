@@ -41,7 +41,8 @@
                                     <x-ui-text-field label="Tanggal Terima Barang" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" />
                                     <x-ui-text-field label="Nomor Transaksi" model="inputs.tr_code" :action="$actionValue"
-                                        required="false" enabled="false" />
+                                        required="false" enabled="true" onChanged="onTrCodeChanged"
+                                        placeHolder="Edit nomor transaksi dan tekan enter untuk cari transaksi lain, kosongkan untuk create" />
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('note') }}" model="inputs.remark"
