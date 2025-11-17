@@ -1,5 +1,23 @@
-{{-- Custom content setelah filters untuk tanggal tagih --}}
-<div class="d-flex flex-wrap gap-2 mb-3 p-3 bg-light rounded align-items-end">
+<div x-data="{
+    selectedItems: [],
+
+    init() {
+        console.log('Sales Billing Alpine.js initialized');
+        this.updateSelection();
+    },
+
+    updateSelection() {
+        const checkboxes = document.querySelectorAll('.custom-checkbox:checked');
+        this.selectedItems = Array.from(checkboxes).map(cb => cb.value);
+        console.log('Selected items:', this.selectedItems);
+    },
+
+    getSelectedCount() {
+        return this.selectedItems.length;
+    }
+}" @change.window="updateSelection()">
+    {{-- Custom content setelah filters untuk tanggal tagih --}}
+    <div class="d-flex flex-wrap gap-2 mb-3 p-3 bg-light rounded align-items-end">
     <div>
         <label class="form-label fw-bold">Tanggal Tagih</label>
         <input type="date"
@@ -31,10 +49,10 @@
             Centang checkbox untuk auto-update tanggal tagih, lalu klik "Cetak" untuk mencetak
         </small>
         <div class="d-flex gap-2 align-items-center">
-            @if($this->getSelectedItemsCount() > 0)
+            <span x-show="getSelectedCount() > 0">
                 <span class="badge bg-info">
                     <i class="fas fa-check-square me-1"></i>
-                    {{ $this->getSelectedItemsCount() }} item dipilih
+                    <span x-text="getSelectedCount()"></span> item dipilih
                 </span>
                 <button type="button"
                         class="btn btn-sm btn-outline-secondary"
@@ -43,14 +61,35 @@
                     <i class="fas fa-times"></i>
                     Clear
                 </button>
-            @endif
+            </span>
         </div>
     </div>
-</div>
+    </div>
 
-<script>
+    <style>
+    /* Badge styling */
+    .badge {
+        font-size: 0.75em !important;
+        padding: 0.2em 0.4em;
+    }
+
+    /* Alpine.js transitions */
+    [x-cloak] {
+        display: none !important;
+    }
+    </style>
+
+    <script>
     document.addEventListener('livewire:initialized', function() {
-        console.log('Custom checkbox system initialized');
+        console.log('Sales Billing - Simple version initialized');
+
+        // Listen for Livewire events to update Alpine.js state
+        Livewire.on('selectionUpdated', () => {
+            // Force Alpine.js to update selection
+            setTimeout(() => {
+                window.dispatchEvent(new Event('change'));
+            }, 100);
+        });
 
         // Update Livewire property when date changes
         document.addEventListener('change', function(e) {
@@ -58,21 +97,37 @@
                 @this.set('tanggalTagih', e.target.value);
             }
 
-            // Handle checkbox changes untuk auto-update tanggal tagih
+            // Handle checkbox changes untuk mengelola tanggal tagih
             if (e.target.classList.contains('custom-checkbox')) {
                 const rowId = e.target.value;
                 const isChecked = e.target.checked;
 
                 console.log(`Checkbox ${rowId} changed to: ${isChecked}`);
 
+                // Dispatch event for Alpine.js
+                window.dispatchEvent(new Event('change'));
+
+                const tanggalInput = document.getElementById('tanggalTagihInput');
+
                 if (isChecked) {
-                    // Auto update tanggal tagih saat checkbox di-check
-                    @this.call('autoUpdateTanggalTagih', rowId);
+                    // Jika checkbox di-check dan sudah ada tanggal tagih yang dipilih
+                    const currentTanggalTagih = tanggalInput ? tanggalInput.value : '';
+
+                    if (currentTanggalTagih) {
+                        // Update ke tanggal tagih baru
+                        console.log(`Updating row ${rowId} dengan tanggal tagih: ${currentTanggalTagih}`);
+                        @this.call('updateTanggalTagih', rowId, currentTanggalTagih);
+                    } else {
+                        // Jika belum ada tanggal tagih, clear dulu
+                        @this.call('clearTanggalTagih', rowId);
+                    }
                 } else {
-                    // Clear tanggal tagih saat checkbox di-uncheck
+                    // Jika checkbox di-uncheck, kosongkan tanggal tagih
+                    console.log(`Clearing tanggal tagih for row ${rowId}`);
                     @this.call('clearTanggalTagih', rowId);
                 }
             }
         });
     });
-</script>
+    </script>
+</div>

@@ -20,6 +20,7 @@ class IndexDataTable extends BaseDataTableComponent
 
     protected $listeners = [
         'autoUpdateTanggalTagih',
+        'updateTanggalTagih',
         'clearTanggalTagih',
         'clearSelections',
     ];
@@ -119,6 +120,56 @@ class IndexDataTable extends BaseDataTableComponent
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Failed to auto update tanggal tagih: ' . $e->getMessage());
+            $this->dispatch('error', 'Gagal mengupdate tanggal tagih: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update tanggal tagih dengan tanggal yang diberikan
+     */
+    public function updateTanggalTagih($rowId, $tanggalTagih)
+    {
+        if (empty($tanggalTagih)) {
+            $this->dispatch('warning', 'Tanggal tagih tidak valid');
+            return;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $billing = BillingHdr::find($rowId);
+            if (!$billing) {
+                $this->dispatch('error', 'Data tidak ditemukan');
+                return;
+            }
+
+            // Simpan print_date lama untuk audit log
+            $oldPrintDate = $billing->print_date;
+
+            // Update tanggal tagih dan status
+            $billing->print_date = $tanggalTagih;
+            $billing->status_code = Status::PRINT;
+            $billing->updated_at = now();
+            $billing->save();
+
+            // Create audit log
+            try {
+                AuditLogService::createPrintDateAuditLogs(
+                    [$rowId],
+                    $tanggalTagih,
+                    $oldPrintDate
+                );
+            } catch (\Exception $e) {
+                Log::error('Failed to create audit logs: ' . $e->getMessage());
+            }
+
+            DB::commit();
+
+            $this->dispatch('success', "Tanggal tagih untuk nota {$billing->tr_code} berhasil diupdate ke {$tanggalTagih}");
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Failed to update tanggal tagih: ' . $e->getMessage());
             $this->dispatch('error', 'Gagal mengupdate tanggal tagih: ' . $e->getMessage());
         }
     }
