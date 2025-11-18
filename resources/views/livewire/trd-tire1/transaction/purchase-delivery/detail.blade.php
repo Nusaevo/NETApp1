@@ -136,6 +136,60 @@
                 window.addEventListener('closeMaterialDialog', function() {
                     $('#materialDialogBox').modal('hide');
                 });
+
+                // Update Select2 for reffhdrtr_code after Livewire updates
+                Livewire.hook('morph.updated', ({ el, component }) => {
+                    setTimeout(function() {
+                        const selectElement = document.getElementById('inputs_reffhdrtr_code');
+                        if (selectElement && $(selectElement).hasClass('select2-hidden-accessible')) {
+                            // Get current value from Livewire component
+                            const livewireComponent = Livewire.find(component.id);
+                            if (livewireComponent) {
+                                const currentValue = livewireComponent.get('inputs.reffhdrtr_code');
+                                if (currentValue && currentValue !== '' && currentValue !== '0') {
+                                    // Check if value is already set in Select2
+                                    const select2Value = $(selectElement).val();
+                                    if (select2Value !== currentValue) {
+                                        // Fetch display text and update Select2
+                                        const endpoint = '/search-dropdown';
+                                        const queryParam = selectElement.getAttribute('data-query');
+                                        const params = new URLSearchParams();
+                                        params.append('connection', selectElement.getAttribute('data-connection') || 'Default');
+                                        params.append('query', queryParam);
+                                        params.append('option_value', selectElement.getAttribute('data-option-value') || 'id');
+                                        params.append('option_label', selectElement.getAttribute('data-option-label') || 'name');
+                                        params.append('id', currentValue);
+                                        params.append('preserve_existing', 'true');
+                                        params.append('bypass_filters', 'true');
+
+                                        fetch(`${endpoint}?${params.toString()}`)
+                                            .then(response => response.json())
+                                            .then(data => {
+                                                if (data && data.results && data.results.length > 0) {
+                                                    const item = data.results[0];
+                                                    const displayText = item.text;
+
+                                                    // Clear existing options and add new one
+                                                    $(selectElement).empty();
+                                                    const option = new Option(displayText, item.id, true, true);
+                                                    $(selectElement).append(option).trigger('change');
+                                                } else {
+                                                    // Create placeholder option if not found
+                                                    $(selectElement).empty();
+                                                    const option = new Option(`ID: ${currentValue} (Not Found)`, currentValue, true, true);
+                                                    $(option).addClass('missing-option');
+                                                    $(selectElement).append(option).trigger('change');
+                                                }
+                                            })
+                                            .catch(error => {
+                                                console.warn('Failed to update Select2 value:', error);
+                                            });
+                                    }
+                                }
+                            }
+                        }
+                    }, 100);
+                });
             });
         </script>
     @endpush
