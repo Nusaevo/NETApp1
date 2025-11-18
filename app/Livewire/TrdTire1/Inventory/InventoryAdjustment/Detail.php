@@ -1025,7 +1025,7 @@ class Detail extends BaseComponent
     public function delete()
     {
         try {
-            dd($this->object->tr_type, $this->object->id);
+            // dd($this->object->tr_type, $this->object->id);
             app(InventoryService::class)->delInventory($this->object->tr_type, $this->object->id);
             $this->dispatch('success', __('generic.string.delete'));
         } catch (Exception $e) {
