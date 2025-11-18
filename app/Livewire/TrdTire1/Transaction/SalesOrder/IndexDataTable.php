@@ -26,6 +26,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return OrderHdr::with(['OrderDtl', 'Partner'])
+            ->select('order_hdrs.*')
             ->where('order_hdrs.tr_type', 'SO')
             ->orderBy('order_hdrs.tr_date', 'desc')
             ->orderBy('order_hdrs.tr_code', 'desc');
@@ -83,9 +84,9 @@ class IndexDataTable extends BaseDataTableComponent
                     return $row->total_qty;
                 })
                 ->sortable(),
-            Column::make($this->trans('amt'), 'total_amt')
+            Column::make($this->trans('amt'), 'order_hdrs.amt')
                 ->label(function ($row) {
-                    return rupiah($row->total_amt, false);
+                    return rupiah($row->amt, false);
                 })
                 ->sortable(),
             Column::make($this->trans("Status"), "status_code")

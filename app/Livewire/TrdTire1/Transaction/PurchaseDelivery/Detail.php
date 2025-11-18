@@ -83,7 +83,8 @@ class Detail extends BaseComponent
         'changeStatus'  => 'changeStatus',
         'delete' => 'delete',
         // 'load-purchase-order-details' => 'loadPurchaseOrderDetails',
-        'onPurchaseOrderChanged' => 'onPurchaseOrderChanged'
+        'onPurchaseOrderChanged' => 'onPurchaseOrderChanged',
+        'onTrCodeChanged' => 'onTrCodeChanged', // listener untuk perubahan tr_code
     ];
     #endregion
 
@@ -104,61 +105,75 @@ class Detail extends BaseComponent
         $this->warehouses = $this->masterService->getWarehouse();
         $this->purchaseOrders = app(OrderService::class)->getOutstandingPO();
 
-        if ($this->isEditOrView()) {
+        if ($this->isEditOrView() && !empty($this->objectIdValue)) {
+            // Load object berdasarkan objectIdValue jika ada
             $this->object = DelivHdr::withTrashed()->find($this->objectIdValue);
-            $this->isTrCodeEnabled = "false";
-            // Populate inputs array
-            $this->inputs = populateArrayFromModel($this->object);
-            // $this->inputs['status_code'] = $this->object->status_Code_text;
-            $this->inputs['tax_invoice'] = $this->object->tax_invoice;
-            $this->inputs['tr_code'] = $this->object->tr_code;
-
-            // Load reffhdrtr_code from DelivPacking if not set in DelivHdr
-            if (empty($this->inputs['reffhdrtr_code'])) {
-                $delivDtl = DelivPacking::where('trhdr_id', $this->object->id)->first();
-                if ($delivDtl) {
-                    $this->inputs['reffhdrtr_code'] = $delivDtl->reffhdrtr_code;
-                    $this->inputs['reffhdr_id'] = $delivDtl->reffhdr_id;
-                    // $this->inputs['qty'] = $delivDtl->qty;
-                    // $this->inputs['wh_code'] = $delivDtl->wh_code;
-                }
+            if ($this->object) {
+                $this->loadDeliveryData();
             } else {
-                // Force load from DelivPacking even if already set
-                $delivDtl = DelivPacking::where('trhdr_id', $this->object->id)->first();
-                if ($delivDtl && !empty($delivDtl->reffhdrtr_code)) {
-                    $this->inputs['reffhdrtr_code'] = $delivDtl->reffhdrtr_code;
-                    $this->inputs['reffhdr_id'] = $delivDtl->reffhdr_id;
-                }
+                // Jika object tidak ditemukan, buat instance baru dan tampilkan error
+                $this->object = new DelivHdr();
+                $this->dispatch('error', 'Data tidak ditemukan');
             }
+        } else if ($this->actionValue === 'Edit' && !empty($this->inputs['tr_code'])) {
+            // Untuk mode edit tanpa objectIdValue, cari berdasarkan tr_code
+            $existingDelivery = DelivHdr::where('tr_code', $this->inputs['tr_code'])
+                ->where('tr_type', $this->trType)
+                ->first();
 
-            // Load partner data
-            $partner = Partner::find($this->object->partner_id);
-            if ($partner) {
-                $this->inputs['partner_id'] = $partner->id;
-                $this->inputs['partner_name'] = $partner->name;
+            if ($existingDelivery) {
+                $this->object = $existingDelivery;
+                $this->objectIdValue = $existingDelivery->id;
+                $this->loadDeliveryData();
             }
-
-            // Add existing reffhdrtr_code to purchaseOrders array for edit mode
-            // if (!empty($this->inputs['reffhdrtr_code'])) {
-            //     $existingCode = $this->inputs['reffhdrtr_code'];
-
-            //     // Add to purchaseOrders array
-            //     $this->purchaseOrders[] = [
-            //         'label' => $existingCode,
-            //         'value' => $existingCode,
-            //     ];
-            // }
-
-            // Load details and purchase order details
-            $this->loadDetails();
-            $this->whCodeOnChanged($this->inputs['wh_code']);
-
-            // Set panel enabled state based on whether there are items
-            $this->isPanelEnabled = !empty($this->input_details) ? "false" : "true";
-
-            // Check if there are new items from purchase order
-            $this->checkForNewItems();
+        } else {
+            // Mode Create
+            $this->object = new DelivHdr();
         }
+    }
+
+    private function loadDeliveryData()
+    {
+        // Method untuk load data delivery yang dipanggil dari berbagai tempat
+        $this->isTrCodeEnabled = "false";
+        // Populate inputs array
+        $this->inputs = populateArrayFromModel($this->object);
+        // $this->inputs['status_code'] = $this->object->status_Code_text;
+        $this->inputs['tax_invoice'] = $this->object->tax_invoice;
+        $this->inputs['tr_code'] = $this->object->tr_code;
+
+        // Load reffhdrtr_code from DelivPacking if not set in DelivHdr
+        if (empty($this->inputs['reffhdrtr_code'])) {
+            $delivDtl = DelivPacking::where('trhdr_id', $this->object->id)->first();
+            if ($delivDtl) {
+                $this->inputs['reffhdrtr_code'] = $delivDtl->reffhdrtr_code;
+                $this->inputs['reffhdr_id'] = $delivDtl->reffhdr_id;
+            }
+        } else {
+            // Force load from DelivPacking even if already set
+            $delivDtl = DelivPacking::where('trhdr_id', $this->object->id)->first();
+            if ($delivDtl && !empty($delivDtl->reffhdrtr_code)) {
+                $this->inputs['reffhdrtr_code'] = $delivDtl->reffhdrtr_code;
+                $this->inputs['reffhdr_id'] = $delivDtl->reffhdr_id;
+            }
+        }
+
+        // Load partner data
+        $partner = Partner::find($this->object->partner_id);
+        if ($partner) {
+            $this->inputs['partner_id'] = $partner->id;
+            $this->inputs['partner_name'] = $partner->name;
+        }
+
+        // Load details and purchase order details
+        $this->loadDetails();
+        $this->whCodeOnChanged($this->inputs['wh_code']);
+
+        // Set panel enabled state based on whether there are items
+        $this->isPanelEnabled = !empty($this->input_details) ? "false" : "true";
+
+        // Check if there are new items from purchase order
+        $this->checkForNewItems();
     }
 
     public function onReset()
@@ -177,6 +192,107 @@ class Detail extends BaseComponent
         $this->inputs['partner_code'] = null;
         $this->isPanelEnabled = "true";
         $this->isTrCodeEnabled = "true";
+    }
+
+    public function onTrCodeChanged()
+    {
+        $trCode = trim($this->inputs['tr_code'] ?? '');
+
+        if (empty($trCode)) {
+            // Jika tr_code kosong, reset ke mode create tanpa object
+            $this->resetToCreateModeInternal();
+            // Pastikan reffhdrtr_code benar-benar ter-reset
+            $this->inputs['reffhdrtr_code'] = '';
+            $this->inputs['reffhdr_id'] = null;
+            $this->inputs['partner_id'] = null;
+            $this->inputs['partner_name'] = null;
+            $this->inputs['partner_code'] = null;
+
+            // Reset public property juga
+            $this->reffhdrtr_code = '';
+
+            // Panggil onPurchaseOrderChanged dengan nilai kosong untuk reset partner
+            $this->onPurchaseOrderChanged('');
+
+            // Dispatch event khusus untuk refresh dropdown reffhdrtr_code
+            $this->dispatch('refreshSelect2', 'inputs_reffhdrtr_code');
+            $this->dispatch('info', 'Mode telah direset ke Create. Silakan input data baru.');
+            return;
+        }
+
+        try {
+            // Cari DelivHdr berdasarkan tr_code dan tr_type
+            $existingDelivery = DelivHdr::where('tr_code', $trCode)
+                ->where('tr_type', $this->trType)
+                ->first();
+
+            if ($existingDelivery) {
+                // Jika delivery ditemukan, load data untuk edit tanpa redirect
+                $this->loadDeliveryByTrCode($existingDelivery);
+                $this->dispatch('info', "Purchase Delivery {$trCode} ditemukan. Data telah dimuat untuk edit.");
+            } else {
+                // Jika tidak ditemukan, biarkan tr_code tetap di field untuk koreksi user
+                $this->dispatch('warning', "Nomor surat jalan '{$trCode}' tidak ditemukan. Silakan periksa kembali atau gunakan nomor lain.");
+            }
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Terjadi kesalahan saat mencari surat jalan: ' . $e->getMessage());
+            // Jangan hapus tr_code, biarkan user bisa perbaiki
+        }
+    }
+
+    private function loadDeliveryByTrCode($delivery)
+    {
+        // Set mode ke edit dan load object
+        $this->actionValue = 'Edit';
+        $this->objectIdValue = $delivery->id;
+        $this->object = $delivery;
+
+        // Load semua data delivery menggunakan method yang sama
+        $this->loadDeliveryData();
+    }
+
+    private function resetToCreateModeInternal()
+    {
+        // Reset ke mode create murni
+        $this->actionValue = 'Create';
+        $this->objectIdValue = null;
+        $this->object = new DelivHdr();
+        $this->resetInputsToDefault();
+        $this->isPanelEnabled = "true";
+        $this->isTrCodeEnabled = "true";
+
+        // Dispatch event untuk refresh Select2 dropdowns
+        $this->dispatch('resetSelect2Dropdowns');
+    }
+
+    private function resetInputsToDefault()
+    {
+        // Reset semua inputs ke nilai default
+        $this->inputs = populateArrayFromModel(new DelivHdr());
+        $this->inputs['tr_date'] = date('Y-m-d');
+        $this->inputs['reff_date'] = date('Y-m-d');
+        $this->inputs['tr_type'] = $this->trType;
+        $this->inputs['wh_code'] = null;
+        $this->inputs['wh_id'] = 0;
+        $this->inputs['reffhdrtr_code'] = '';
+        $this->inputs['reffhdr_id'] = null;
+        $this->inputs['tr_code'] = '';
+        $this->inputs['partner_id'] = null;
+        $this->inputs['partner_name'] = null;
+        $this->inputs['partner_code'] = null;
+        $this->inputs['note'] = '';
+
+        // Reset public property juga
+        $this->reffhdrtr_code = '';
+
+        // Reset detail items
+        $this->input_details = [];
+
+        // Reset flags
+        $this->hasNewItems = false;
+
+        // Dispatch event untuk reset Select2 dropdowns
+        $this->dispatch('resetSelect2Dropdowns');
     }
     #endregion
 

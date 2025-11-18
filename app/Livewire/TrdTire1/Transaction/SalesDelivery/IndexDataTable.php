@@ -28,16 +28,28 @@ class IndexDataTable extends BaseDataTableComponent
     public $tanggalKirim; // Field untuk tanggal kirim
     public $warehouse; // Field untuk warehouse
     public $warehouses = []; // Array untuk dropdown warehouse
+    public $selectedRows = []; // Array untuk menyimpan ID rows yang dipilih
+    public $batchProcessing = false; // Flag untuk batch processing
 
     protected $listeners = ['clearSelections'];
+
+    /**
+     * Computed property untuk selected count
+     */
+    public function getSelectedCountProperty()
+    {
+        return is_array($this->selectedRows) ? count($this->selectedRows) : 0;
+    }
 
     public function clearSelections()
     {
         $this->clearSelected();
         $this->bulkSelectedIds = null;
+        $this->selectedRows = []; // Clear custom selection
+
+        // Dispatch event to update the custom filters
+        $this->dispatch('selectionUpdated');
     }
-
-
     public function mount(): void
     {
         $this->setSearchDisabled();
@@ -47,6 +59,9 @@ class IndexDataTable extends BaseDataTableComponent
         // Initialize tanggal kirim dan warehouse
         $this->initializeTanggalKirim();
         $this->loadWarehouses();
+
+        // Optimize rendering
+        $this->selectedRows = [];
     }
 
     public function configure(): void
@@ -63,8 +78,16 @@ class IndexDataTable extends BaseDataTableComponent
         // Hide sorting pills to avoid confusion
         $this->setSortingPillsStatus(false);
 
+        // Disable default bulk actions area
+        $this->setBulkActionsStatus(false);
+
+        // Keep toolbar enabled for configurable areas
+        $this->setToolBarStatus(true);
+
         // Enable custom filters area
-        $this->enableCustomFiltersArea('livewire.trd-tire1.transaction.sales-delivery.custom-filters');
+        $this->setConfigurableAreas([
+            'after-toolbar' => 'livewire.trd-tire1.transaction.sales-delivery.custom-filters',
+        ]);
     }
 
     /**
@@ -86,15 +109,7 @@ class IndexDataTable extends BaseDataTableComponent
         $this->warehouses = $masterService->getWarehouse();
     }
 
-    /**
-     * Enable custom filters area in datatable
-     */
-    private function enableCustomFiltersArea(string $viewPath = 'livewire.custom-filters'): void
-    {
-        $currentAreas = $this->getConfigurableAreas() ?? [];
-        $currentAreas['after-toolbar'] = $viewPath;
-        $this->setConfigurableAreas($currentAreas);
-    }
+
 
 
     public function builder(): Builder
@@ -109,6 +124,18 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
+            Column::make("Pilih ", "id")
+                ->format(function ($value, $row) {
+                    return '
+                        <div class="text-center">
+                            <input type="checkbox"
+                                   class="form-check-input custom-checkbox"
+                                   wire:model="selectedRows"
+                                   value="' . $row->id . '"
+                                   id="checkbox-' . $row->id . '">
+                        </div>';
+                })
+                ->html(),
             Column::make($this->trans("Tanggal Nota"), "tr_date")
                 ->format(function ($value) {
                     return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '';
@@ -265,23 +292,87 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function bulkActions(): array
     {
+        // Bulk actions dipindah ke custom filters
+        return [];
+    }
+
+    /**
+     * Get selected items untuk custom filters
+     */
+    public function getSelectedItems()
+    {
+        return $this->selectedRows;
+    }
+
+    /**
+     * Get selected count untuk custom filters
+     */
+    public function getSelectedItemsCount()
+    {
+        return is_array($this->selectedRows) ? count($this->selectedRows) : 0;
+    }
+
+
+
+    /**
+     * Updated when selectedRows changes (automatically by wire:model)
+     * Optimized untuk client-side processing
+     */
+    public function updatedSelectedRows()
+    {
+        // Hanya dispatch jika bukan dalam batch processing
+        if (!$this->batchProcessing) {
+            $this->dispatch('selectionUpdated');
+        }
+    }    /**
+     * Method untuk refresh selection count di custom filters
+     */
+    public function refreshCustomFilters()
+    {
+        // Method untuk trigger refresh custom filters area
+        $this->dispatch('refresh-custom-filters');
+    }
+
+    /**
+     * Validate selections before processing - untuk client-side validation
+     */
+    public function validateSelections()
+    {
+        $selectedCount = is_array($this->selectedRows) ? count($this->selectedRows) : 0;
+
+        if ($selectedCount === 0) {
+            $this->dispatch('error', 'Silakan pilih minimal satu nota terlebih dahulu');
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get real-time processing status untuk client-side updates
+     */
+    public function getProcessingStatus()
+    {
         return [
-            'setDeliveryDate' => 'Kirim',
-            'cancelDeliveryDate' => 'Batal Kirim',
-            'cancel' => 'Cancel',
-            'unCancel' => 'UnCancel',
+            'isProcessing' => $this->batchProcessing,
+            'selectedCount' => $this->selectedCount,
         ];
     }
 
     public function setDeliveryDate()
     {
+        // Set batch processing flag
+        $this->batchProcessing = true;
+
         // Validasi tanggal kirim dan warehouse
         if (empty($this->tanggalKirim)) {
+            $this->batchProcessing = false;
             $this->dispatch('error', 'Silakan pilih tanggal kirim terlebih dahulu');
             return;
         }
 
         if (empty($this->warehouse)) {
+            $this->batchProcessing = false;
             $this->dispatch('error', 'Silakan pilih warehouse terlebih dahulu');
             return;
         }
@@ -291,12 +382,14 @@ class IndexDataTable extends BaseDataTableComponent
         $today = Carbon::now()->startOfDay();
 
         if ($deliveryDate->gt($today)) {
+            $this->batchProcessing = false;
             $this->dispatch('error', 'Tanggal kirim tidak boleh lebih besar dari tanggal sekarang.');
             return;
         }
 
-        $selectedOrderIds = $this->getSelected();
+        $selectedOrderIds = $this->selectedRows;
         if (count($selectedOrderIds) === 0) {
+            $this->batchProcessing = false;
             $this->dispatch('error', 'Silakan pilih minimal satu nota untuk dikirim.');
             return;
         }
@@ -305,6 +398,7 @@ class IndexDataTable extends BaseDataTableComponent
         $warehouse = ConfigConst::where('str1', $this->warehouse)->first();
 
         if (!$warehouse) {
+            $this->batchProcessing = false;
             $this->dispatch('error', 'Warehouse tidak ditemukan.');
             return;
         }
@@ -452,8 +546,11 @@ class IndexDataTable extends BaseDataTableComponent
         // Tampilkan hasil dengan detail
         $this->showProcessResults($successOrders, $failedOrders, $successCount);
 
+        // Reset batch processing flag
+        $this->batchProcessing = false;
+
         // Clear selections after successful completion
-        $this->clearSelected();
+        $this->selectedRows = [];
     }
 
     /**
@@ -547,7 +644,10 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function cancelDeliveryDate()
     {
-        $selectedOrderIds = $this->getSelected();
+        // Set batch processing flag
+        $this->batchProcessing = true;
+
+        $selectedOrderIds = $this->selectedRows;
         if (count($selectedOrderIds) > 0) {
             DB::beginTransaction();
 
@@ -562,9 +662,10 @@ class IndexDataTable extends BaseDataTableComponent
                 ->get();
 
 	            if ($delivHdrs->isEmpty()) {
-	                $this->dispatch('error', 'Tidak ada data pengiriman yang dapat dibatalkan');
-	                $this->clearSelections();
-	                return;
+                $this->batchProcessing = false;
+                $this->dispatch('error', 'Tidak ada data pengiriman yang dapat dibatalkan');
+                $this->selectedRows = [];
+                return;
 	            }
 
             // Proses setiap delivery secara individual
@@ -633,6 +734,9 @@ class IndexDataTable extends BaseDataTableComponent
 
             // Tampilkan hasil dengan detail
             $this->showBatalKirimResults($successOrders, $failedOrders, $deletedCount);
+
+            // Reset batch processing flag
+            $this->batchProcessing = false;
             // $this->dispatch('refresh-page');
         }
     }
@@ -679,13 +783,16 @@ class IndexDataTable extends BaseDataTableComponent
 
         // Hanya clear selection jika semua berhasil atau semua gagal
         if (empty($failedOrders) || empty($successOrders)) {
-            $this->clearSelected();
+            $this->selectedRows = [];
         }
     }
 
     public function cancel()
     {
-        $selectedOrderIds = $this->getSelected();
+        // Set batch processing flag
+        $this->batchProcessing = true;
+
+        $selectedOrderIds = $this->selectedRows;
         if (count($selectedOrderIds) > 0) {
             DB::beginTransaction();
 
@@ -700,6 +807,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->count();
 
             if ($shippedOrders > 0) {
+                $this->batchProcessing = false;
                 $this->dispatch('error', 'Tidak bisa membatalkan pesanan barang yang sudah dikirim');
                 return;
             }
@@ -733,14 +841,22 @@ class IndexDataTable extends BaseDataTableComponent
 
             DB::commit();
 
-            $this->clearSelected();
+            // Reset batch processing flag
+            $this->batchProcessing = false;
+
+            $this->selectedRows = [];
             $this->dispatch('success', ['Pesanan berhasil dibatalkan']);
+        } else {
+            $this->batchProcessing = false;
         }
     }
 
     public function unCancel()
     {
-        $selectedOrderIds = $this->getSelected();
+        // Set batch processing flag
+        $this->batchProcessing = true;
+
+        $selectedOrderIds = $this->selectedRows;
         if (count($selectedOrderIds) > 0) {
             DB::beginTransaction();
 
@@ -777,11 +893,34 @@ class IndexDataTable extends BaseDataTableComponent
 
             DB::commit();
 
-            $this->clearSelected();
+            // Reset batch processing flag
+            $this->batchProcessing = false;
+
+            $this->selectedRows = [];
             $this->dispatch('showAlert', [
                 'type' => 'success',
                 'message' => 'Pesanan berhasil dikembalikan dan stok diperbarui'
             ]);
+        } else {
+            $this->batchProcessing = false;
         }
+    }
+
+    /**
+     * Handle method calls yang gagal dengan graceful error handling
+     */
+    public function exception($e, $stopPropagation)
+    {
+        // Reset batch processing flag jika ada error
+        $this->batchProcessing = false;
+
+        // Log error untuk debugging
+        \Illuminate\Support\Facades\Log::error('Sales Delivery error: ' . $e->getMessage(), [
+            'selectedRows' => $this->selectedRows,
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        // Dispatch error ke client
+        $this->dispatch('error', 'Terjadi kesalahan: ' . $e->getMessage());
     }
 }

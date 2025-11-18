@@ -28,7 +28,9 @@ class OrderService
 
             $headerData['id'] = $header->id;
 
-            $this->saveDetails($headerData, $detailData);
+            if (!empty($detailData)) {
+                $this->saveDetails($headerData, $detailData);
+            }
 
             return [
                 'header' => $header,

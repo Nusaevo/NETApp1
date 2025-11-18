@@ -22,12 +22,13 @@
                                         query="SELECT id, code, name, address, city FROM partners WHERE deleted_at IS NULL AND grp = 'C'"
                                         optionValue="id" optionLabel="{code};{name};{address};{city}"
                                         placeHolder="Type to search customer..." :selectedValue="$inputs['partner_id']" required="true"
-                                        :action="$actionValue" :enabled="$isPanelEnabled" type="int"
+                                        :action="$actionValue" enabled="true" type="int"
                                         onChanged="onPartnerChanged" />
                                     <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     <x-ui-text-field label="Nomor Transaksi" model="inputs.tr_code" :action="$actionValue"
-                                        required="false" enabled="false" />
+                                        required="false" :enabled="$actionValue === 'Create' ? 'false' : 'true'" onChanged="onTrCodeChanged"
+                                        placeHolder="Edit nomor pelunasan dan tekan enter untuk cari pelunasan lain, kosongkan untuk create" />
                                 </div>
                             </x-ui-padding>
                         </x-ui-card>

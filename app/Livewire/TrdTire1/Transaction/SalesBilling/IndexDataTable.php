@@ -19,10 +19,41 @@ class IndexDataTable extends BaseDataTableComponent
     public $tanggalTagih; // Field untuk tanggal tagih - specific untuk sales billing
 
     protected $listeners = [
-        'autoUpdateTanggalTagihFromJs' => 'autoUpdateTanggalTagihFromJs',
+        'autoUpdateTanggalTagih',
+        'updateTanggalTagih',
+        'clearTanggalTagih',
+        'clearSelections',
     ];
 
     public $selectedRows = []; // Array untuk tracking selected rows
+
+    public function clearSelections()
+    {
+        $this->selectedRows = [];
+
+        // Force refresh the entire component to update checkbox states
+        $this->dispatch('$refresh');
+
+        // Dispatch event to update the custom filters
+        $this->dispatch('selectionUpdated');
+    }
+
+
+
+    /**
+     * Updated when selectedRows changes (automatically by wire:model)
+     */
+    public function updatedSelectedRows($value, $name)
+    {
+        // Dispatch event to update the custom filters
+        $this->dispatch('selectionUpdated');
+
+        // Jika ada perubahan pada selectedRows, cek item yang baru ditambah/dihapus
+        if (is_array($this->selectedRows)) {
+            // Logic untuk auto-update tanggal tagih akan dipindah ke view dengan Alpine.js
+            // Karena kita tidak bisa tahu item mana yang baru di-check/uncheck dari sini
+        }
+    }
 
     public function mount(): void
     {
@@ -41,26 +72,12 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setDefaultSort('Partner.name', 'asc');
     }
 
-    /**
-     * Toggle row selection dan auto update tanggal tagih
-     */
-    public function toggleRowSelection($rowId)
-    {
-        if (in_array($rowId, $this->selectedRows)) {
-            // Remove from selection - set tanggal tagih menjadi null
-            $this->selectedRows = array_diff($this->selectedRows, [$rowId]);
-            $this->clearTanggalTagih($rowId);
-        } else {
-            // Add to selection - auto update tanggal tagih
-            $this->selectedRows[] = $rowId;
-            $this->autoUpdateTanggalTagih($rowId);
-        }
-    }
+
 
     /**
      * Auto update tanggal tagih ketika row dipilih
      */
-    private function autoUpdateTanggalTagih($rowId)
+    public function autoUpdateTanggalTagih($rowId)
     {
         if (empty($this->tanggalTagih)) {
             $this->dispatch('warning', 'Silakan pilih tanggal tagih terlebih dahulu');
@@ -108,9 +125,59 @@ class IndexDataTable extends BaseDataTableComponent
     }
 
     /**
+     * Update tanggal tagih dengan tanggal yang diberikan
+     */
+    public function updateTanggalTagih($rowId, $tanggalTagih)
+    {
+        if (empty($tanggalTagih)) {
+            $this->dispatch('warning', 'Tanggal tagih tidak valid');
+            return;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $billing = BillingHdr::find($rowId);
+            if (!$billing) {
+                $this->dispatch('error', 'Data tidak ditemukan');
+                return;
+            }
+
+            // Simpan print_date lama untuk audit log
+            $oldPrintDate = $billing->print_date;
+
+            // Update tanggal tagih dan status
+            $billing->print_date = $tanggalTagih;
+            $billing->status_code = Status::PRINT;
+            $billing->updated_at = now();
+            $billing->save();
+
+            // Create audit log
+            try {
+                AuditLogService::createPrintDateAuditLogs(
+                    [$rowId],
+                    $tanggalTagih,
+                    $oldPrintDate
+                );
+            } catch (\Exception $e) {
+                Log::error('Failed to create audit logs: ' . $e->getMessage());
+            }
+
+            DB::commit();
+
+            $this->dispatch('success', "Tanggal tagih untuk nota {$billing->tr_code} berhasil diupdate ke {$tanggalTagih}");
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Failed to update tanggal tagih: ' . $e->getMessage());
+            $this->dispatch('error', 'Gagal mengupdate tanggal tagih: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Clear tanggal tagih ketika row di-uncheck
      */
-    private function clearTanggalTagih($rowId)
+    public function clearTanggalTagih($rowId)
     {
         try {
             DB::beginTransaction();
@@ -216,13 +283,13 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             Column::make("Pilih ", "id")
                 ->format(function ($value, $row) {
-                    $isChecked = in_array($row->id, $this->selectedRows) ? 'checked' : '';
                     return '
                         <div class="text-center">
                             <input type="checkbox"
                                    class="form-check-input custom-checkbox"
-                                   wire:click="toggleRowSelection(' . $row->id . ')"
-                                   ' . $isChecked . '>
+                                   wire:model.live="selectedRows"
+                                   value="' . $row->id . '"
+                                   id="checkbox-' . $row->id . '">
                         </div>';
                 })
                 ->html(),
@@ -289,10 +356,9 @@ class IndexDataTable extends BaseDataTableComponent
                 ->html()
                 ->sortable(),
 
-            Column::make($this->trans('Total Harga'), 'total_amt')
+            Column::make($this->trans('Total Harga'), 'amt')
                 ->label(function ($row) {
-                    // Ambil total_amt dari relasi OrderHdr
-                    return $row->OrderHdr ? rupiah($row->OrderHdr->amt, false) : '-';
+                    return $row->amt ? rupiah($row->amt, false) : '-';
                 })
                 ->sortable(),
 
@@ -404,6 +470,22 @@ class IndexDataTable extends BaseDataTableComponent
         return [];
     }
 
+
+    /**
+     * Get selected items untuk custom filters
+     */
+    public function getSelectedItems()
+    {
+        return $this->selectedRows;
+    }
+
+    /**
+     * Get selected count untuk custom filters
+     */
+    public function getSelectedItemsCount()
+    {
+        return count($this->selectedRows);
+    }
 
     public function cetak()
     {

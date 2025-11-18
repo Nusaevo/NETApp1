@@ -81,6 +81,7 @@ class Detail extends BaseComponent
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
         'delete' => 'delete',
+        'onTrCodeChanged' => 'onTrCodeChanged', // listener untuk perubahan tr_code
     ];
 
     #endregion
@@ -107,33 +108,30 @@ class Detail extends BaseComponent
         // Tidak otomatis populate advance items saat Create mode
         // Advance items akan muncul setelah partner dipilih melalui confirmSelection()
 
-        if ($this->isEditOrView()) {
-            if (empty($this->objectIdValue)) {
-                $this->dispatch('error', 'Invalid object ID');
-                return;
-            }
+        if ($this->isEditOrView() && !empty($this->objectIdValue)) {
+            // Load object berdasarkan objectIdValue jika ada
             $this->object = PaymentHdr::withTrashed()->find($this->objectIdValue);
-            if (!$this->object) {
-                $this->dispatch('error', 'Object not found');
-                return;
+            if ($this->object) {
+                $this->loadPaymentData();
+            } else {
+                // Jika object tidak ditemukan, buat instance baru dan tampilkan error
+                $this->object = new PaymentHdr();
+                $this->dispatch('error', 'Data tidak ditemukan');
             }
-            $this->inputs = populateArrayFromModel($this->object);
-            $this->inputs['partner_name'] = $this->object->partner->code . ' - ' . $this->object->partner->name;
-            $this->inputs['tr_code'] = $this->object->tr_code;
-            $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
+        } else if ($this->actionValue === 'Edit' && !empty($this->inputs['tr_code'])) {
+            // Untuk mode edit tanpa objectIdValue, cari berdasarkan tr_code
+            $existingPayment = PaymentHdr::where('tr_code', $this->inputs['tr_code'])
+                ->where('tr_type', $this->trType)
+                ->first();
 
-            // Load details
-            $this->loadDetails();
-            $this->loadPaymentDetails();
-
-            // Hitung total piutang customer untuk mode edit
-            $this->calculateTotalPiutangCustomer($this->object->partner_id);
-
-            // Set flag bahwa data sudah dimuat untuk mode edit
-            $this->isDataLoaded = true;
-        }
-
-        if (!$this->isEditOrView()) {
+            if ($existingPayment) {
+                $this->object = $existingPayment;
+                $this->objectIdValue = $existingPayment->id;
+                $this->loadPaymentData();
+            }
+        } else {
+            // Mode Create
+            $this->object = new PaymentHdr();
             $this->isPanelEnabled = "true";
             // Set default tr_date for Create mode if not already set
             if (empty($this->inputs['tr_date'])) {
@@ -151,16 +149,7 @@ class Detail extends BaseComponent
                 ];
             })->toArray();
 
-        // Tambahkan partnerOptions untuk dropdown bank_reff (hanya partner grup B - Bank)
-        $this->partnerOptions = Partner::where('grp', Partner::BANK)
-            ->orderBy('name')->get()
-            ->map(function ($partner) {
-                return [
-                    'label' => $partner->name,
-                    'value' => $partner->name,
-                    'id' => $partner->id,
-                ];
-            })->toArray();
+        $this->loadPartnerOptions();
 
         // Ambil daftar partner_bals yang amt_adv != 0 untuk dropdown Advance
         $this->advanceOptions = PartnerBal::where('amt_adv', '!=', 0)->get()
@@ -191,6 +180,30 @@ class Detail extends BaseComponent
         if (!isset($this->input_advance) || !is_array($this->input_advance)) {
             $this->input_advance = [];
         }
+    }
+
+    private function loadPaymentData()
+    {
+        // Method untuk load data payment yang dipanggil dari berbagai tempat
+        $this->inputs = populateArrayFromModel($this->object);
+        $this->inputs['partner_name'] = $this->object->partner ? ($this->object->partner->code . ' - ' . $this->object->partner->name) : '';
+        $this->inputs['tr_code'] = $this->object->tr_code;
+
+        // Load details
+        $this->loadDetails();
+        $this->loadPaymentDetails();
+
+        // Hitung total piutang customer untuk mode edit
+        $this->calculateTotalPiutangCustomer($this->object->partner_id);
+
+        // Set flag bahwa data sudah dimuat untuk mode edit
+        $this->isDataLoaded = true;
+        $this->isPanelEnabled = "false"; // Disable panel karena sudah ada data
+
+        // Dispatch event to refresh partner dropdown with loaded partner_id
+        $this->dispatch('resetSelect2Dropdowns', [
+            'partner_id' => $this->inputs['partner_id'] ?? null
+        ]);
     }
 
     public function getTransactionCode()
@@ -238,6 +251,113 @@ class Detail extends BaseComponent
         $this->inputs['partner_id'] = 0;
         $this->totalPiutangCustomer = 0;
         // dd($this->inputs);
+    }
+
+    public function onTrCodeChanged()
+    {
+        $trCode = trim($this->inputs['tr_code'] ?? '');
+
+        if (empty($trCode)) {
+            // Jika tr_code kosong, reset ke mode create tanpa object
+            $this->resetToCreateModeInternal();
+            // Pastikan isPanelEnabled benar-benar "true" untuk enable semua field
+            $this->isPanelEnabled = "true";
+            $this->dispatch('info', 'Mode telah direset ke Create. Silakan input data baru.');
+            return;
+        }
+
+        try {
+            // Cari PaymentHdr berdasarkan tr_code dan tr_type
+            $existingPayment = PaymentHdr::where('tr_code', $trCode)
+                ->where('tr_type', $this->trType)
+                ->first();
+
+            if ($existingPayment) {
+                // Jika pelunasan ditemukan, load data untuk edit tanpa redirect
+                $this->loadPaymentByTrCode($existingPayment);
+                $this->dispatch('info', "Pelunasan {$trCode} ditemukan. Data telah dimuat untuk edit.");
+            } else {
+                // Jika tidak ditemukan, biarkan tr_code tetap di field untuk koreksi user
+                $this->dispatch('warning', "Nomor pelunasan '{$trCode}' tidak ditemukan. Silakan periksa kembali atau gunakan nomor lain.");
+            }
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Terjadi kesalahan saat mencari pelunasan: ' . $e->getMessage());
+            // Jangan hapus tr_code, biarkan user bisa perbaiki
+        }
+    }
+
+    private function loadPaymentByTrCode($payment)
+    {
+        // Set mode ke edit dan load object
+        $this->actionValue = 'Edit';
+        $this->objectIdValue = $payment->id;
+        $this->object = $payment;
+
+        // Load semua data payment menggunakan method yang sama
+        $this->loadPaymentData();
+    }
+
+    private function resetToCreateModeInternal()
+    {
+        // Reset ke mode create murni
+        $this->actionValue = 'Create';
+        $this->objectIdValue = null;
+        $this->object = new PaymentHdr();
+        $this->resetInputsToDefault();
+        $this->isPanelEnabled = "true";
+
+        // Reset flag data loaded
+        $this->isDataLoaded = false;
+
+        // Dispatch event untuk refresh Select2 dropdowns
+        $this->dispatch('resetSelect2Dropdowns');
+        $this->isPanelEnabled = false;
+    }
+
+    private function resetInputsToDefault()
+    {
+        // Reset semua inputs ke nilai default
+        $this->inputs = populateArrayFromModel(new PaymentHdr());
+        $this->inputs['tr_type'] = $this->trType;
+        $this->inputs['tr_date'] = date('Y-m-d');
+        $this->inputs['curr_code'] = "IDR";
+        $this->inputs['curr_id'] = app(ConfigService::class)->getConstIdByStr1('BASE_CURRENCY', $this->inputs['curr_code']);
+        $this->inputs['curr_rate'] = 1.00;
+        $this->inputs['partner_id'] = 0;
+        $this->inputs['partner_code'] = '';
+        $this->inputs['partner_name'] = '';
+        $this->inputs['tr_code'] = '';
+
+        // Reset detail items
+        $this->input_details = [];
+        $this->input_payments = [];
+        $this->input_advance = [];
+
+        // Reset totals
+        $this->totalPiutangCustomer = 0;
+        $this->totalAmtAdvance = 0;
+        $this->totalAmtBillingNota = 0;
+        $this->totalAmtBilling = 0;
+        $this->totalAmtSource = 0;
+        $this->overPayment = 0;
+
+        $this->loadPartnerOptions();
+        $this->notaQuery = '';
+        $this->selectedNotaId = null;
+
+        $this->dispatch('resetSelect2Dropdowns');
+    }
+    private function loadPartnerOptions()
+    {
+        $this->partnerOptions = Partner::where('grp', Partner::BANK)
+            ->orderBy('name')->get()
+            ->map(function ($partner) {
+                return [
+                    'label' => $partner->name,
+                    'value' => $partner->name,
+                    'id' => $partner->id,
+                ];
+            })->toArray();
     }
 
     // public function deleteItem($index)
@@ -830,10 +950,12 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['is_lunas'] = false;
                 $this->input_details[$key]['amt_adjustment'] = 0;
             }
+        } else {
+            $this->dispatch('warning', 'Total piutang dan total pembayaran tidak sama, jangan lupa lakukan adjustment.');
         }
 
         $this->updateTotalAmt();
-        $this->dispatch('success', 'Pembayaran berhasil dibagi ke semua nota sesuai urutan jatuh tempo yang paling dekat.');
+        // $this->dispatch('success', 'Pembayaran berhasil dibagi ke semua nota sesuai urutan jatuh tempo yang paling dekat.');
     }
 
     public function isEditOrView()
