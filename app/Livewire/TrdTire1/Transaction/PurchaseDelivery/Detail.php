@@ -702,7 +702,7 @@ class Detail extends BaseComponent
 
             // Kemudian hapus delivery
             $deliveryService = app(DeliveryService::class);
-            dd ( $this->object->tr_type, $this->object->id);
+            // dd ( $this->object->tr_type, $this->object->id);
             $deliveryService->delDelivery($this->object->tr_type,$this->object->id);
 
             $this->dispatch('success', 'Purchase Delivery berhasil dihapus.');
