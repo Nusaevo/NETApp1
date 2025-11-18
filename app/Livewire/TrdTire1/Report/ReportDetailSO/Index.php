@@ -429,6 +429,7 @@ class Index extends BaseComponent
             $excelData = [];
             $rowStyles = [];
             $currentRowIndex = 0;
+            $columnCount = 14; // Total kolom yang akan diexport
 
             // Export all results, not just current page
             foreach ($this->allResults as $nota) {
@@ -492,7 +493,9 @@ class Index extends BaseComponent
                     'nextRowHeight' => 8
                 ];
 
-                // Tidak perlu menambah baris kosong pada data; baris kosong disisipkan oleh styling
+                // Tambahkan baris kosong untuk memberi jarak antar nota
+                $excelData[] = array_fill(0, $columnCount, '');
+                $currentRowIndex++;
 
             }
 

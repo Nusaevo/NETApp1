@@ -199,6 +199,7 @@ class DeliveryService
                 $totalStock = IvtBal::where('matl_id', $detailData['matl_id'])
                     ->where('matl_uom', $detailData['matl_uom'])
                     ->where('wh_id', $detailData['wh_id'])
+                    ->where('qty_oh', '>', 0)
                     ->sum('qty_oh');
                 throw new Exception('Stok tidak cukup untuk material ' . $detailData['matl_code'] .
                     ' di gudang ' . $detailData['wh_code'] . '. Stok tersedia: ' . $totalStock .
