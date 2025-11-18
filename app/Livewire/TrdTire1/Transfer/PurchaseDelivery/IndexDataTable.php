@@ -70,6 +70,16 @@ class IndexDataTable extends BaseDataTableComponent
                         '<span class="text-muted">Nama tidak tersedia</span>';
                 })
                 ->html(),
+            Column::make($this->trans("gudang"), "warehouse")
+                ->label(function ($row) {
+                    // Mengambil warehouse dari DelivPicking
+                    $delivPicking = DelivPicking::whereHas('DelivPacking', function($query) use ($row) {
+                        $query->where('trhdr_id', $row->id)
+                              ->where('tr_type', 'PD');
+                    })->first();
+                    return $delivPicking ? $delivPicking->wh_code : '-';
+                })
+                ->sortable(),
             Column::make($this->trans('Kode/Nama Barang'), 'kode_barang')
                 ->label(function ($row) {
                     // Ambil semua kode barang dan nama dari DelivPicking melalui relasi DelivPacking

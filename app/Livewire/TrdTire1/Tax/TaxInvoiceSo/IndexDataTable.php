@@ -4,7 +4,7 @@ namespace App\Livewire\TrdTire1\Tax\TaxInvoiceSo;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
-use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
+use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl, BillingHdr};
 use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
@@ -102,14 +102,30 @@ class IndexDataTable extends BaseDataTableComponent
                     return rupiah($amtTax);
                 })
                 ->sortable(),
-            Column::make($this->trans("No Faktur"), "tax_doc_num")
-                ->format(function ($value, $row) {
-                    // Tampilkan nomor faktur hanya jika tidak 0 (tidak dihapus)
-                    return $row->tax_doc_num && $row->tax_doc_num != 0 ? $row->tax_doc_num : '';
+            Column::make($this->trans("No Faktur"), "taxinv_num")
+                ->label(function ($row) {
+                    // Get taxinv_num from BillingHdr
+                    $billingHdr = BillingHdr::where('tr_code', $row->tr_code)
+                        ->where('tr_type', 'ARB')
+                        ->first();
+                    if ($billingHdr && $billingHdr->taxinv_num && $billingHdr->taxinv_num != 0) {
+                        return $billingHdr->taxinv_num;
+                    }
+                    return '';
                 })
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("Tgl Proses"), "tax_process_date")
+            Column::make($this->trans("Tgl Proses"), "taxinv_date")
+                ->label(function ($row) {
+                    // Get taxinv_date from BillingHdr
+                    $billingHdr = BillingHdr::where('tr_code', $row->tr_code)
+                        ->where('tr_type', 'ARB')
+                        ->first();
+                    if ($billingHdr && $billingHdr->taxinv_date && $billingHdr->taxinv_date != 0) {
+                        return $billingHdr->taxinv_date;
+                    }
+                    return '';
+                })
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans('NPWP CODE'), 'npwp_code')
@@ -202,16 +218,28 @@ class IndexDataTable extends BaseDataTableComponent
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     if ($value === 'with') {
-                        // Ada nomor faktur: tax_doc_num tidak null, tidak kosong, dan tidak 0
-                        $builder->whereNotNull('order_hdrs.tax_doc_num')
-                            ->where('order_hdrs.tax_doc_num', '!=', '')
-                            ->where('order_hdrs.tax_doc_num', '!=', 0);
+                        // Ada nomor faktur: check in BillingHdr
+                        $builder->whereExists(function ($query) {
+                            $query->select(DB::raw(1))
+                                ->from('billing_hdrs')
+                                ->whereRaw('billing_hdrs.tr_code = order_hdrs.tr_code')
+                                ->where('billing_hdrs.tr_type', 'ARB')
+                                ->whereNotNull('billing_hdrs.taxinv_num')
+                                ->where('billing_hdrs.taxinv_num', '!=', '')
+                                ->where('billing_hdrs.taxinv_num', '!=', 0);
+                        });
                     } elseif ($value === 'without') {
-                        // Tanpa nomor faktur: tax_doc_num null, kosong, atau 0
+                        // Tanpa nomor faktur: check in BillingHdr
                         $builder->where(function ($q) {
-                            $q->whereNull('order_hdrs.tax_doc_num')
-                                ->orWhere('order_hdrs.tax_doc_num', '=', '')
-                                ->orWhere('order_hdrs.tax_doc_num', '=', 0);
+                            $q->whereNotExists(function ($query) {
+                                $query->select(DB::raw(1))
+                                    ->from('billing_hdrs')
+                                    ->whereRaw('billing_hdrs.tr_code = order_hdrs.tr_code')
+                                    ->where('billing_hdrs.tr_type', 'ARB')
+                                    ->whereNotNull('billing_hdrs.taxinv_num')
+                                    ->where('billing_hdrs.taxinv_num', '!=', '')
+                                    ->where('billing_hdrs.taxinv_num', '!=', 0);
+                            });
                         });
                     }
                 }),
@@ -243,13 +271,16 @@ class IndexDataTable extends BaseDataTableComponent
 
         $selectedItems = OrderHdr::whereIn('id', $this->getSelected())
             ->with('Partner')
-            ->get(['id', 'tr_code', 'partner_id', 'npwp_name', 'tax_doc_num', 'amt'])
+            ->get(['id', 'tr_code', 'partner_id', 'npwp_name', 'amt'])
             ->map(function ($order) {
+                $billingHdr = BillingHdr::where('tr_code', $order->tr_code)
+                    ->where('tr_type', 'ARB')
+                    ->first();
                 return [
                     'id' => $order->id,
                     'nomor_nota' => $order->tr_code,
                     'nama' => $order->npwp_name ?: '',
-                    'faktur' => $order->tax_doc_num ?: '',
+                    'faktur' => $billingHdr ? ($billingHdr->taxinv_num ?: '') : '',
                     'total_amt' => rupiah($order->amt),
                 ];
             })
@@ -268,14 +299,17 @@ class IndexDataTable extends BaseDataTableComponent
 
         $selectedItems = OrderHdr::whereIn('id', $this->getSelected())
             ->with('Partner')
-            ->get(['id', 'tr_code', 'partner_id', 'npwp_name', 'tax_doc_num', 'amt'])
+            ->get(['id', 'tr_code', 'partner_id', 'npwp_name', 'npwp_code', 'amt'])
             ->map(function ($order) {
+                $billingHdr = BillingHdr::where('tr_code', $order->tr_code)
+                    ->where('tr_type', 'ARB')
+                    ->first();
                 return [
                     'id' => $order->id,
                     'nomor_nota' => $order->tr_code,
                     'nama' => $order->npwp_name ?: '',
                     'npwp' => $order->npwp_code ?: '',
-                    'faktur' => $order->tax_doc_num ?: '',
+                    'faktur' => $billingHdr ? ($billingHdr->taxinv_num ?: '') : '',
                     'total_amt' => rupiah($order->amt),
                 ];
             })
