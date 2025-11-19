@@ -187,6 +187,13 @@ class Detail extends BaseComponent
 
         // Check if there are new items from purchase order
         $this->checkForNewItems();
+
+        // Dispatch event to refresh Select2 dropdown with loaded reffhdrtr_code
+        if (!empty($this->inputs['reffhdrtr_code'])) {
+            $this->dispatch('resetSelect2Dropdowns', [
+                'reffhdrtr_code' => $this->inputs['reffhdrtr_code']
+            ]);
+        }
     }
 
     public function onReset()
