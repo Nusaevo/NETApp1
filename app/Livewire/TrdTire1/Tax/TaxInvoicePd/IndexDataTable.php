@@ -4,7 +4,7 @@ namespace App\Livewire\TrdTire1\Tax\TaxInvoicePd;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
-use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
+use App\Models\TrdTire1\Transaction\{DelivHdr, DelivPacking, DelivPicking, BillingHdr};
 use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
@@ -23,7 +23,7 @@ class IndexDataTable extends BaseDataTableComponent
 
     protected $listeners = ['clearSelections' => 'clearSelections'];
 
-    protected $model = OrderHdr::class;
+    protected $model = DelivHdr::class;
     public function mount(): void
     {
         $this->setSearchDisabled();
@@ -33,14 +33,11 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return OrderHdr::with(['OrderDtl', 'Partner'])
-            ->join('deliv_hdrs', function($join) {
-                $join->on('order_hdrs.tr_code', '=', 'deliv_hdrs.tr_code')
-                     ->where('deliv_hdrs.tr_type', '=', 'PD');
-            })
-            ->whereIn('deliv_hdrs.status_code', [Status::PRINT, Status::OPEN, Status::SHIP, Status::BILL])
-            // ->where('deliv_hdrs.tax_doc_flag', 1)
-            ->select('order_hdrs.*');
+        return DelivHdr::with(['DelivPacking.DelivPickings', 'Partner'])
+            ->where('deliv_hdrs.tr_type', 'PD')
+            ->orderBy('deliv_hdrs.updated_at', 'desc')
+            ->orderBy('deliv_hdrs.tr_date', 'desc')
+            ->orderBy('deliv_hdrs.tr_code', 'desc');
     }
 
     public function clearSelections(): void
@@ -48,119 +45,158 @@ class IndexDataTable extends BaseDataTableComponent
         $this->clearSelected();
         $this->bulkSelectedIds = null;
     }
+
+    /**
+     * Get BillingHdr (APB) from DelivHdr through DelivPacking -> reffhdrtr_code -> BillingOrder
+     */
+    private function getBillingHdrFromDelivHdr($delivHdr): ?BillingHdr
+    {
+        $delivPacking = DelivPacking::where('trhdr_id', $delivHdr->id)
+            ->where('tr_type', 'PD')
+            ->first();
+
+        if (!$delivPacking || !$delivPacking->reffhdrtr_code) {
+            return null;
+        }
+
+        return BillingHdr::join('billing_orders', function($join) {
+                $join->on('billing_hdrs.id', '=', 'billing_orders.trhdr_id')
+                     ->where('billing_orders.tr_type', '=', DB::raw('billing_hdrs.tr_type'));
+            })
+            ->where('billing_orders.reffhdrtr_code', $delivPacking->reffhdrtr_code)
+            ->where('billing_hdrs.tr_type', 'APB')
+            ->select('billing_hdrs.*')
+            ->first();
+    }
     public function columns(): array
     {
         return [
-            Column::make($this->trans("date"), "tr_date")
-                ->searchable()
-                ->sortable(),
             Column::make($this->trans("tr_type"), "tr_type")
                 ->hideIf(true)
                 ->sortable(),
-            Column::make('currency', from: "curr_rate")
-                ->hideIf(true)
+            Column::make($this->trans("Tgl. Terima Barang"), "tr_date")
+                ->format(function ($value) {
+                    return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '-';
+                })
+                ->searchable()
                 ->sortable(),
-            Column::make($this->trans("Nomor Nota"), "tr_code")
+            Column::make($this->trans("Nomor Surat Jalan"), "tr_code")
                 ->format(function ($value, $row) {
-                    if ($row->partner_id) {
-                        return '<a href="' . route($this->appCode . '.Transaction.SalesOrder.Detail', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($row->id)
-                        ]) . '">' . $row->tr_code . '</a>';
-                    } else {
-                        return '';
-                    }
+                    return '<a href="' . route($this->appCode . '.Transaction.PurchaseDelivery.Detail', [
+                        'action' => encryptWithSessionKey('Edit'),
+                        'objectId' => encryptWithSessionKey((string)$row->id)
+                    ]) . '">' . $row->tr_code . '</a>';
                 })
                 ->html(),
+            Column::make($this->trans("Tgl. Surat Jalan"), "reff_date")
+                ->format(function ($value) {
+                    return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '-';
+                })
+                ->searchable()
+                ->sortable(),
             Column::make($this->trans("supplier"), "partner_id")
                 ->format(function ($value, $row) {
-                    if ($row->Partner && $row->Partner->name) {
-                        return '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
+                    return $row->Partner ?
+                        '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->partner_id)
-                        ]) . '">' . $row->Partner->name . '</a>';
-                    } else {
-                        return '';
-                    }
+                        ]) . '">' . $row->Partner->name . '</a>' :
+                        '<span class="text-muted">Nama tidak tersedia</span>';
                 })
-                ->hideIf(true)
                 ->html(),
-            Column::make($this->trans('amt'), 'amt')
+            Column::make($this->trans("gudang"), "warehouse")
                 ->label(function ($row) {
-                    $orderDetails = OrderDtl::where('trhdr_id', $row->id)->get();
-                    $amt = $orderDetails->sum('amt');
-                    return rupiah($amt);
+                    // Mengambil warehouse dari DelivPicking
+                    $delivPicking = DelivPicking::whereHas('DelivPacking', function($query) use ($row) {
+                        $query->where('trhdr_id', $row->id)
+                              ->where('tr_type', 'PD');
+                    })->first();
+                    return $delivPicking ? $delivPicking->wh_code : '-';
                 })
                 ->sortable(),
-            Column::make($this->trans('dpp'), 'amt_beforetax')
+            Column::make($this->trans('Kode/Nama Barang'), 'kode_barang')
                 ->label(function ($row) {
-                    $orderDetails = OrderDtl::where('trhdr_id', $row->id)->get();
-                    $dpp = $orderDetails->sum('amt_beforetax');
-                    return rupiah($dpp);
+                    // Ambil semua kode barang dan nama dari DelivPicking melalui relasi DelivPacking
+                    $matlData = DelivPicking::with('Material')
+                        ->whereHas('DelivPacking', function($query) use ($row) {
+                            $query->where('trhdr_id', $row->id);
+                        })
+                        ->get();
+
+                    if ($matlData->isNotEmpty()) {
+                        $formattedData = $matlData->map(function($item) {
+                            $code = $item->matl_code;
+                            $name = $item->Material ? $item->Material->name : '-';
+                            return $code . ' - ' . $name;
+                        });
+                        return $formattedData->implode('<br>');
+                    }
+                    return '-';
                 })
+                ->html()
                 ->sortable(),
-            Column::make($this->trans('ppn'), 'amt_tax')
+            Column::make($this->trans('Barang'), 'total_qty')
                 ->label(function ($row) {
-                    $orderDetails = OrderDtl::where('trhdr_id', $row->id)->get();
-                    $amtTax = $orderDetails->sum('amt_tax');
-                    return rupiah($amtTax);
+                    // Tampilkan qty per item sesuai urutan daftar Kode/Nama Barang
+                    $pickings = DelivPicking::with('DelivPacking')
+                        ->whereHas('DelivPacking', function($query) use ($row) {
+                            $query->where('trhdr_id', $row->id);
+                        })
+                        ->get();
+
+                    if ($pickings->isNotEmpty()) {
+                        $qtyList = $pickings->map(function($picking) {
+                            return round($picking->qty);
+                        });
+                        return $qtyList->implode('<br>');
+                    }
+
+                    return '0';
                 })
+                ->html()
                 ->sortable(),
-            Column::make($this->trans("No Faktur"), "tax_doc_num")
-                ->format(function ($value, $row) {
-                    // Tampilkan nomor faktur hanya jika tidak 0 (tidak dihapus)
-                    return $row->tax_doc_num && $row->tax_doc_num != 0 ? $row->tax_doc_num : '';
+            // Column::make($this->trans('amt'), 'amt')
+            //     ->label(function ($row) {
+            //         $billingHdr = BillingHdr::where('tr_code', $row->tr_code)
+            //             ->where('tr_type', 'APB')
+            //             ->first();
+            //         return $billingHdr ? rupiah($billingHdr->amt) : rupiah(0);
+            //     })
+            //     ->sortable(),
+            // Column::make($this->trans('dpp'), 'amt_beforetax')
+            //     ->label(function ($row) {
+            //         $billingHdr = BillingHdr::where('tr_code', $row->tr_code)
+            //             ->where('tr_type', 'APB')
+            //             ->first();
+            //         return $billingHdr ? rupiah($billingHdr->amt_beforetax) : rupiah(0);
+            //     })
+            //     ->sortable(),
+            // Column::make($this->trans('ppn'), 'amt_tax')
+            //     ->label(function ($row) {
+            //         $billingHdr = BillingHdr::where('tr_code', $row->tr_code)
+            //             ->where('tr_type', 'APB')
+            //             ->first();
+            //         return $billingHdr ? rupiah($billingHdr->amt_tax) : rupiah(0);
+            //     })
+            //     ->sortable(),
+            Column::make($this->trans("No Faktur"), "taxinv_num")
+                ->label(function ($row) {
+                    $billingHdr = $this->getBillingHdrFromDelivHdr($row);
+                    return ($billingHdr && $billingHdr->taxinv_num && $billingHdr->taxinv_num != 0)
+                        ? $billingHdr->taxinv_num
+                        : '';
                 })
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("Tgl Proses"), "tax_process_date")
+            Column::make($this->trans("Tgl Proses"), "taxinv_date")
+                ->label(function ($row) {
+                    $billingHdr = $this->getBillingHdrFromDelivHdr($row);
+                    return ($billingHdr && $billingHdr->taxinv_date && $billingHdr->taxinv_date != 0)
+                        ? \Carbon\Carbon::parse($billingHdr->taxinv_date)->format('d-m-Y')
+                        : '-';
+                })
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans('NPWP CODE'), 'npwp_code')
-                ->label(function ($row) {
-                    return $row->npwp_code;
-                })
-                ->sortable(),
-            Column::make($this->trans('NAMA WP'), 'npwp_name')
-                ->label(function ($row) {
-                    return $row->npwp_name;
-                })
-                ->sortable(),
-            Column::make($this->trans('ALAMAT WP'), 'npwp_addr')
-                ->label(function ($row) {
-                    return $row->npwp_addr;
-                })
-                ->sortable(),
-            Column::make($this->trans("npwp_code21"), "npwp_code")
-                ->format(function ($value, $row) {
-                    if ($row->PartnerDetail && $row->PartnerDetail->npwp_code) {
-                        return $row->PartnerDetail->npwp_code;
-                    } else {
-                        return '';
-                    }
-                })
-                ->hideIf(true)
-                ->html(),
-            Column::make($this->trans("npwp_name21"), "npwp_name")
-                ->format(function ($value, $row) {
-                    if ($row->PartnerDetail && $row->PartnerDetail->npwp_name) {
-                        return $row->PartnerDetail->npwp_name;
-                    } else {
-                        return '';
-                    }
-                })
-                ->hideIf(true)
-                ->html(),
-            Column::make($this->trans("npwp_addr21"), "npwp_addr")
-                ->format(function ($value, $row) {
-                    if ($row->PartnerDetail && $row->PartnerDetail->npwp_addr) {
-                        return $row->PartnerDetail->npwp_addr;
-                    } else {
-                        return '';
-                    }
-                })
-                ->hideIf(true)
-                ->html(),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
@@ -190,14 +226,18 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            DateFilter::make('Tanggal Nota Awal')
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->whereDate('order_hdrs.tr_date', '>=', $value);
-                }),
-            DateFilter::make('Tanggal Nota Akhir')
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->whereDate('order_hdrs.tr_date', '<=', $value);
-                }),
+            DateFilter::make('Tanggal Awal Terima')->filter(function (Builder $builder, string $value) {
+                $builder->where('deliv_hdrs.tr_date', '>=', $value);
+            }),
+            DateFilter::make('Tanggal Akhir Terima')->filter(function (Builder $builder, string $value) {
+                $builder->where('deliv_hdrs.tr_date', '<=', $value);
+            }),
+            DateFilter::make('Tanggal Awal Kirim')->filter(function (Builder $builder, string $value) {
+                $builder->where('deliv_hdrs.reff_date', '>=', $value);
+            }),
+            DateFilter::make('Tanggal Akhir Kirim')->filter(function (Builder $builder, string $value) {
+                $builder->where('deliv_hdrs.reff_date', '<=', $value);
+            }),
             SelectFilter::make('Nomor Faktur')
                 ->options([
                     '' => 'Semua',
@@ -206,26 +246,47 @@ class IndexDataTable extends BaseDataTableComponent
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     if ($value === 'with') {
-                        // Ada nomor faktur: tax_doc_num tidak null, tidak kosong, dan tidak 0
-                        $builder->whereNotNull('order_hdrs.tax_doc_num')
-                            ->where('order_hdrs.tax_doc_num', '!=', '')
-                            ->where('order_hdrs.tax_doc_num', '!=', 0);
+                        // Ada nomor faktur: check in BillingHdr
+                        $builder->whereExists(function ($query) {
+                            $query->select(DB::raw(1))
+                                ->from('billing_hdrs')
+                                ->whereRaw('billing_hdrs.tr_code = deliv_hdrs.tr_code')
+                                ->where('billing_hdrs.tr_type', 'APB')
+                                ->whereNotNull('billing_hdrs.taxinv_num')
+                                ->where('billing_hdrs.taxinv_num', '!=', '')
+                                ->where('billing_hdrs.taxinv_num', '!=', 0);
+                        });
                     } elseif ($value === 'without') {
-                        // Tanpa nomor faktur: tax_doc_num null, kosong, atau 0
+                        // Tanpa nomor faktur: check in BillingHdr
                         $builder->where(function ($q) {
-                            $q->whereNull('order_hdrs.tax_doc_num')
-                                ->orWhere('order_hdrs.tax_doc_num', '=', '')
-                                ->orWhere('order_hdrs.tax_doc_num', '=', 0);
+                            $q->whereNotExists(function ($query) {
+                                $query->select(DB::raw(1))
+                                    ->from('billing_hdrs')
+                                    ->whereRaw('billing_hdrs.tr_code = deliv_hdrs.tr_code')
+                                    ->where('billing_hdrs.tr_type', 'APB')
+                                    ->whereNotNull('billing_hdrs.taxinv_num')
+                                    ->where('billing_hdrs.taxinv_num', '!=', '')
+                                    ->where('billing_hdrs.taxinv_num', '!=', 0);
+                            });
                         });
                     }
                 }),
-
-            $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
-                $builder->where(DB::raw('UPPER(order_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
-            },true),
-            $this->createTextFilter('Nama WP', 'npwp_name', 'Cari Nama WP', function (Builder $builder, string $value) {
-                $builder->where(DB::raw('UPPER(order_hdrs.npwp_name)'), 'like', '%' . strtoupper($value) . '%');
-            },true),
+            $this->createTextFilter('Nomor Surat Jalan', 'tr_code', 'Cari Nomor Surat Jalan', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(deliv_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
+            }, true),
+            $this->createTextFilter('Nomor Nota', 'reffhdrtr_code', 'Cari Kode Referensi', function (Builder $builder, string $value) {
+                $builder->whereExists(function ($query) use ($value) {
+                    $query->select(DB::raw(1))
+                        ->from('deliv_packings')
+                        ->whereRaw('deliv_packings.trhdr_id = deliv_hdrs.id')
+                        ->where(DB::raw('UPPER(reffhdrtr_code)'), 'like', '%' . strtoupper($value) . '%');
+                });
+            }, true),
+            $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
+                $builder->whereHas('Partner', function ($query) use ($value) {
+                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                });
+            }, true),
         ];
     }
     public function bulkActions(): array
@@ -234,7 +295,7 @@ class IndexDataTable extends BaseDataTableComponent
             'nomorFaktur' => 'Set Nomor Faktur',
             'deleteNomorFaktur' => 'Hapus Nomor Faktur',
             // 'cetakProsesDate' => 'Cetak Proses Faktur Pajak',
-            'transferKeCTMS' => 'Transfer ke CTMS',
+            // 'transferKeCTMS' => 'Transfer ke CTMS',
         ];
     }
 
@@ -245,16 +306,27 @@ class IndexDataTable extends BaseDataTableComponent
             return;
         }
 
-        $selectedItems = OrderHdr::whereIn('id', $this->getSelected())
-            ->with('Partner')
-            ->get(['id', 'tr_code', 'partner_id', 'npwp_name', 'tax_doc_num', 'amt'])
-            ->map(function ($order) {
+        $selectedItems = DelivHdr::whereIn('id', $this->getSelected())
+            ->with('Partner', 'DelivPacking')
+            ->get(['id', 'tr_code', 'partner_id'])
+            ->map(function ($deliv) {
+                $billingHdr = $this->getBillingHdrFromDelivHdr($deliv);
+
+                // Get PO OrderHdr from DelivPacking reffhdrtr_code for total_amt
+                $delivPacking = $deliv->DelivPacking->first();
+                $orderHdr = null;
+                if ($delivPacking && $delivPacking->reffhdrtr_code) {
+                    $orderHdr = \App\Models\TrdTire1\Transaction\OrderHdr::where('tr_code', $delivPacking->reffhdrtr_code)
+                        ->where('tr_type', 'PO')
+                        ->first();
+                }
+
                 return [
-                    'id' => $order->id,
-                    'nomor_nota' => $order->tr_code,
-                    'nama' => $order->npwp_name ?: '',
-                    'faktur' => $order->tax_doc_num ?: '',
-                    'total_amt' => rupiah($order->amt),
+                    'id' => $deliv->id,
+                    'nomor_nota' => $deliv->tr_code,
+                    'nama' => $deliv->Partner ? $deliv->Partner->name : '',
+                    'faktur' => $billingHdr ? ($billingHdr->taxinv_num ?: '') : '',
+                    'total_amt' => $orderHdr ? rupiah($orderHdr->amt ?? 0) : rupiah(0),
                 ];
             })
             ->toArray();
@@ -270,17 +342,27 @@ class IndexDataTable extends BaseDataTableComponent
             return;
         }
 
-        $selectedItems = OrderHdr::whereIn('id', $this->getSelected())
-            ->with('Partner')
-            ->get(['id', 'tr_code', 'partner_id', 'npwp_name', 'tax_doc_num', 'amt'])
-            ->map(function ($order) {
+        $selectedItems = DelivHdr::whereIn('id', $this->getSelected())
+            ->with('Partner', 'DelivPacking')
+            ->get(['id', 'tr_code', 'partner_id'])
+            ->map(function ($deliv) {
+                $billingHdr = $this->getBillingHdrFromDelivHdr($deliv);
+
+                // Get PO OrderHdr from DelivPacking reffhdrtr_code for total_amt
+                $delivPacking = $deliv->DelivPacking->first();
+                $orderHdr = null;
+                if ($delivPacking && $delivPacking->reffhdrtr_code) {
+                    $orderHdr = \App\Models\TrdTire1\Transaction\OrderHdr::where('tr_code', $delivPacking->reffhdrtr_code)
+                        ->where('tr_type', 'PO')
+                        ->first();
+                }
+
                 return [
-                    'id' => $order->id,
-                    'nomor_nota' => $order->tr_code,
-                    'nama' => $order->npwp_name ?: '',
-                    'npwp' => $order->npwp_code ?: '',
-                    'faktur' => $order->tax_doc_num ?: '',
-                    'total_amt' => rupiah($order->amt),
+                    'id' => $deliv->id,
+                    'nomor_nota' => $deliv->tr_code,
+                    'nama' => $deliv->Partner ? $deliv->Partner->name : '',
+                    'faktur' => $billingHdr ? ($billingHdr->taxinv_num ?: '') : '',
+                    'total_amt' => $orderHdr ? rupiah($orderHdr->amt ?? 0) : rupiah(0),
                 ];
             })
             ->toArray();
@@ -295,13 +377,16 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $selectedPrintDate = $this->filters['tax_process_date'] ?? null;
         if ($selectedPrintDate) {
-            // Check if there are any orders for the selected print date
-            $orderCount = OrderHdr::where('tax_process_date', $selectedPrintDate)
-                ->where('tr_type', 'SO')
+            // Check if there are any deliveries with related PO orders for the selected print date
+            $delivCount = DelivHdr::whereHas('OrderHdr', function($query) use ($selectedPrintDate) {
+                    $query->where('tr_type', 'PO')
+                          ->where('tax_process_date', $selectedPrintDate);
+                })
+                ->where('tr_type', 'PD')
                 ->whereNull('deleted_at')
                 ->count();
 
-            if ($orderCount === 0) {
+            if ($delivCount === 0) {
                 $this->dispatch('error', 'Tidak ada data untuk tanggal proses yang dipilih.');
                 return;
             }

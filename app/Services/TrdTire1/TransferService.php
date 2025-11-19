@@ -30,8 +30,6 @@ class TransferService
 
             DB::beginTransaction();
 
-
-            // Ambil data order headers dengan relasi lengkap termasuk delivery dan billing
             $orderHeaders = OrderHdr::whereIn('id', $orderHdrIds)
                 ->with([
                     'Partner',
@@ -39,11 +37,9 @@ class TransferService
                     'OrderDtl',
                     'OrderDtl.Material',
                     'OrderDtl.Material.MatlUom',
-                    // Relasi delivery
                     'DelivHdr',
                     'DelivHdr.DelivPacking',
                     'DelivHdr.DelivPacking.DelivPickings',
-                    // Relasi billing
                     'BillingHdr',
                     'BillingHdr.BillingOrder',
                     'BillingHdr.BillingDeliv'
@@ -51,7 +47,6 @@ class TransferService
                 ->get();
 
 
-            // Validasi data yang ditemukan
             if ($orderHeaders->isEmpty()) {
                 $errorMsg = "Tidak ada data order header yang ditemukan untuk ID: " . implode(', ', $orderHdrIds);
                 $results['errors'][] = $errorMsg;
@@ -116,12 +111,10 @@ class TransferService
      */
     private function transferPartner(?Partner $partner1): int
     {
-        // Validasi partner tidak null
         if (!$partner1) {
             throw new Exception("Partner data tidak ditemukan");
         }
 
-        // Cek apakah partner sudah ada di TrdTire2 berdasarkan code
         $existingPartner2 = Partner2::on('TrdTire2')->where('code', $partner1->code)->first();
 
         if ($existingPartner2) {
@@ -156,12 +149,10 @@ class TransferService
         foreach ($orderDetails as $detail) {
             $material1 = $detail->Material;
 
-            // Validasi material tidak null
             if (!$material1) {
                 continue;
             }
 
-            // Cek apakah material sudah ada di TrdTire2 berdasarkan code
             $existingMaterial2 = Material2::on('TrdTire2')->where('code', $material1->code)->first();
 
             if ($existingMaterial2) {
@@ -195,7 +186,6 @@ class TransferService
      */
     private function transferOrderHeader(OrderHdr $orderHdr1, int $partner2Id): int
     {
-        // Cek apakah order header sudah ada di TrdTire2
         $existingOrderHdr2 = OrderHdr2::on('TrdTire2')->where('tr_code', $orderHdr1->tr_code)->first();
 
         if ($existingOrderHdr2) {
@@ -218,7 +208,6 @@ class TransferService
     private function transferOrderDetails($orderDetails, int $orderHdr2Id, array $materials2Ids): void
     {
         foreach ($orderDetails as $detail1) {
-            // Cek apakah order detail sudah ada di TrdTire2
             $existingOrderDtl2 = OrderDtl2::on('TrdTire2')->where('tr_code', $detail1->tr_code)
                 ->where('tr_seq', $detail1->tr_seq)
                 ->first();
@@ -282,7 +271,7 @@ class TransferService
             $delivHdr = $orderHdr->DelivHdr;
 
             if (!$delivHdr) {
-                return false; // Tidak ada delivery data
+                return false;
             }
 
             // Cek apakah delivery header sudah ada di TrdTire2
@@ -349,157 +338,77 @@ class TransferService
     private function transferBillingData(OrderHdr $orderHdr, int $orderHdr2Id, int $partner2Id, array $materials2Ids): bool
     {
         try {
-            $billingHdr = $orderHdr->BillingHdr;
+            // Cari BillingOrder yang memiliki reffhdrtr_code = order_code
+            $billingOrder = BillingOrder::where('reffhdrtr_code', $orderHdr->tr_code)->first();
 
-            if (!$billingHdr) {
-                Log::info('No billing data found for order', ['order_code' => $orderHdr->tr_code]);
+            if (!$billingOrder) {
                 return false; // Tidak ada billing data
             }
 
-            Log::info('Found billing data for transfer', [
-                'order_code' => $orderHdr->tr_code,
-                'billing_code' => $billingHdr->tr_code,
-                'billing_id' => $billingHdr->id
-            ]);
+            // Dari BillingOrder, ambil trhdr_id untuk mencari BillingHdr
+            $billingHdr = BillingHdr::where('id', $billingOrder->trhdr_id)->first();
 
-            // Check BillingOrder data directly from database
-            $billingOrderCount = \App\Models\TrdTire1\Transaction\BillingOrder::where('trhdr_id', $billingHdr->id)->count();
-            $billingOrderWithTrTypeCount = \App\Models\TrdTire1\Transaction\BillingOrder::where('trhdr_id', $billingHdr->id)
-                ->where('tr_type', $billingHdr->tr_type)->count();
-            Log::info('Direct BillingOrder count from database', [
-                'order_code' => $orderHdr->tr_code,
-                'billing_hdr_id' => $billingHdr->id,
-                'billing_hdr_tr_type' => $billingHdr->tr_type,
-                'billing_order_count_total' => $billingOrderCount,
-                'billing_order_count_with_tr_type' => $billingOrderWithTrTypeCount
-            ]);
+            if (!$billingHdr) {
+                return false; // Tidak ada billing header
+            }
 
             // Cek apakah billing header sudah ada di TrdTire2
             $existingBillingHdr2 = BillingHdr2::on('TrdTire2')->where('tr_code', $billingHdr->tr_code)->first();
 
             if ($existingBillingHdr2) {
-                Log::info('Billing header already exists in TrdTire2, skipping transfer', [
-                    'order_code' => $orderHdr->tr_code,
-                    'billing_code' => $billingHdr->tr_code,
-                    'existing_billing_id' => $existingBillingHdr2->id
-                ]);
                 return true; // Sudah ada, skip transfer
             }
 
             // Transfer Billing Header
-            Log::info('Transferring billing header', [
-                'order_code' => $orderHdr->tr_code,
-                'billing_code' => $billingHdr->tr_code
-            ]);
-
             $billingHdr2 = new BillingHdr2();
             $billingHdr2->setConnection('TrdTire2');
             $billingHdr2->fill($billingHdr->toArray());
             $billingHdr2->partner_id = $partner2Id; // Update dengan partner ID TrdTire2
+            $billingHdr2->taxinv_date = now(); // Set taxinv_date dengan tanggal sekarang
             $billingHdr2->save();
-            Log::info('Billing header transferred successfully', [
-                'order_code' => $orderHdr->tr_code,
-                'billing_code' => $billingHdr->tr_code,
-                'new_billing_id' => $billingHdr2->id
-            ]);
 
-            // Transfer Billing Order
-            Log::info('Transferring billing order data', [
-                'order_code' => $orderHdr->tr_code,
-                'billing_order_count' => $billingHdr->BillingOrder->count(),
-                'billing_hdr_id' => $billingHdr->id,
-                'billing_tr_type' => $billingHdr->tr_type
-            ]);
+            // Transfer Billing Order - Gunakan query langsung untuk menghindari masalah relasi
+            $billingOrders = BillingOrder::where('trhdr_id', $billingHdr->id)
+                ->where('tr_type', $billingHdr->tr_type)
+                ->orderBy('tr_seq')
+                ->get();
 
-            // Check if BillingOrder collection is empty
-            if ($billingHdr->BillingOrder->isEmpty()) {
-                Log::warning('No BillingOrder data found for billing header', [
-                    'order_code' => $orderHdr->tr_code,
-                    'billing_hdr_id' => $billingHdr->id,
-                    'billing_tr_type' => $billingHdr->tr_type
-                ]);
-
-                // Try to load BillingOrder without tr_type filter for debugging
-                $allBillingOrders = \App\Models\TrdTire1\Transaction\BillingOrder::where('trhdr_id', $billingHdr->id)->get();
-                Log::info('All BillingOrder records for this billing header', [
-                    'order_code' => $orderHdr->tr_code,
-                    'billing_hdr_id' => $billingHdr->id,
-                    'all_billing_orders' => $allBillingOrders->map(function($bo) {
-                        return [
-                            'id' => $bo->id,
-                            'tr_type' => $bo->tr_type,
-                            'tr_code' => $bo->tr_code,
-                            'tr_seq' => $bo->tr_seq
-                        ];
-                    })->toArray()
-                ]);
-            }
-
-            foreach ($billingHdr->BillingOrder as $billingOrder) {
+            foreach ($billingOrders as $billingOrder) {
                 $existingBillingOrder2 = BillingOrder2::on('TrdTire2')
                     ->where('tr_code', $billingOrder->tr_code)
                     ->where('tr_seq', $billingOrder->tr_seq)
                     ->first();
 
                 if (!$existingBillingOrder2) {
-                    Log::info('Transferring billing order item', [
-                        'order_code' => $orderHdr->tr_code,
-                        'billing_order_seq' => $billingOrder->tr_seq
-                    ]);
                     $billingOrder2 = new BillingOrder2();
                     $billingOrder2->setConnection('TrdTire2');
                     $billingOrder2->fill($billingOrder->toArray());
                     $billingOrder2->trhdr_id = $billingHdr2->id; // Update dengan billing header ID TrdTire2
                     $billingOrder2->save();
-                    Log::info('Billing order item transferred', [
-                        'order_code' => $orderHdr->tr_code,
-                        'billing_order_seq' => $billingOrder->tr_seq,
-                        'new_billing_order_id' => $billingOrder2->id
-                    ]);
                 }
             }
 
-            // Transfer Billing Delivery
-            Log::info('Transferring billing delivery data', [
-                'order_code' => $orderHdr->tr_code,
-                'billing_delivery_count' => $billingHdr->BillingDeliv->count()
-            ]);
-            foreach ($billingHdr->BillingDeliv as $billingDeliv) {
+            // Transfer Billing Delivery - Gunakan query langsung untuk menghindari masalah relasi
+            $billingDelivs = BillingDeliv::where('trhdr_id', $billingHdr->id)->get();
+
+            foreach ($billingDelivs as $billingDeliv) {
                 $existingBillingDeliv2 = BillingDeliv2::on('TrdTire2')
                     ->where('trhdr_id', $billingHdr2->id)
                     ->where('deliv_code', $billingDeliv->deliv_code)
                     ->first();
 
                 if (!$existingBillingDeliv2) {
-                    Log::info('Transferring billing delivery item', [
-                        'order_code' => $orderHdr->tr_code,
-                        'delivery_code' => $billingDeliv->deliv_code
-                    ]);
                     $billingDeliv2 = new BillingDeliv2();
                     $billingDeliv2->setConnection('TrdTire2');
                     $billingDeliv2->fill($billingDeliv->toArray());
                     $billingDeliv2->trhdr_id = $billingHdr2->id; // Update dengan billing header ID TrdTire2
                     $billingDeliv2->save();
-                    Log::info('Billing delivery item transferred', [
-                        'order_code' => $orderHdr->tr_code,
-                        'delivery_code' => $billingDeliv->deliv_code,
-                        'new_billing_delivery_id' => $billingDeliv2->id
-                    ]);
                 }
             }
 
-            Log::info('Billing data transfer completed successfully', [
-                'order_code' => $orderHdr->tr_code,
-                'billing_code' => $billingHdr->tr_code
-            ]);
             return true;
 
         } catch (Exception $e) {
-            Log::error("Transfer Billing Error", [
-                'order_code' => $orderHdr->tr_code ?? 'Unknown',
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
             return false;
         }
     }
@@ -553,8 +462,10 @@ class TransferService
                     // 2. Transfer Order jika ada (dari reffhdr_id atau reffhdrtr_code di DelivPacking)
                     $orderHdr2Id = null;
                     $orderTransferred = false;
+                    $billingTransferred = false;
                     $materials2Ids = [];
                     $processedOrderIds = [];
+                    $transferredOrders = []; // Simpan order yang sudah ditransfer untuk transfer billing
 
                     // Ambil OrderHdr dari DelivPacking menggunakan reffhdr_id atau reffhdrtr_code
                     // Query DelivPacking langsung dari database menggunakan trhdr_id
@@ -572,7 +483,7 @@ class TransferService
                                 if ($packing->reffhdrtr_type) {
                                     $orderHdr = OrderHdr::where('id', $packing->reffhdr_id)
                                         ->where('tr_type', $packing->reffhdrtr_type)
-                                        ->with(['OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom'])
+                                        ->with(['OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom', 'BillingHdr'])
                                         ->first();
                                 }
 
@@ -580,14 +491,14 @@ class TransferService
                                 if (!$orderHdr) {
                                     $orderHdr = OrderHdr::where('id', $packing->reffhdr_id)
                                         ->where('tr_type', 'PO')
-                                        ->with(['OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom'])
+                                        ->with(['OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom', 'BillingHdr'])
                                         ->first();
                                 }
 
                                 // Jika masih tidak ditemukan, coba tanpa filter tr_type
                                 if (!$orderHdr) {
                                     $orderHdr = OrderHdr::where('id', $packing->reffhdr_id)
-                                        ->with(['OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom'])
+                                        ->with(['OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom', 'BillingHdr'])
                                         ->first();
                                 }
 
@@ -599,7 +510,7 @@ class TransferService
                                 if ($packing->reffhdrtr_type) {
                                     $orderHdr = OrderHdr::where('tr_code', $packing->reffhdrtr_code)
                                         ->where('tr_type', $packing->reffhdrtr_type)
-                                        ->with(['OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom'])
+                                        ->with(['OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom', 'BillingHdr'])
                                         ->first();
                                 }
 
@@ -607,14 +518,14 @@ class TransferService
                                 if (!$orderHdr) {
                                     $orderHdr = OrderHdr::where('tr_code', $packing->reffhdrtr_code)
                                         ->where('tr_type', 'PO')
-                                        ->with(['OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom'])
+                                        ->with(['OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom', 'BillingHdr'])
                                         ->first();
                                 }
 
                                 // Jika masih tidak ditemukan, coba tanpa filter tr_type
                                 if (!$orderHdr) {
                                     $orderHdr = OrderHdr::where('tr_code', $packing->reffhdrtr_code)
-                                        ->with(['OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom'])
+                                        ->with(['OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom', 'BillingHdr'])
                                         ->first();
                                 }
 
@@ -640,6 +551,13 @@ class TransferService
                                 // Transfer Order Details
                                 $this->transferOrderDetails($orderHdr->OrderDtl, $orderHdr2Id, $orderMaterials2Ids);
 
+                                // Simpan order yang sudah ditransfer untuk transfer billing nanti
+                                $transferredOrders[] = [
+                                    'orderHdr' => $orderHdr,
+                                    'orderHdr2Id' => $orderHdr2Id,
+                                    'materials2Ids' => $orderMaterials2Ids
+                                ];
+
                                 $orderTransferred = true;
                             }
                         } catch (Exception $e) {
@@ -662,16 +580,33 @@ class TransferService
                     // 5. Transfer Delivery Packing dan Picking
                     $this->transferDeliveryPackingAndPicking($delivHdr, $delivHdr2Id, $materials2Ids);
 
+                    // 6. Transfer Billing Data untuk setiap order yang sudah ditransfer
+                    foreach ($transferredOrders as $transferredOrder) {
+                        $billingResult = $this->transferBillingData(
+                            $transferredOrder['orderHdr'],
+                            $transferredOrder['orderHdr2Id'],
+                            $partner2Id,
+                            $transferredOrder['materials2Ids']
+                        );
+                        if ($billingResult) {
+                            $billingTransferred = true;
+                        }
+                    }
+
                     $results['transferred_deliveries'][] = [
                         'original_tr_code' => $delivHdr->tr_code,
                         'new_tr_code' => $delivHdr->tr_code,
                         'partner_name' => $delivHdr->Partner->name ?? 'Unknown',
-                        'order_transferred' => $orderTransferred
+                        'order_transferred' => $orderTransferred,
+                        'billing_transferred' => $billingTransferred
                     ];
 
                     $successMsg = "Delivery " . ($delivHdr->tr_code ?? 'Unknown') . " berhasil ditransfer ke TrdTire2";
                     if ($orderTransferred) {
                         $successMsg .= " (termasuk Order)";
+                    }
+                    if ($billingTransferred) {
+                        $successMsg .= " (termasuk Billing)";
                     }
                     $results['success'][] = $successMsg;
 

@@ -3,9 +3,9 @@
 namespace App\Livewire\TrdTire1\Tax\TaxInvoiceSo;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdTire1\Transaction\OrderHdr;
+use App\Models\TrdTire1\Transaction\{OrderHdr, BillingHdr};
 use Livewire\Attributes\On;
-use App\Livewire\TrdTire1\Tax\TaxInvoice\IndexDataTable as TaxInvoiceTable;
+use App\Livewire\TrdTire1\Tax\TaxInvoiceSo\IndexDataTable as TaxInvoiceTable;
 
 class Index extends BaseComponent
 {
@@ -55,11 +55,16 @@ class Index extends BaseComponent
 
     public function submitNomorFaktur()
     {
-                // Untuk action delete, tidak perlu validasi nomor faktur
+        // Untuk action delete, tidak perlu validasi nomor faktur
         if ($this->actionType === 'delete') {
-            // Hapus nomor faktur untuk order yang dipilih
+            // Hapus nomor faktur untuk billing yang dipilih
             // Gunakan nilai 0 untuk menandakan nomor faktur telah dihapus
-            OrderHdr::whereIn('id', $this->selectedOrderIds)->update(['tax_doc_num' => 0]);
+            $orderHdrs = OrderHdr::whereIn('id', $this->selectedOrderIds)->get(['id', 'tr_code']);
+            foreach ($orderHdrs as $orderHdr) {
+                BillingHdr::where('tr_code', $orderHdr->tr_code)
+                    ->where('tr_type', 'ARB')
+                    ->update(['taxinv_num' => 0]);
+            }
 
             $this->dispatch('clearSelections')->to(TaxInvoiceTable::class);
             $this->dispatch('refreshDatatable')->to(TaxInvoiceTable::class);
@@ -69,27 +74,37 @@ class Index extends BaseComponent
         }
 
         // Tidak ada validasi global, karena input per baris
-        // Simpan nomor faktur per order (pertahankan leading zero)
-        foreach ($this->selectedOrderIds as $orderId) {
+        // Simpan nomor faktur per billing (pertahankan leading zero)
+        $orderHdrs = OrderHdr::whereIn('id', $this->selectedOrderIds)->get(['id', 'tr_code']);
+
+        foreach ($orderHdrs as $orderHdr) {
+            $orderId = $orderHdr->id;
             if (isset($this->taxDocNumInputs[$orderId]) && $this->taxDocNumInputs[$orderId] !== '') {
                 $numRaw = trim((string) $this->taxDocNumInputs[$orderId]);
                 // Validasi per baris: hanya digit dan nilai numeriknya > 0
                 if ($numRaw === '' || !ctype_digit($numRaw) || intval($numRaw) <= 0) {
-                    $this->dispatch('error', "Nomor faktur untuk order {$orderId} tidak valid");
+                    $this->dispatch('error', "Nomor faktur untuk nota {$orderHdr->tr_code} tidak valid");
                     return;
                 }
+
                 // Cek unik berdasarkan string apa adanya (agar '01' berbeda dengan '1')
-                $exists = OrderHdr::where('tax_doc_num', $numRaw)
-                    ->where('id', '!=', $orderId)
-                    ->where('tax_doc_num', '!=', 0)
+                $exists = BillingHdr::where('taxinv_num', $numRaw)
+                    ->where('tr_code', '!=', $orderHdr->tr_code)
+                    ->where('tr_type', 'ARB')
+                    ->where('taxinv_num', '!=', 0)
                     ->exists();
                 if ($exists) {
                     $this->dispatch('error', "Nomor faktur {$numRaw} sudah digunakan");
                     return;
                 }
-                OrderHdr::where('id', $orderId)->update(['tax_doc_num' => $numRaw]);
+
+                // Update BillingHdr dengan taxinv_num
+                BillingHdr::where('tr_code', $orderHdr->tr_code)
+                    ->where('tr_type', 'ARB')
+                    ->update(['taxinv_num' => $numRaw]);
             }
         }
+
         $this->dispatch('clearSelections')->to(TaxInvoiceTable::class);
         $this->dispatch('refreshDatatable')->to(TaxInvoiceTable::class);
         $this->dispatch('close-modal-nomor-faktur');

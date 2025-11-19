@@ -142,20 +142,21 @@ class Detail extends BaseComponent
         $this->inputs['tax_invoice'] = $this->object->tax_invoice;
         $this->inputs['tr_code'] = $this->object->tr_code;
 
-        // Load reffhdrtr_code from DelivPacking if not set in DelivHdr
-        if (empty($this->inputs['reffhdrtr_code'])) {
-            $delivDtl = DelivPacking::where('trhdr_id', $this->object->id)->first();
-            if ($delivDtl) {
-                $this->inputs['reffhdrtr_code'] = $delivDtl->reffhdrtr_code;
-                $this->inputs['reffhdr_id'] = $delivDtl->reffhdr_id;
-            }
+        // Load reffhdrtr_code from DelivPacking - always load from DelivPacking since it's not in DelivHdr
+        $delivDtl = DelivPacking::where('trhdr_id', $this->object->id)
+            ->where('tr_type', $this->trType)
+            ->first();
+
+        if ($delivDtl && !empty($delivDtl->reffhdrtr_code)) {
+            $this->inputs['reffhdrtr_code'] = $delivDtl->reffhdrtr_code;
+            $this->inputs['reffhdr_id'] = $delivDtl->reffhdr_id;
+            // Set public property juga untuk konsistensi
+            $this->reffhdrtr_code = $delivDtl->reffhdrtr_code;
         } else {
-            // Force load from DelivPacking even if already set
-            $delivDtl = DelivPacking::where('trhdr_id', $this->object->id)->first();
-            if ($delivDtl && !empty($delivDtl->reffhdrtr_code)) {
-                $this->inputs['reffhdrtr_code'] = $delivDtl->reffhdrtr_code;
-                $this->inputs['reffhdr_id'] = $delivDtl->reffhdr_id;
-            }
+            // Jika tidak ditemukan, set ke empty string
+            $this->inputs['reffhdrtr_code'] = '';
+            $this->inputs['reffhdr_id'] = null;
+            $this->reffhdrtr_code = '';
         }
 
         // Load partner data
@@ -163,6 +164,18 @@ class Detail extends BaseComponent
         if ($partner) {
             $this->inputs['partner_id'] = $partner->id;
             $this->inputs['partner_name'] = $partner->name;
+        }
+
+        // Ensure reffhdrtr_code is in purchase orders dropdown if it exists
+        if (!empty($this->inputs['reffhdrtr_code'])) {
+            $poExists = collect($this->purchaseOrders)->pluck('value')->contains($this->inputs['reffhdrtr_code']);
+            if (!$poExists) {
+                // Add the loaded reffhdrtr_code to purchase orders dropdown
+                $this->purchaseOrders[] = [
+                    'label' => $this->inputs['reffhdrtr_code'],
+                    'value' => $this->inputs['reffhdrtr_code'],
+                ];
+            }
         }
 
         // Load details and purchase order details
@@ -174,6 +187,13 @@ class Detail extends BaseComponent
 
         // Check if there are new items from purchase order
         $this->checkForNewItems();
+
+        // Dispatch event to refresh Select2 dropdown with loaded reffhdrtr_code
+        if (!empty($this->inputs['reffhdrtr_code'])) {
+            $this->dispatch('resetSelect2Dropdowns', [
+                'reffhdrtr_code' => $this->inputs['reffhdrtr_code']
+            ]);
+        }
     }
 
     public function onReset()
@@ -690,26 +710,30 @@ class Detail extends BaseComponent
     public function delete()
     {
         try {
-            // Validasi apakah object masih ada sebelum dihapus
             if (!$this->object || !$this->object->id) {
                 $this->dispatch('error', 'Data Purchase Delivery tidak ditemukan.');
                 return;
             }
 
-            // Panggil service untuk hapus billing terlebih dahulu
-            $billingService = app(BillingService::class);
-            $billingService->delBilling($this->object->billhdr_id);
+            DB::transaction(function () {
 
-            // Kemudian hapus delivery
-            $deliveryService = app(DeliveryService::class);
-             $deliveryService->delDelivery($this->object->tr_type,$this->object->id);
+                $billingService = app(BillingService::class);
+                $billingService->delBilling($this->object->billhdr_id);
+
+                $deliveryService = app(DeliveryService::class);
+                $deliveryService->delDelivery($this->object->tr_type, $this->object->id);
+
+                // throw new Exception('Testing rollback delete purchase delivery');
+            });
 
             $this->dispatch('success', 'Purchase Delivery berhasil dihapus.');
             return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+
         } catch (Exception $e) {
             $this->dispatch('error', 'Gagal menghapus data: ' . $e->getMessage());
         }
     }
+
     #endregion
 
     public function render()
