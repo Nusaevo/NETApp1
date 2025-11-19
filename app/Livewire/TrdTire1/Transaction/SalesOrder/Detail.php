@@ -462,8 +462,6 @@ class Detail extends BaseComponent
             $this->orderService = app(OrderService::class);
         }
 
-
-
         $this->validate();
 
         // Validasi tr_code sesuai dengan yang di-generate
@@ -1271,15 +1269,29 @@ class Detail extends BaseComponent
                 throw new Exception(__('Data header tidak ditemukan'));
             }
 
-            // Pastikan orderService sudah diinisialisasi
-            if (!$this->orderService) {
-                $this->orderService = app(OrderService::class);
+            $connectionName = $this->getModelConnection();
+            DB::connection($connectionName)->beginTransaction();
+
+            try {
+                // Pastikan orderService sudah diinisialisasi
+                if (!$this->orderService) {
+                    $this->orderService = app(OrderService::class);
+                }
+
+                $this->orderService->delOrder($this->object->tr_type, $this->object->id);
+
+                // testing rollback
+                // throw new Exception('Testing rollback delete sales order');
+
+                DB::connection($connectionName)->commit();
+            } catch (Exception $e) {
+                DB::connection($connectionName)->rollBack();
+                $this->dispatch('error', 'Gagal menghapus data: ' . $e->getMessage());
+                return;
             }
 
-            dd ($this->object->tr_type, $this->object->id);
-            $this->orderService->delOrder($this->object->tr_type, $this->object->id);
+            // Jika sudah berhasil
             $this->dispatch('success', __('Data berhasil terhapus'));
-
             return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.delete', ['message' => $e->getMessage()]));

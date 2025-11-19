@@ -714,25 +714,34 @@ class Detail extends BaseComponent
                 $this->dispatch('error', 'Data Purchase Delivery tidak ditemukan.');
                 return;
             }
+            $connectionName = $this->getModelConnection();
+            DB::connection($connectionName)->beginTransaction();
 
-            DB::transaction(function () {
-
+            try {
                 $billingService = app(BillingService::class);
                 $billingService->delBilling($this->object->billhdr_id);
-
                 $deliveryService = app(DeliveryService::class);
                 $deliveryService->delDelivery($this->object->tr_type, $this->object->id);
 
+                // testing rollback
                 // throw new Exception('Testing rollback delete purchase delivery');
-            });
 
+                DB::connection($connectionName)->commit();
+            } catch (Exception $e) {
+                DB::connection($connectionName)->rollBack();
+                $this->dispatch('error', 'Gagal menghapus data: ' . $e->getMessage());
+                Log::error("Method Delete : " . $e->getMessage());
+                return;
+            }
+
+            // Jika sudah berhasil
             $this->dispatch('success', 'Purchase Delivery berhasil dihapus.');
             return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
-
         } catch (Exception $e) {
             $this->dispatch('error', 'Gagal menghapus data: ' . $e->getMessage());
         }
     }
+
 
     #endregion
 
