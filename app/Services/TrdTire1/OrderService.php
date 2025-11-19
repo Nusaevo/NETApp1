@@ -126,13 +126,12 @@ class OrderService
     #region Delete Order
     public function delOrder(string $trType, int $orderId)
     {
-        try {
-            OrderDtl::where('trhdr_id', $orderId)->delete();
-            $this->inventoryService->delIvtLog($trType, $orderId);
-            OrderHdr::where('id', $orderId)->forceDelete();
-        } catch (Exception $e) {
-            throw new Exception('Error deleting order: ' . $e->getMessage());
-        }
+        OrderDtl::where('trhdr_id', $orderId)->delete();
+        $this->inventoryService->delIvtLog($trType, $orderId);
+        // Hapus log reservation (POR untuk PO, SOR untuk SO)
+        $reservationType = $trType . 'R';
+        $this->inventoryService->delIvtLog($reservationType, $orderId);
+        OrderHdr::where('id', $orderId)->forceDelete();
     }
 
     // Check if the order is editable
