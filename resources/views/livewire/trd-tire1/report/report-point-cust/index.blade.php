@@ -165,20 +165,23 @@
 
                                     // Pisahkan nama dan kota customer
                                     function splitCustomer($customer) {
-                                        // Jika customer kosong, return kosong
-                                        // if (!$customer) return ['name' => '', 'city' => ''];
-                                        // // Jika customer diawali dengan '_CUSTOMER', tampilkan di kolom nama saja
-                                        // if (strpos($customer, '_CUSTOMER') === 0) {
-                                        //     return ['name' => $customer, 'city' => ''];
-                                        // }
-                                        // // Debug: jika customer tidak ada ' - ', tampilkan semua di name
-                                        // if (strpos($customer, ' - ') === false) {
-                                        //     return ['name' => $customer, 'city' => ''];
-                                        // }
-                                        $parts = explode(' - ', $customer, 2);
+                                        if (!is_string($customer) || trim($customer) === '') {
+                                            return ['name' => '', 'address' => '', 'city' => ''];
+                                        }
+
+                                        $parts = array_map('trim', explode(' - ', $customer));
+                                        $name = $parts[0] ?? '';
+                                        $address = $parts[1] ?? '';
+                                        $city = '';
+
+                                        if (count($parts) > 2) {
+                                            $city = implode(' - ', array_slice($parts, 2));
+                                        }
+
                                         return [
-                                            'name' => $parts[0] ?? $customer,
-                                            'city' => $parts[1] ?? '',
+                                            'name' => $name,
+                                            'address' => $address,
+                                            'city' => $city,
                                         ];
                                     }
                                 @endphp
@@ -192,6 +195,8 @@
                                     <thead>
                                         <tr>
                                             <th rowspan="2" style="border: 1px solid #000; text-align: center; padding:4px 8px; background:#f9f9f9; font-weight:bold;">Customer</th>
+                                            <th rowspan="2" style="border: 1px solid #000; text-align: center; padding:4px 8px; background:#f9f9f9; font-weight:bold;">Alamat</th>
+                                            <th rowspan="2" style="border: 1px solid #000; text-align: center; padding:4px 8px; background:#f9f9f9; font-weight:bold;">Kota</th>
                                             @foreach ($groupColumns as $col)
                                                 <th style="text-align:center; padding:4px 8px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:15px; min-width:40px; border: 1px solid #000; background:#f9f9f9; font-weight:bold;" rowspan="2">
                                                     {{ $col }}
@@ -231,7 +236,12 @@
                                                 $customer = $row->customer ?? '';
                                             @endphp
                                             <tr>
-                                                <td style="padding:4px 8px; border: 1px solid #000; font-size: 16px;">{{ $customer }}</td>
+                                                @php
+                                                    $customerParts = splitCustomer($customer);
+                                                @endphp
+                                                <td style="padding:4px 8px; border: 1px solid #000; font-size: 16px;">{{ $customerParts['name'] }}</td>
+                                                <td style="padding:4px 8px; border: 1px solid #000; font-size: 16px;">{{ $customerParts['address'] }}</td>
+                                                <td style="padding:4px 8px; border: 1px solid #000; font-size: 16px;">{{ $customerParts['city'] }}</td>
                                                 @foreach ($groupColumns as $col)
                                                     @php
                                                         $val = $row->$col ?? '';
@@ -270,7 +280,7 @@
                                             }
                                         @endphp
                                         <tr>
-                                            <td style="padding:4px 8px; border: 1px solid #000; font-weight:bold; background:#f2f2f2;">Total</td>
+                                            <td colspan="3" style="padding:4px 8px; border: 1px solid #000; font-weight:bold; background:#f2f2f2;">Total</td>
                                             @foreach ($groupColumns as $col)
                                                 <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold; background:#f2f2f2;">
                                                     {{ $colTotalsQty[$col] ? $colTotalsQty[$col] : '' }}<br>
