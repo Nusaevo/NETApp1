@@ -131,7 +131,7 @@
 
                         <x-slot name="button">
                             <x-ui-button clickEvent="addPaymentItem" cssClass="btn btn-primary" iconPath="add.svg"
-                                button-name="Add" />
+                                button-name="Add" :action="$actionValue"/>
                         </x-slot>
                     </x-ui-table>
                 </x-ui-card>

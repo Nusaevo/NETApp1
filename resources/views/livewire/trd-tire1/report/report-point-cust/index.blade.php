@@ -26,10 +26,10 @@
                                 onclick="printReport()">
                                 <i class="fas fa-print text-primary"></i> Print
                             </button>
-                            {{-- <button type="button" class="btn btn-success text-capitalize border-0 w-100 mt-2"
+                            <button type="button" class="btn btn-success text-capitalize border-0 w-100 mt-2"
                                 wire:click="downloadExcel">
                                 <i class="fas fa-file-excel"></i> Excel
-                            </button> --}}
+                            </button>
                         </div>
                     </div>
                 </div>
