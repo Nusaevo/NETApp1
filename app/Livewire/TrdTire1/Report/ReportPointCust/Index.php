@@ -258,8 +258,20 @@ class Index extends BaseComponent
             }
             $groupColumns = array_values(array_filter($columns, fn($c) => $c !== 'customer'));
 
-            // Header: Customer, untuk setiap grup 3 kolom (Qty, Point, Sisa), lalu Total Qty, Total Point, dan Total Sisa
-            $headers = ['Customer'];
+            // Helper function untuk memisahkan customer
+            $splitCustomer = function($customer) {
+                if (!is_string($customer) || trim($customer) === '') {
+                    return ['name' => '', 'address' => '', 'city' => ''];
+                }
+                $parts = array_map('trim', explode(' - ', $customer));
+                $name = $parts[0] ?? '';
+                $address = $parts[1] ?? '';
+                $city = count($parts) > 2 ? implode(' - ', array_slice($parts, 2)) : '';
+                return ['name' => $name, 'address' => $address, 'city' => $city];
+            };
+
+            // Header: Customer, Alamat, Kota, untuk setiap grup 3 kolom (Qty, Point, Sisa), lalu Total Qty, Total Point, dan Total Sisa
+            $headers = ['Customer', 'Alamat', 'Kota'];
             foreach ($groupColumns as $grpCol) {
                 $headers[] = $grpCol . ' Qty';
                 $headers[] = $grpCol . ' Point';
@@ -274,7 +286,11 @@ class Index extends BaseComponent
             foreach ($this->results as $row) {
                 $dataRow = [];
                 $customer = $row->customer ?? '';
-                $dataRow[] = $customer;
+                $customerParts = $splitCustomer($customer);
+                // Tambahkan 3 kolom customer: name, address, city
+                $dataRow[] = $customerParts['name'];
+                $dataRow[] = $customerParts['address'];
+                $dataRow[] = $customerParts['city'];
 
                 $rowTotalQty = 0;
                 $rowTotalPoint = 0;
