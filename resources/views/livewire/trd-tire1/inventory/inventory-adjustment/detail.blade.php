@@ -156,7 +156,7 @@
                     <x-ui-footer>
                         <div>
                             <x-ui-button clickEvent="delete" button-name="Hapus" loading="true"
-                                :action="$actionValue" cssClass="btn-danger" iconPath="delete.svg" />
+                                :action="$actionValue" cssClass="btn-danger" iconPath="delete.svg" enableConfirmationDialog="true" :permissions="$permissions" type="delete"/>
 
                             @include('layout.customs.buttons.save')
 

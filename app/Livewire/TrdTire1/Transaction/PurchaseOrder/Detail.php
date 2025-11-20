@@ -12,7 +12,7 @@ use App\Services\TrdTire1\InventoryService;
 use App\Services\TrdTire1\Master\MasterService;
 use App\Services\TrdTire1\OrderService;
 use App\Services\TrdTire1\DeliveryService;
-use Illuminate\Support\Facades\{Session, DB};
+use Illuminate\Support\Facades\{Session, DB, Log};
 use Exception;
 use Illuminate\Support\Number;
 
@@ -805,18 +805,32 @@ class Detail extends BaseComponent
                 return;
             }
 
-            // 3) Pastikan OrderService sudah diinisialisasi
-            if (!$this->orderService) {
-                $this->orderService = app(OrderService::class);
+            $connectionName = $this->getModelConnection();
+            DB::connection($connectionName)->beginTransaction();
+
+            try {
+                // 3) Pastikan OrderService sudah diinisialisasi
+                if (!$this->orderService) {
+                    $this->orderService = app(OrderService::class);
+                }
+
+                // 4) Gunakan OrderService untuk menghapus order
+                $this->orderService->delOrder($this->object->tr_type, $this->object->id);
+
+                // testing rollback
+                // throw new Exception('Testing rollback delete purchase order');
+
+                DB::connection($connectionName)->commit();
+            } catch (Exception $e) {
+                DB::connection($connectionName)->rollBack();
+                $this->dispatch('error', 'Gagal menghapus data: ' . $e->getMessage());
+                Log::error("Method Delete : " . $e->getMessage());
+                return;
             }
 
-            // 4) Gunakan OrderService untuk menghapus order
-            dd ($this->object->tr_type, $this->object->id);
-            $this->orderService->delOrder($this->object->tr_type, $this->object->id);
-
+            // Jika sudah berhasil
             $this->dispatch('success', __('Data berhasil terhapus'));
             return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
-
         } catch (\Exception $e) {
             $this->dispatch('error', __('generic.error.delete', [
                 'message' => $e->getMessage()

@@ -11,7 +11,7 @@ use App\Services\TrdTire1\Master\MasterService;
 use App\Models\TrdTire1\Inventories\IvtBal;
 use App\Models\TrdTire1\Inventories\IvttrDtl;
 use App\Services\TrdTire1\InventoryService;
-use Illuminate\Support\Facades\{Session, DB, Auth};
+use Illuminate\Support\Facades\{Session, DB, Auth, Log};
 use Exception;
 use App\Enums\Constant;
 class Detail extends BaseComponent
@@ -1025,13 +1025,35 @@ class Detail extends BaseComponent
     public function delete()
     {
         try {
-            // dd($this->object->tr_type, $this->object->id);
-            app(InventoryService::class)->delInventory($this->object->tr_type, $this->object->id);
+            if (!$this->object || !$this->object->id) {
+                $this->dispatch('error', 'Data Inventory Adjustment tidak ditemukan.');
+                return;
+            }
+
+            $connectionName = $this->getModelConnection();
+            DB::connection($connectionName)->beginTransaction();
+
+            try {
+                // dd($this->object->tr_type, $this->object->id);
+                app(InventoryService::class)->delInventory($this->object->tr_type, $this->object->id);
+
+                // testing rollback
+                // throw new Exception('Testing rollback delete inventory adjustment');
+
+                DB::connection($connectionName)->commit();
+            } catch (Exception $e) {
+                DB::connection($connectionName)->rollBack();
+                $this->dispatch('error', 'Gagal menghapus data: ' . $e->getMessage());
+                // Log::error("Method Delete : " . $e->getMessage());
+                return;
+            }
+
+            // Jika sudah berhasil
             $this->dispatch('success', __('generic.string.delete'));
+            return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.disable', ['message' => $e->getMessage()]));
         }
-        return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
     }
 
     public function onTypeChanged($value)

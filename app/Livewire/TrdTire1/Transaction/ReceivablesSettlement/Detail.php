@@ -5,7 +5,7 @@ namespace App\Livewire\TrdTire1\Transaction\ReceivablesSettlement;
 use Exception;
 use App\Enums\TrdTire1\Status;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\{Log, DB};
 use App\Models\SysConfig1\ConfigSnum;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\TrdTire1\Master\Partner;
@@ -526,16 +526,31 @@ class Detail extends BaseComponent
                 throw new Exception('Nomor Pelunasan tidak ada');
             }
 
-            $this->paymentService->delPayment($this->object->id);
+            $connectionName = $this->getModelConnection();
+            DB::connection($connectionName)->beginTransaction();
 
-            $partnertrHdr = PartnertrHdr::where('tr_type', '=', 'ARA')
-                ->where('tr_code', '=', $this->object->tr_code)
-                ->first();
-            if ($partnertrHdr) {
-                // dd($partnertrHdr);
-                $this->partnerTrxService->delPartnerTrx($partnertrHdr['id']);
+            try {
+                $this->paymentService->delPayment($this->object->id);
+
+                $partnertrHdr = PartnertrHdr::where('tr_type', '=', 'ARA')
+                    ->where('tr_code', '=', $this->object->tr_code)
+                    ->first();
+                if ($partnertrHdr) {
+                    // dd($partnertrHdr);
+                    $this->partnerTrxService->delPartnerTrx($partnertrHdr['id']);
+                }
+
+                // testing rollback
+                // throw new Exception('Testing rollback delete receivables settlement');
+
+                DB::connection($connectionName)->commit();
+            } catch (Exception $e) {
+                DB::connection($connectionName)->rollBack();
+                $this->dispatch('error', 'Gagal menghapus data: ' . $e->getMessage());
+                return;
             }
 
+            // Jika sudah berhasil
             $this->dispatch('success', ('Data berhasil terhapus'));
             return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
         } catch (\Exception $e) {
@@ -547,7 +562,6 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
-
         // Validate partner wajib dipilih
         if (empty($this->inputs['partner_id']) || empty($this->inputs['partner_code'])) {
             $this->dispatch('error', 'Partner wajib dipilih!');
@@ -631,48 +645,42 @@ class Detail extends BaseComponent
         //     $this->input_details, $detailData,
         //     $this->input_advance, $advanceData);
 
-        // Process save dengan error handling
-        try {
-            // Set ID untuk mode Edit
-            if ($this->actionValue == 'Edit') {
-                $headerData['id'] = $this->objectIdValue;
-            }
-
-            // Save payment
-            $result = $this->paymentService->savePayment($headerData, $detailData, $paymentData, $advanceData, $this->overPayment);
-
-            if (!$result || !isset($result->id)) {
-                throw new Exception('Failed to save payment: Invalid result returned from addPayment service');
-            }
-
-            // Update state
-            $this->objectIdValue = $result->id;
-            $this->actionValue = 'Edit';
-
-            // Set status_code langsung pada object jika baru dibuat
-            if ($result && $this->actionValue === 'Edit') {
-                // Pastikan status_code tidak null
-                if (empty($result->status_code)) {
-                    $result->status_code = Status::OPEN;
-                    $result->save();
-                }
-            }
-
-            // Handle adjustment
-            $this->saveCreditNote($headerData, $detailData);
-
-            // Success response
-            $this->dispatch('disable-onbeforeunload');
-            $this->dispatch('success', ('Data berhasil disimpan.'));
-
-            return redirect()->route($this->appCode . '.Transaction.ReceivablesSettlement.Detail', [
-                'action' => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey($this->objectIdValue)
-            ]);
-        } catch (Exception $e) {
-            $this->dispatch('error', 'Error saving payment: ' . $e->getMessage());
-            return;
+        // Process save
+        // Set ID untuk mode Edit
+        if ($this->actionValue == 'Edit') {
+            $headerData['id'] = $this->objectIdValue;
         }
+
+        // Save payment
+        $result = $this->paymentService->savePayment($headerData, $detailData, $paymentData, $advanceData, $this->overPayment);
+
+        if (!$result || !isset($result->id)) {
+            throw new Exception('Failed to save payment: Invalid result returned from addPayment service');
+        }
+
+        // Update state
+        $this->objectIdValue = $result->id;
+        $this->actionValue = 'Edit';
+
+        // Set status_code langsung pada object jika baru dibuat
+        if ($result && $this->actionValue === 'Edit') {
+            if (empty($result->status_code)) {
+                $result->status_code = Status::OPEN;
+                $result->save();
+            }
+        }
+
+        // Handle adjustment
+        $this->saveCreditNote($headerData, $detailData);
+
+        // Success response
+        $this->dispatch('disable-onbeforeunload');
+        $this->dispatch('success', ('Data berhasil disimpan.'));
+
+        return redirect()->route($this->appCode . '.Transaction.ReceivablesSettlement.Detail', [
+            'action' => encryptWithSessionKey('Edit'),
+            'objectId' => encryptWithSessionKey($this->objectIdValue)
+        ]);
     }
 
     private function saveCreditNote($headerData, $detailData)

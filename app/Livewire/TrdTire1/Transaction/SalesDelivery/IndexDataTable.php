@@ -16,7 +16,7 @@ use App\Models\SysConfig1\ConfigConst;
 use App\Models\TrdTire1\Master\Material;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Livewire; // pastikan namespace ini diimport
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB, Log, Session};
 use Illuminate\Support\Carbon;
 use Exception;
 use Rappasoft\LaravelLivewireTables\Views\Filters\BooleanFilter;
@@ -489,55 +489,76 @@ class IndexDataTable extends BaseDataTableComponent
 
             // Panggil DeliveryService dengan array inputs dan input_details
             if (!empty($input_details)) {
-                $deliveryService = app(DeliveryService::class);
-                $result = $deliveryService->saveDelivery($inputs, $input_details);
+                // Get connection name untuk transaction
+                $connectionName = Session::get('app_code') ?: config('database.default');
+                DB::connection($connectionName)->beginTransaction();
 
-                // Persiapan data untuk BillingService
-                $billingHeaderData = [
-                    'id' => 0,
-                    'tr_type' => 'ARB',
-                    'tr_code' => $order->tr_code,
-                    'tr_date' => $this->tanggalKirim,
-                ];
+                try {
+                    $deliveryService = app(DeliveryService::class);
+                    $result = $deliveryService->saveDelivery($inputs, $input_details);
 
-                // Ambil delivery_id dari hasil saveDelivery
-                $deliveryDetails = [];
-                if (!empty($result['header'])) {
-                    $deliveryDetails[] = [
-                        'deliv_id' => $result['header']->id,
+                    // Persiapan data untuk BillingService
+                    $billingHeaderData = [
+                        'id' => 0,
+                        'tr_type' => 'ARB',
+                        'tr_code' => $order->tr_code,
+                        'tr_date' => $this->tanggalKirim,
                     ];
-                }
 
-                $billingService = app(BillingService::class);
-                $billingResult = $billingService->saveBilling($billingHeaderData, $deliveryDetails);
+                    // Ambil delivery_id dari hasil saveDelivery
+                    $deliveryDetails = [];
+                    if (!empty($result['header'])) {
+                        $deliveryDetails[] = [
+                            'deliv_id' => $result['header']->id,
+                        ];
+                    }
 
-                if (!empty($result['header'])) {
-                    AuditLogService::createDeliveryKirim([$result['header']->id]);
-                    // Audit log for Sales Delivery KIRIM
+                    $billingService = app(BillingService::class);
+                    $billingResult = $billingService->saveBilling($billingHeaderData, $deliveryDetails);
 
-                    // Cek hasil billing
-                    if (!empty($billingResult['billing_hdr'])) {
-                        // Billing berhasil dibuat
-                        // Update status_code OrderHdr menjadi SHIP
-                        $order->status_code = Status::SHIP;
-                        $order->save();
+                    if (!empty($result['header'])) {
+                        AuditLogService::createDeliveryKirim([$result['header']->id]);
+                        // Audit log for Sales Delivery KIRIM
 
-                        $successOrders[] = $order->tr_code;
-                        $successCount++;
+                        // Cek hasil billing
+                        if (!empty($billingResult['billing_hdr'])) {
+                            // Billing berhasil dibuat
+                            // Update status_code OrderHdr menjadi SHIP
+                            $order->status_code = Status::SHIP;
+                            $order->save();
+
+                            // testing rollback
+                            // throw new Exception('Testing rollback set delivery date');
+
+                            DB::connection($connectionName)->commit();
+
+                            $successOrders[] = $order->tr_code;
+                            $successCount++;
+                        } else {
+                            // Billing gagal dibuat
+                            DB::connection($connectionName)->rollBack();
+                            $failedOrders[] = [
+                                'tr_code' => $order->tr_code,
+                                'stock_errors' => [],
+                                'errors' => ['Gagal membuat Billing']
+                            ];
+                        }
                     } else {
-                        // Billing gagal dibuat
+                        // Delivery gagal dibuat
+                        DB::connection($connectionName)->rollBack();
                         $failedOrders[] = [
                             'tr_code' => $order->tr_code,
                             'stock_errors' => [],
-                            'errors' => ['Gagal membuat Billing']
+                            'errors' => ['Gagal membuat Delivery']
                         ];
                     }
-                } else {
-                    // Delivery gagal dibuat
+                } catch (Exception $e) {
+                    DB::connection($connectionName)->rollBack();
+                    Log::error("Method setDeliveryDate Error for Order {$order->tr_code}: " . $e->getMessage());
                     $failedOrders[] = [
                         'tr_code' => $order->tr_code,
                         'stock_errors' => [],
-                        'errors' => ['Gagal membuat Delivery']
+                        'errors' => ['Error: ' . $e->getMessage()]
                     ];
                 }
             }
@@ -649,8 +670,6 @@ class IndexDataTable extends BaseDataTableComponent
 
         $selectedOrderIds = $this->selectedRows;
         if (count($selectedOrderIds) > 0) {
-            DB::beginTransaction();
-
             // Ambil tr_code dari OrderHdr yang terpilih
             $selectedTrCodes = OrderHdr::whereIn('id', $selectedOrderIds)
                 ->pluck('tr_code')
@@ -661,12 +680,12 @@ class IndexDataTable extends BaseDataTableComponent
                 ->whereIn('tr_code', $selectedTrCodes)
                 ->get();
 
-	            if ($delivHdrs->isEmpty()) {
+            if ($delivHdrs->isEmpty()) {
                 $this->batchProcessing = false;
                 $this->dispatch('error', 'Tidak ada data pengiriman yang dapat dibatalkan');
                 $this->selectedRows = [];
                 return;
-	            }
+            }
 
             // Proses setiap delivery secara individual
             $deliveryService = app(DeliveryService::class);
@@ -675,6 +694,9 @@ class IndexDataTable extends BaseDataTableComponent
             $successOrders = [];
             $failedOrders = [];
             $successOrderIds = [];
+
+            // Get connection name untuk transaction
+            $connectionName = Session::get('app_code') ?: config('database.default');
 
             foreach ($delivHdrs as $delivHdr) {
                 // Cek apakah billing sudah di-print atau sudah ada pembayaran untuk nota ini
@@ -700,6 +722,9 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 }
 
+                // Get connection name untuk transaction
+                DB::connection($connectionName)->beginTransaction();
+
                 try {
                     // Simpan ID sebelum penghapusan untuk audit log
                     $delivId = $delivHdr->id;
@@ -710,27 +735,30 @@ class IndexDataTable extends BaseDataTableComponent
                     $deliveryService->delDelivery($delivHdr->tr_type, $delivHdr->id);
                     $billingService->delBilling($delivHdr->billhdr_id);
 
-                    $successOrders[] = $delivHdr->tr_code;
                     // Get OrderHdr ID from tr_code relationship since order_id field doesn't exist
                     $orderHdr = OrderHdr::where('tr_code', $delivHdr->tr_code)->where('tr_type', 'SO')->first();
                     if ($orderHdr) {
+                        // Update status OrderHdr kembali ke PRINT
+                        $orderHdr->status_code = Status::PRINT;
+                        $orderHdr->save();
                         $successOrderIds[] = $orderHdr->id;
                     }
+
+                    // testing rollback
+                    // throw new Exception('Testing rollback cancel delivery date');
+
+                    DB::connection($connectionName)->commit();
+
+                    $successOrders[] = $delivHdr->tr_code;
                     $deletedCount++;
                 } catch (Exception $e) {
+                    DB::connection($connectionName)->rollBack();
                     $failedOrders[] = [
                         'tr_code' => $delivHdr->tr_code,
                         'reason' => 'Error: ' . $e->getMessage()
                     ];
                 }
             }
-
-            // Update status OrderHdr kembali ke PRINT hanya untuk yang berhasil
-            if (!empty($successOrderIds)) {
-                OrderHdr::whereIn('id', $successOrderIds)->update(['status_code' => Status::PRINT]);
-            }
-
-            DB::commit();
 
             // Tampilkan hasil dengan detail
             $this->showBatalKirimResults($successOrders, $failedOrders, $deletedCount);
@@ -794,8 +822,6 @@ class IndexDataTable extends BaseDataTableComponent
 
         $selectedOrderIds = $this->selectedRows;
         if (count($selectedOrderIds) > 0) {
-            DB::beginTransaction();
-
             // Ambil tr_code dari OrderHdr yang terpilih
             $selectedTrCodes = OrderHdr::whereIn('id', $selectedOrderIds)
                 ->pluck('tr_code')
@@ -812,40 +838,78 @@ class IndexDataTable extends BaseDataTableComponent
                 return;
             }
 
-            $orderDtls = OrderDtl::whereIn('trhdr_id', function ($query) use ($selectedTrCodes) {
-                $query->select('id')
-                    ->from('order_hdrs')
-                    ->whereIn('tr_code', $selectedTrCodes)
-                    ->where('tr_type', 'SO');
-            })->get();
+            // Get connection name untuk transaction
+            $connectionName = Session::get('app_code') ?: config('database.default');
 
-            foreach ($orderDtls as $orderDtl) {
-                // Kembalikan qty_fgi ke IvtBal dengan batch_code null
-                $ivtBal = IvtBal::where('matl_id', $orderDtl->matl_id)
-                    ->where('matl_uom', $orderDtl->matl_uom)
-                    ->where('wh_id', 0)
-                    ->where(function($query) {
-                        $query->whereNull('batch_code')
-                              ->orWhere('batch_code', '');
-                    })
-                    ->first();
+            $successCount = 0;
+            $failedOrders = [];
 
-                if ($ivtBal) {
-                    $ivtBal->qty_fgi -= $orderDtl->qty;
-                    $ivtBal->save();
+            // Proses setiap order secara individual
+            foreach ($selectedOrderIds as $orderId) {
+                DB::connection($connectionName)->beginTransaction();
+
+                try {
+                    $orderHdr = OrderHdr::find($orderId);
+                    if (!$orderHdr) {
+                        throw new Exception("Order dengan ID {$orderId} tidak ditemukan");
+                    }
+
+                    // Validasi status SHIP untuk order ini
+                    if ($orderHdr->status_code === Status::SHIP) {
+                        throw new Exception("Order {$orderHdr->tr_code} sudah dikirim dan tidak bisa dibatalkan");
+                    }
+
+                    $orderDtls = OrderDtl::where('trhdr_id', $orderId)->get();
+
+                    foreach ($orderDtls as $orderDtl) {
+                        // Kembalikan qty_fgi ke IvtBal dengan batch_code null
+                        $ivtBal = IvtBal::where('matl_id', $orderDtl->matl_id)
+                            ->where('matl_uom', $orderDtl->matl_uom)
+                            ->where('wh_id', 0)
+                            ->where(function($query) {
+                                $query->whereNull('batch_code')
+                                      ->orWhere('batch_code', '');
+                            })
+                            ->first();
+
+                        if ($ivtBal) {
+                            $ivtBal->qty_fgi -= $orderDtl->qty;
+                            $ivtBal->save();
+                        }
+                    }
+
+                    // Update status to CANCEL
+                    $orderHdr->status_code = Status::CANCEL;
+                    $orderHdr->save();
+
+                    // testing rollback
+                    // throw new Exception('Testing rollback cancel order');
+
+                    DB::connection($connectionName)->commit();
+                    $successCount++;
+                } catch (Exception $e) {
+                    DB::connection($connectionName)->rollBack();
+                    $failedOrders[] = [
+                        'order_id' => $orderId,
+                        'reason' => $e->getMessage()
+                    ];
                 }
             }
-
-            // Update status to CANCEL
-            OrderHdr::whereIn('id', $selectedOrderIds)->update(['status_code' => Status::CANCEL]);
-
-            DB::commit();
 
             // Reset batch processing flag
             $this->batchProcessing = false;
 
-            $this->selectedRows = [];
-            $this->dispatch('success', ['Pesanan berhasil dibatalkan']);
+            // Tampilkan hasil
+            if ($successCount > 0) {
+                $this->selectedRows = [];
+                if (count($failedOrders) > 0) {
+                    $this->dispatch('warning', "{$successCount} pesanan berhasil dibatalkan, " . count($failedOrders) . " gagal.");
+                } else {
+                    $this->dispatch('success', ['Pesanan berhasil dibatalkan']);
+                }
+            } else {
+                $this->dispatch('error', 'Gagal membatalkan pesanan. Silakan cek log untuk detail.');
+            }
         } else {
             $this->batchProcessing = false;
         }
@@ -858,49 +922,84 @@ class IndexDataTable extends BaseDataTableComponent
 
         $selectedOrderIds = $this->selectedRows;
         if (count($selectedOrderIds) > 0) {
-            DB::beginTransaction();
+            // Get connection name untuk transaction
+            $connectionName = Session::get('app_code') ?: config('database.default');
 
-            // Ambil tr_code dari OrderHdr yang terpilih
-            $selectedTrCodes = OrderHdr::whereIn('id', $selectedOrderIds)
-                ->pluck('tr_code')
-                ->toArray();
+            $successCount = 0;
+            $failedOrders = [];
 
-            // Ambil matl_id dari OrderDtl yang sesuai dengan tr_code
-            $orderDtls = OrderDtl::whereIn('trhdr_id', function ($query) use ($selectedTrCodes) {
-                $query->select('id')
-                    ->from('order_hdrs')
-                    ->whereIn('tr_code', $selectedTrCodes)
-                    ->where('tr_type', 'SO');
-            })->get();
+            // Proses setiap order secara individual
+            foreach ($selectedOrderIds as $orderId) {
+                DB::connection($connectionName)->beginTransaction();
 
-            foreach ($orderDtls as $orderDtl) {
-                // Kembalikan qty_fgi ke IvtBal dengan batch_code null
-                $ivtBal = IvtBal::where('matl_id', $orderDtl->matl_id)
-                    ->where('matl_uom', $orderDtl->matl_uom)
-                    ->where('wh_id', 0)
-                    ->where(function($query) {
-                        $query->whereNull('batch_code')
-                              ->orWhere('batch_code', '');
-                    })
-                    ->first();
+                try {
+                    $orderHdr = OrderHdr::find($orderId);
+                    if (!$orderHdr) {
+                        throw new Exception("Order dengan ID {$orderId} tidak ditemukan");
+                    }
 
-                if ($ivtBal) {
-                    $ivtBal->qty_fgi += $orderDtl->qty;
-                    $ivtBal->save();
+                    // Validasi status CANCEL untuk order ini
+                    if ($orderHdr->status_code !== Status::CANCEL) {
+                        throw new Exception("Order {$orderHdr->tr_code} tidak dalam status CANCEL");
+                    }
+
+                    $orderDtls = OrderDtl::where('trhdr_id', $orderId)->get();
+
+                    foreach ($orderDtls as $orderDtl) {
+                        // Kembalikan qty_fgi ke IvtBal dengan batch_code null
+                        $ivtBal = IvtBal::where('matl_id', $orderDtl->matl_id)
+                            ->where('matl_uom', $orderDtl->matl_uom)
+                            ->where('wh_id', 0)
+                            ->where(function($query) {
+                                $query->whereNull('batch_code')
+                                      ->orWhere('batch_code', '');
+                            })
+                            ->first();
+
+                        if ($ivtBal) {
+                            $ivtBal->qty_fgi += $orderDtl->qty;
+                            $ivtBal->save();
+                        }
+                    }
+
+                    // Update status to PRINT
+                    $orderHdr->status_code = Status::PRINT;
+                    $orderHdr->save();
+
+                    // testing rollback
+                    // throw new Exception('Testing rollback uncancel order');
+
+                    DB::connection($connectionName)->commit();
+                    $successCount++;
+                } catch (Exception $e) {
+                    DB::connection($connectionName)->rollBack();
+                    $failedOrders[] = [
+                        'order_id' => $orderId,
+                        'reason' => $e->getMessage()
+                    ];
                 }
             }
-            OrderHdr::whereIn('id', $selectedOrderIds)->update(['status_code' => Status::PRINT]);
-
-            DB::commit();
 
             // Reset batch processing flag
             $this->batchProcessing = false;
 
-            $this->selectedRows = [];
-            $this->dispatch('showAlert', [
-                'type' => 'success',
-                'message' => 'Pesanan berhasil dikembalikan dan stok diperbarui'
-            ]);
+            // Tampilkan hasil
+            if ($successCount > 0) {
+                $this->selectedRows = [];
+                if (count($failedOrders) > 0) {
+                    $this->dispatch('showAlert', [
+                        'type' => 'warning',
+                        'message' => "{$successCount} pesanan berhasil dikembalikan, " . count($failedOrders) . " gagal."
+                    ]);
+                } else {
+                    $this->dispatch('showAlert', [
+                        'type' => 'success',
+                        'message' => 'Pesanan berhasil dikembalikan dan stok diperbarui'
+                    ]);
+                }
+            } else {
+                $this->dispatch('error', 'Gagal mengembalikan pesanan. Silakan cek log untuk detail.');
+            }
         } else {
             $this->batchProcessing = false;
         }

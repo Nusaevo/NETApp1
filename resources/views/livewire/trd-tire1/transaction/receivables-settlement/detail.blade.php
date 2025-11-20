@@ -131,7 +131,7 @@
 
                         <x-slot name="button">
                             <x-ui-button clickEvent="addPaymentItem" cssClass="btn btn-primary" iconPath="add.svg"
-                                button-name="Add" />
+                                button-name="Add":action="$actionValue" />
                         </x-slot>
                     </x-ui-table>
                 </x-ui-card>
@@ -215,7 +215,7 @@
                                 </div>
                             @endif
                             <x-ui-button clickEvent="payItem" cssClass="btn btn-primary"
-                                button-name="Auto Pelunasan" />
+                                button-name="Auto Pelunasan" :action="$actionValue"/>
                         </x-slot>
                     </x-ui-table>
                 </x-ui-card>
@@ -244,7 +244,6 @@
             </x-ui-card>
         </x-ui-tab-view-content>
     </x-ui-page-card>
-
     <!-- Footer with Save button -->
     <x-ui-footer>
         <x-ui-button clickEvent="delete" button-name="Hapus" loading="true" :action="$actionValue" cssClass="btn-danger"
@@ -253,8 +252,6 @@
             cssClass="btn-primary" iconPath="save.svg" />
     </x-ui-footer>
     <br>
-
-
 </div>
 
 <script>
