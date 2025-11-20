@@ -144,7 +144,7 @@ class Index extends BaseComponent
                         ELSE ''
                     END AS customer,
                     r.grp,
-                    SUM(d.qty)::int || '|' || SUM(TRUNC(d.qty / r.qty) * r.reward)::int AS point
+                    SUM(d.qty)::int || '|' || (TRUNC(SUM(d.qty) / MAX(r.qty)) * MAX(r.reward))::int AS point
                 FROM order_hdrs h
                 JOIN order_dtls d
                   ON d.tr_code = h.tr_code
@@ -301,7 +301,7 @@ class Index extends BaseComponent
             }
 
             // Title & subtitle
-            $title = 'DATA PENJUALAN GT RADIAL per Customer';
+            $title = 'DATA PENJUALAN per Customer';
             $subtitleParts = [];
             if ($this->category) {
                 $subtitleParts[] = 'Program: ' . $this->category;
