@@ -267,6 +267,8 @@ class Detail extends BaseComponent
         $this->objectIdValue = $delivery->id;
         $this->object = $delivery;
 
+        $this->versionNumber = $this->object->version_number ?? 1;
+
         // Load semua data delivery menggunakan method yang sama
         $this->loadDeliveryData();
     }
@@ -327,7 +329,15 @@ class Detail extends BaseComponent
             foreach ($this->object_detail as $key => $detail) {
                 $order = OrderDtl::find($detail->reffdtl_id);
                 $this->input_details[$key]['order_date'] = $order->OrderHdr->tr_date;
-                $this->input_details[$key]['qty_order'] = $order->qty - $order->qty_reff + $detail->qty;
+                // qty_order = qty order - qty_reff (yang sudah dikirim) + qty delivery ini
+                // Karena qty_reff sudah include qty dari delivery ini, kita perlu tambahkan kembali
+                // untuk mendapatkan qty yang benar-benar belum dikirim (selain delivery ini)
+                // Tapi jika order_qty_reff = 0, berarti belum ada yang dikirim, jadi qty_order = order->qty
+                if ($order->qty_reff == 0) {
+                    $this->input_details[$key]['qty_order'] = $order->qty;
+                } else {
+                    $this->input_details[$key]['qty_order'] = ($order->qty - $order->qty_reff) + $detail->qty;
+                }
                 $picking = DelivPicking::where('trpacking_id', $detail->id)->first();
                 $this->inputs['wh_id'] = $picking->wh_id;
                 $this->inputs['wh_code'] = $picking->wh_code;
@@ -388,6 +398,41 @@ class Detail extends BaseComponent
 
     public function onPurchaseOrderChanged($value)
     {
+        // Di mode Edit, jangan reset input_details jika delivery sudah ada item
+        // karena akan menyebabkan duplikasi item yang sudah ada
+        // Juga check jika value sama dengan yang sudah ada, tidak perlu reset
+        if ($this->isEditOrView() && !empty($this->object->id)) {
+            // Jika value sama dengan yang sudah ada, tidak perlu melakukan apa-apa
+            $currentValue = $this->inputs['reffhdrtr_code'] ?? '';
+            if ($value === $currentValue && !empty($this->input_details)) {
+                return;
+            }
+
+            // Jika delivery sudah ada item, jangan reset input_details
+            if (!empty($this->input_details)) {
+                // Hanya update partner info dan reffhdrtr_code, jangan reset input_details
+                if (!empty($value)) {
+                    $orderDetails = OrderDtl::selectRaw('
+                            order_hdrs.partner_id, order_hdrs.partner_code,
+                            partners.name, partners.city
+                        ')
+                        ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
+                        ->join('partners', 'order_hdrs.partner_id', '=', 'partners.id')
+                        ->where('order_hdrs.tr_type', 'PO')
+                        ->where('order_hdrs.tr_code', $value)
+                        ->first();
+
+                    if ($orderDetails) {
+                        $this->inputs['partner_id'] = $orderDetails->partner_id;
+                        $this->inputs['partner_name'] = $orderDetails->name . ' - ' . $orderDetails->city;
+                        $this->inputs['partner_code'] = $orderDetails->partner_code;
+                        $this->inputs['reffhdrtr_code'] = $value;
+                    }
+                }
+                return;
+            }
+        }
+
         $this->input_details = [];
 
         if (empty($value)) {
