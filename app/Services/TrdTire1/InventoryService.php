@@ -14,7 +14,7 @@ class InventoryService
     private function isMaterialJasa(int $matlId): bool
     {
         $material = Material::find($matlId);
-        return $material && strtoupper(trim($material->category ?? '')) === 'JASA';
+        return $material && strtoupper(trim($material->type_code)) === 'S';
     }
 
     #endregion
@@ -182,11 +182,12 @@ class InventoryService
     {
         // Hapus log inventory berdasarkan trHdrId dan opsional trdtlId
         if ($trDtlId !== null) {
-            // Jika ada trdtlId, cari berdasarkan trdtlId saja
+            // Jika ada trdtlId, cari berdasarkan trType, trhdrId, dan trdtlId untuk memastikan log yang tepat
             $query = IvtLog::where('tr_type', $trType)
+                ->where('trhdr_id', $trHdrId)
                 ->where('trdtl_id', $trDtlId);
         } else {
-            // Jika tidak ada trdtlId, cari berdasarkan trhdrId
+            // Jika tidak ada trdtlId, cari berdasarkan trType dan trhdrId
             $query = IvtLog::where('tr_type', $trType)
                 ->where('trhdr_id', $trHdrId);
         }

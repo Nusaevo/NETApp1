@@ -120,16 +120,15 @@ class DeliveryService
         unset($detail);
         foreach ($existingPackings as $existing) {
             if (!in_array($existing->id, $packing_ids)) {
-                // Hapus semua picking terlebih dahulu beserta log-nya
+                // Hapus semua picking terlebih dahulu beserta log PD-nya
                 $existingPickings = DelivPicking::where('trpacking_id', $existing->id)->get();
                 foreach ($existingPickings as $picking) {
-                    // dd ($headerData['tr_type'] . 'R', $headerData['id'], $picking->id);
-                    $this->inventoryService->delIvtLog($headerData['tr_type'] . 'R', $headerData['id'], $picking->id);
+                    // Hapus PD log yang menggunakan picking id sebagai trdtl_id
+                    $this->inventoryService->delIvtLog($headerData['tr_type'], $headerData['id'], $picking->id);
                     $picking->delete();
                 }
 
                 // Hapus log reservation (PDR) yang dibuat dengan packing id
-                // dd($headerData['tr_type'] . 'R', $headerData['id'], $existing->id);
                 $this->inventoryService->delIvtLog($headerData['tr_type'] . 'R', $headerData['id'], $existing->id);
                 OrderDtl::updateQtyReff(-$existing->qty, $existing->reffdtl_id);
                 $existing->delete();
@@ -307,11 +306,33 @@ class DeliveryService
 
     private function deleteDetail(int $delivId): bool
     {
+        // Get delivery header untuk mendapatkan tr_type
+        $delivHdr = DelivHdr::find($delivId);
+        if (!$delivHdr) {
+            return false;
+        }
+
+        $trType = $delivHdr->tr_type;
+        $reservationType = $trType . 'R'; // PDR untuk PD, SDR untuk SD
+
         // Get existing packings
         $dbDelivPacking = DelivPacking::where('trhdr_id', $delivId)->get();
         foreach ($dbDelivPacking as $packing) {
+            // Hapus semua picking terlebih dahulu beserta log PD-nya
+            $existingPickings = DelivPicking::where('trpacking_id', $packing->id)->get();
+            foreach ($existingPickings as $picking) {
+                // Hapus PD log yang menggunakan picking id sebagai trdtl_id
+                $this->inventoryService->delIvtLog($trType, $delivId, $picking->id);
+                $picking->delete();
+            }
+
+            // Hapus PDR log yang menggunakan packing id sebagai trdtl_id
+            $this->inventoryService->delIvtLog($reservationType, $delivId, $packing->id);
+
+            // Update qty_reff di order detail
             OrderDtl::updateQtyReff(-$packing->qty, $packing->reffdtl_id);
-            DelivPicking::where('trpacking_id', $packing->id)->delete();
+
+            // Hapus packing
             $packing->Delete();
         }
         return true;

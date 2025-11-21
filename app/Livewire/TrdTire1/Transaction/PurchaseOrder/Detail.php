@@ -190,6 +190,9 @@ class Detail extends BaseComponent
         // Validasi duplikasi matl_id dalam detail
         $this->validateMatlIdDuplicate();
 
+        // Pastikan detail tidak kosong dan setiap baris terisi
+        $this->validateDetailFilled();
+
         // Validasi: pastikan item yang tidak editable tidak diubah
         $this->validateNonEditableItems();
 
@@ -1057,6 +1060,30 @@ class Detail extends BaseComponent
                 throw new Exception("Material '{$materialName}' sudah ada dalam detail. Silakan hapus salah satu atau gunakan material yang berbeda.");
             }
             $matlIds[] = $matlId;
+        }
+    }
+
+    /**
+     * Pastikan detail minimal satu baris dan terisi lengkap
+     */
+    private function validateDetailFilled(): void
+    {
+        if (empty($this->input_details)) {
+            throw new Exception('Detail item belum diisi. Tambahkan minimal satu material sebelum menyimpan.');
+        }
+
+        foreach ($this->input_details as $index => $detail) {
+            $matlId = $detail['matl_id'] ?? null;
+            $qty = $detail['qty'] ?? null;
+            $price = $detail['price'] ?? null;
+
+            $qtyIsEmpty = !array_key_exists('qty', $detail) || $qty === null || $qty === '';
+            $priceIsEmpty = !array_key_exists('price', $detail) || $price === null || $price === '';
+
+            if (empty($matlId) || $qtyIsEmpty || $priceIsEmpty) {
+                $lineNumber = $index + 1;
+                throw new Exception("Detail baris {$lineNumber} belum lengkap. Pastikan material, qty, dan harga terisi.");
+            }
         }
     }
 
