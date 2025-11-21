@@ -21,7 +21,11 @@
         <div class="{{ $containerClass }} position-relative"
              x-data="{
                 open: @entangle('showDropdown'),
-                highlightIndex: 0,
+                highlightIndex: @entangle('highlightIndex'),
+                getOptionsCount() {
+                    const items = document.querySelectorAll('.dropdown-option-item');
+                    return items.length;
+                },
                 focusSearch() {
                     this.$nextTick(() => {
                         const searchInput = this.$refs.searchInput;
@@ -30,16 +34,44 @@
                         }
                     });
                 },
+                scrollToHighlighted() {
+                    this.$nextTick(() => {
+                        const highlighted = document.querySelector('.option-highlighted');
+                        if (highlighted) {
+                            highlighted.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                        }
+                    });
+                },
+                handleArrowDown() {
+                    setTimeout(() => {
+                        const count = this.getOptionsCount();
+                        if (count === 0) return;
+                        if (this.highlightIndex < count - 1) {
+                            this.highlightIndex++;
+                        } else {
+                            this.highlightIndex = 0;
+                        }
+                        this.scrollToHighlighted();
+                    }, 50);
+                },
+                handleArrowUp() {
+                    setTimeout(() => {
+                        const count = this.getOptionsCount();
+                        if (count === 0) return;
+                        if (this.highlightIndex > 0) {
+                            this.highlightIndex--;
+                        } else {
+                            this.highlightIndex = count - 1;
+                        }
+                        this.scrollToHighlighted();
+                    }, 50);
+                },
                 selectOption(value, label) {
-                    // Close dropdown first
                     this.open = false;
-                    // Call Livewire method instead of JavaScript handling
                     $wire.call('selectOption', value, label);
                 },
                 clearSelection() {
-                    // Close dropdown first
                     this.open = false;
-                    // Call Livewire method instead of JavaScript handling
                     $wire.call('clearSelection');
                 }
              }"
@@ -122,16 +154,15 @@
                    wire:model.live.debounce.250ms="textFieldSearch"
                    class="form-control form-control-sm"
                    placeholder="Ketik untuk mencari..."
-                   wire:keydown.arrow-up="decrementHighlight"
-                   wire:keydown.arrow-down="incrementHighlight"
-                   wire:keydown.enter.prevent="selectOption"
-                   wire:keydown.escape="closeDropdown"
-                   @keydown.escape="open = false"
+                   @keydown.arrow-up.prevent="handleArrowUp()"
+                   @keydown.arrow-down.prevent="handleArrowDown()"
+                   @keydown.enter.prevent="$wire.selectHighlightedOption()"
+                   @keydown.escape="open = false; $wire.closeDropdown()"
                    autocomplete="off">
         </div>
 
         <!-- Loading indicator -->
-        <div wire:loading.delay wire:target="updatedTextFieldSearch"
+        <div wire:loading.delay wire:target="textFieldSearch"
              class="p-2 text-center text-muted">
             <i class="fas fa-spinner fa-spin"></i> Searching...
         </div>
@@ -142,9 +173,12 @@
             <ul class="list-unstyled m-0">
                 @if(!empty($options))
                     @foreach ($options as $i => $option)
-                        <li class="px-3 py-2"
+                        <li class="px-3 py-2 dropdown-option-item"
                             wire:key="option-{{ $option['id'] ?? $i }}"
-                            :class="highlightIndex === {{ $i }} ? 'bg-primary text-white' : 'bg-white text-dark'"
+                            :class="{
+                                'bg-primary text-white option-highlighted': highlightIndex === {{ $i }},
+                                'bg-white text-dark': highlightIndex !== {{ $i }}
+                            }"
                             wire:click.prevent="selectOptionFromList({{ $i }})"
                             @click="highlightIndex = {{ $i }}"
                             @mouseover="highlightIndex = {{ $i }}"

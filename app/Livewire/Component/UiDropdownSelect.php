@@ -850,6 +850,17 @@ class UiDropdownSelect extends Component
     }
 
     /**
+     * Select currently highlighted option (called from keyboard enter)
+     */
+    public function selectHighlightedOption()
+    {
+        if (empty($this->options)) return;
+        
+        // Use the highlighted index to select
+        $this->selectOptionFromList($this->highlightIndex);
+    }
+
+    /**
      * Select an option from list by index (called from blade template)
      */
     public function selectOptionFromList($index)
