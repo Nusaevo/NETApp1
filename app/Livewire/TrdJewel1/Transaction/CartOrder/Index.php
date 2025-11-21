@@ -36,7 +36,8 @@ class Index extends BaseComponent
         'changeStatus' => 'changeStatus',
         'materialSaved' => 'materialSaved',
         'tagScanned' => 'tagScanned',
-        'delete' => 'delete'
+        'delete' => 'delete',
+        'DropdownSelected' => 'DropdownSelected'
     ];
     #endregion
 
@@ -106,7 +107,7 @@ class Index extends BaseComponent
                 ->whereIn('matl_id', $newItemIds)
                 ->orderBy('tr_seq')
                 ->get();
-            
+
             // Update the input_details with fresh data for new items only
             foreach ($newDetails as $detail) {
                 $existingIndex = array_search($detail->matl_id, array_column($this->input_details, 'matl_id'));
@@ -123,7 +124,7 @@ class Index extends BaseComponent
                     $this->input_details[$existingIndex]['image_path'] = $imagePath;
                 }
             }
-            
+
             // Clear the new items array after refresh
             $this->newItems = [];
             $this->countTotalAmount();
@@ -352,7 +353,7 @@ class Index extends BaseComponent
                 $orderDtl->forceDelete();
             }
         }
-        
+
         // Use optimized refresh method for deletion
         $this->refreshAfterDelete($index);
     }

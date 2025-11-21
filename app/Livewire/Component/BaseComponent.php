@@ -625,5 +625,65 @@ class BaseComponent extends Component
         return $appCode ?: config('database.default');
     }
 
+    /**
+     * Handle dropdown selection from UiDropdownSelect component
+     */
+    public function DropdownSelected(...$args)
+    {
+        // Get data from first argument (Livewire passes event data as first parameter)
+        $data = $args[0] ?? [];
 
+
+
+        // Update model if provided
+        if (isset($data['model']) && isset($data['value'])) {
+            $this->fill([$data['model'] => $data['value']]);
+        }
+
+        // Call onChanged function if provided
+        if (isset($data['onChanged']) && !empty($data['onChanged'])) {
+            $onChanged = $data['onChanged'];
+            $value = $data['value'] ?? null;
+
+            // Handle function with parameters like "changeItem(0, $event.target.value)"
+            if (strpos($onChanged, '(') !== false && strpos($onChanged, ')') !== false) {
+                // Extract function name and parameters
+                $functionName = substr($onChanged, 0, strpos($onChanged, '('));
+                $paramsStr = substr($onChanged, strpos($onChanged, '(') + 1, strpos($onChanged, ')') - strpos($onChanged, '(') - 1);
+
+                // Split parameters by comma
+                $params = array_map('trim', explode(',', $paramsStr));
+
+                // Process parameters
+                $processedParams = [];
+                foreach ($params as $param) {
+                    // Handle $event.target.value replacement
+                    if ($param === '$event.target.value') {
+                        $processedParams[] = $value;
+                    }
+                    // Handle numeric parameters
+                    elseif (is_numeric($param)) {
+                        $processedParams[] = (int)$param;
+                    }
+                    // Handle string parameters (remove quotes if present)
+                    else {
+                        $cleanParam = trim($param, '"\'');
+                        $processedParams[] = $cleanParam;
+                    }
+                }
+
+
+
+                // Call method with processed parameters if it exists
+                if (method_exists($this, $functionName)) {
+                    $this->$functionName(...$processedParams);
+                }
+            } else {
+                // Simple function name without parameters
+                if (method_exists($this, $onChanged)) {
+                    $this->$onChanged($value);
+                }
+            }
+        }
+    }
 }

@@ -49,6 +49,7 @@ class Detail extends BaseComponent
     protected $listeners = [
         'changeStatus' => 'changeStatus',
         'delete' => 'delete',
+        'DropdownSelected' => 'DropdownSelected'
     ];
 
     // Livewire lifecycle hooks

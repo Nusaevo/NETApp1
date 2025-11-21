@@ -23,7 +23,9 @@ class Index extends BaseComponent
         AND p.deleted_at IS NULL
     ";
     protected $masterService;
-
+    protected $listeners = [
+        'DropdownSelected' => 'DropdownSelected'
+    ];
     protected function onPreRender()
     {
         $this->masterService = new MasterService();

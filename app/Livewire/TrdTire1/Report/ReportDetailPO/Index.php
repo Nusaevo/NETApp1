@@ -22,7 +22,9 @@ class Index extends BaseComponent
     public $perPage = 25;
     public $page = 1;
     public $allResults = [];
-
+    protected $listeners = [
+        'DropdownSelected' => 'DropdownSelected'
+    ];
     public $ddPartner = [
         'placeHolder' => "Ketik untuk cari supplier ...",
         'optionLabel' => "code,name,address,city",

@@ -83,7 +83,8 @@ class Detail extends BaseComponent
         'changeStatus'  => 'changeStatus',
         'delete' => 'delete',
         // 'load-purchase-order-details' => 'loadPurchaseOrderDetails',
-        'onPurchaseOrderChanged' => 'onPurchaseOrderChanged'
+        'onPurchaseOrderChanged' => 'onPurchaseOrderChanged',
+        'DropdownSelected' => 'DropdownSelected'
     ];
     #endregion
 

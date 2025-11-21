@@ -104,6 +104,7 @@ class Detail extends BaseComponent
         'onTrDateChanged' => 'onTrDateChanged', // listener untuk perubahan tr_date
         'onTrCodeChanged' => 'onTrCodeChanged', // listener untuk perubahan tr_code
         'resetToCreateMode' => 'resetToCreateMode', // listener untuk reset ke mode create
+        'DropdownSelected' => 'DropdownSelected'
     ];
     public function openNpwpDialogBox()
     {

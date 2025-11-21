@@ -81,6 +81,7 @@ class Detail extends BaseComponent
         'salesTypeOnChanged' => 'salesTypeOnChanged', // tambahkan listener baru
         'onTrCodeChanged' => 'onTrCodeChanged', // listener untuk perubahan tr_code
         'resetToCreateMode' => 'resetToCreateMode', // listener untuk reset ke mode create
+        'DropdownSelected' => 'DropdownSelected'
     ];
 
     // Livewire lifecycle hooks

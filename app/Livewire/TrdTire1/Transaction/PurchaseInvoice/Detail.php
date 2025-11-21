@@ -71,7 +71,8 @@ class Detail extends BaseComponent
         'onCurrencyChanged' => 'onCurrencyChanged',
         'onMaterialChanged' => 'onMaterialChanged',
         'onDelivChanged' => 'onDelivChanged',
-        'removeDelivery' => 'removeDelivery'
+        'removeDelivery' => 'removeDelivery',
+        'DropdownSelected' => 'DropdownSelected'
     ];
     #endregion
 

@@ -68,6 +68,7 @@ class Detail extends BaseComponent
         'updateDiscount' => 'updateDiscount',
         'updateDPP' => 'updateDPP',
         'updateTotalTax' => 'updateTotalTax',
+        'DropdownSelected' => 'DropdownSelected'
     ];
     #endregion
 

@@ -36,6 +36,7 @@ class Detail extends BaseComponent
     ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
+        'DropdownSelected' => 'DropdownSelected'
     ];
 
     #endregion

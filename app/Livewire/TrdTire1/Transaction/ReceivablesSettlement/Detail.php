@@ -82,6 +82,7 @@ class Detail extends BaseComponent
         'changeStatus'  => 'changeStatus',
         'delete' => 'delete',
         'onTrCodeChanged' => 'onTrCodeChanged', // listener untuk perubahan tr_code
+        'DropdownSelected' => 'DropdownSelected'
     ];
 
     #endregion

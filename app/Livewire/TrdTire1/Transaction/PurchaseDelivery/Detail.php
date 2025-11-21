@@ -85,6 +85,7 @@ class Detail extends BaseComponent
         // 'load-purchase-order-details' => 'loadPurchaseOrderDetails',
         'onPurchaseOrderChanged' => 'onPurchaseOrderChanged',
         'onTrCodeChanged' => 'onTrCodeChanged', // listener untuk perubahan tr_code
+        'DropdownSelected' => 'DropdownSelected'
     ];
     #endregion
 

@@ -58,6 +58,7 @@ class Detail extends BaseComponent
         'updateDPP' => 'updateDPP',
         'updatePPN' => 'updatePPN',
         'updateTotalTax' => 'updateTotalTax',
+        'DropdownSelected' => 'DropdownSelected'
     ];
     #endregion
 

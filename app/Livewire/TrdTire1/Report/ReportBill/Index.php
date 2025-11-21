@@ -17,7 +17,8 @@ class Index extends BaseComponent
 
     protected $listeners = [
         'onSrCodeChanged',
-        'selectedPrintDate' => 'onDateChanged'
+        'selectedPrintDate' => 'onDateChanged',
+        'DropdownSelected' => 'DropdownSelected'
     ];
 
     protected function onPreRender()
