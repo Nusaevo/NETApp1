@@ -21,27 +21,41 @@
                 open: {{ $showDropdown ? 'true' : 'false' }},
                 highlightIndex: {{ $highlightIndex ?? 0 }},
                 componentId: '{{ $this->getId() }}',
+                destroyed: false,
                 init() {
-                    // Only setup watchers if component is alive
-                    if (this.isComponentAlive()) {
-                        try {
-                            // Watch for Livewire updates safely
-                            this.$watch('$wire.showDropdown', value => {
-                                if (value !== undefined && value !== null) {
-                                    this.open = value;
-                                }
-                            });
-                            this.$watch('$wire.highlightIndex', value => {
-                                if (value !== undefined && value !== null) {
-                                    this.highlightIndex = value;
-                                }
-                            });
-                        } catch (e) {
-                            console.warn('Livewire watcher setup failed:', e);
+                    // Check if component exists before setting up watchers
+                    this.$nextTick(() => {
+                        if (this.isComponentAlive()) {
+                            this.setupWatchers();
                         }
+                    });
+
+                    // Listen for component destruction
+                    document.addEventListener('livewire:component-dehydrated', (e) => {
+                        if (e.detail.component.id === this.componentId) {
+                            this.destroyed = true;
+                        }
+                    });
+                },
+                setupWatchers() {
+                    try {
+                        // Safely setup watchers with null checks
+                        this.$watch('$wire.showDropdown', value => {
+                            if (!this.destroyed && this.isComponentAlive() && value !== undefined && value !== null) {
+                                this.open = value;
+                            }
+                        });
+                        this.$watch('$wire.highlightIndex', value => {
+                            if (!this.destroyed && this.isComponentAlive() && value !== undefined && value !== null) {
+                                this.highlightIndex = value;
+                            }
+                        });
+                    } catch (e) {
+                        // Silently handle watcher setup failures
                     }
                 },
                 isComponentAlive() {
+                    if (this.destroyed) return false;
                     try {
                         return window.Livewire &&
                                window.Livewire.find &&
@@ -65,59 +79,59 @@
                     return items.length;
                 },
                 handleArrowUp() {
-                    if (this.isComponentAlive()) {
+                    if (!this.destroyed && this.isComponentAlive()) {
                         try {
                             $wire.call('decrementHighlight');
                         } catch (e) {
-                            console.warn('Failed to call decrementHighlight:', e);
+                            // Silently handle failed calls
                         }
                     }
                 },
                 handleArrowDown() {
-                    if (this.isComponentAlive()) {
+                    if (!this.destroyed && this.isComponentAlive()) {
                         try {
                             $wire.call('incrementHighlight');
                         } catch (e) {
-                            console.warn('Failed to call incrementHighlight:', e);
+                            // Silently handle failed calls
                         }
                     }
                 },
                 selectOption(value, label) {
                     this.open = false;
-                    if (this.isComponentAlive()) {
+                    if (!this.destroyed && this.isComponentAlive()) {
                         try {
                             $wire.call('selectOption', value, label);
                         } catch (e) {
-                            console.warn('Failed to call selectOption:', e);
+                            // Silently handle failed calls
                         }
                     }
                 },
                 clearSelection() {
                     this.open = false;
-                    if (this.isComponentAlive()) {
+                    if (!this.destroyed && this.isComponentAlive()) {
                         try {
                             $wire.call('clearSelection');
                         } catch (e) {
-                            console.warn('Failed to call clearSelection:', e);
+                            // Silently handle failed calls
                         }
                     }
                 },
                 closeDropdown() {
                     this.open = false;
-                    if (this.isComponentAlive()) {
+                    if (!this.destroyed && this.isComponentAlive()) {
                         try {
                             $wire.call('closeDropdown');
                         } catch (e) {
-                            console.warn('Failed to call closeDropdown:', e);
+                            // Silently handle failed calls
                         }
                     }
                 },
                 selectHighlighted() {
-                    if (this.isComponentAlive()) {
+                    if (!this.destroyed && this.isComponentAlive()) {
                         try {
                             $wire.call('selectHighlightedOption');
                         } catch (e) {
-                            console.warn('Failed to call selectHighlightedOption:', e);
+                            // Silently handle failed calls
                         }
                     }
                 }
@@ -193,7 +207,7 @@
                  x-transition
                  class="position-absolute w-100 bg-white border rounded shadow"
                  style="top: calc(100% - 1px); left: 0; border-top: none; z-index: 9999; max-height: 300px; overflow: hidden;"
-                 @click.away="closeDropdown()">
+                 @click.away="if (!destroyed) { closeDropdown(); }"
 
         <!-- Search Input -->
         <div class="p-2 border-bottom">
