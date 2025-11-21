@@ -21,8 +21,11 @@
 
     // Generate a unique ID for this instance to avoid conflicts
     $uniqueId = uniqid('ui_dropdown_select_');
-@endphp
 
+    // Use searchOnSpace directly from component property (already set in constructor)
+    // Since it's a public property, Laravel automatically populates it from the attribute
+    $searchOnSpaceValue = $searchOnSpace;
+@endphp
 @livewire('component.ui-dropdown-select', [
     'model' => $model,
     'query' => $query,
@@ -41,5 +44,6 @@
     'action' => $action ?? '',
     'buttonEnabled' => $buttonEnabled ?? 'true',
     'enabled' => $enabled ?? 'true',
-    'visible' => $visible ?? 'true'
+    'visible' => $visible ?? 'true',
+    'searchOnSpace' => $searchOnSpaceValue
 ], key($uniqueId))

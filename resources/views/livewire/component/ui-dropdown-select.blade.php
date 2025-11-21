@@ -191,14 +191,22 @@
             </div>
                         </li>
                     @endforeach
-                @elseif(!empty($textFieldSearch) && strlen($textFieldSearch) >= $minSearchLength && !$isSearching)
-                    <li class="px-3 py-2 text-muted">
-                        No results found
-                    </li>
-                @elseif(empty($textFieldSearch))
-                    <li class="px-3 py-2 text-muted">
-
-                    </li>
+                @elseif(!$isSearching)
+                    {{-- Show "No results found" when search is done but no results --}}
+                    @if(!empty($textFieldSearch) && strlen($textFieldSearch) >= $minSearchLength)
+                        <li class="px-3 py-2 text-muted">
+                            No results found
+                        </li>
+                    @elseif(empty($textFieldSearch) && $searchOnSpace === 'true' && $showDropdown)
+                        {{-- SearchOnSpace mode active but no data available --}}
+                        <li class="px-3 py-2 text-muted">
+                            No data available
+                        </li>
+                    @else
+                        <li class="px-3 py-2 text-muted">
+                            Type to search...
+                        </li>
+                    @endif
                 @endif
             </ul>
         </div>

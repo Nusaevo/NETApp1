@@ -43,13 +43,13 @@
         }"
         x-init="initDataTable()"
         class="table-container"
-        style="margin: {{ $margin }}; padding: {{ $padding }}; width: {{ $width }}; height: {{ $height }}; overflow: hidden; display: flex; flex-direction: column;">
+        style="margin: {{ $margin }}; padding: {{ $padding }}; width: {{ $width }}; height: {{ $height }}; overflow: visible; display: flex; flex-direction: column;">
 
-        <!-- Scrollable Table Wrapper -->
-        <div class="table-scroll" style="width: 100%; height: 100%; overflow: auto;">
+        <!-- Table Wrapper -->
+        <div class="table-scroll" style="width: 100%; height: 100%;">
             <table {{ isset($id) ? 'id='.$id : '' }} class="table table-striped table-hover" x-ref="table"
-                style="width: max-content; min-width: 100%; border-collapse: collapse;">
-                <thead style="position: sticky; top: 0; background-color: #f8f9fa; z-index: 10;">
+                style="width: 100%; border-collapse: collapse;">
+                <thead style="position: sticky; top: 0; background-color: #f8f9fa; z-index: 1;">
                     <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
                         {{ $headers }}
                     </tr>
@@ -67,13 +67,14 @@
         @endisset
     </div>
 @else
-<div >
+<div class="ui-table-container"
+    style="margin: {{ $margin }}; padding: {{ $padding }}; width: {{ $width }}; height: {{ $height }}; overflow: visible; display: flex; flex-direction: column;">
 
-    <!-- Scrollable Table Wrapper -->
+    <!-- Table Wrapper -->
     <div class="table-scroll" style="width: 100%; height: 100%;">
         <table {{ isset($id) ? 'id='.$id : 'id=customTableId' }} class="ui-table"
-            style="width: max-content; min-width: 100%; border-collapse: collapse;">
-            <thead style="position: sticky; top: 0; background-color: #f8f9fa; z-index: 10;">
+            style="width: 100%; border-collapse: collapse;">
+            <thead style="position: sticky; top: 0; background-color: #f8f9fa; z-index: 1;">
                 <tr class="fw-bold fs-6 text-gray-800">
                     {{ $headers }}
                 </tr>

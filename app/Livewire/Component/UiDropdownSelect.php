@@ -38,6 +38,7 @@ class UiDropdownSelect extends Component
     public $enabled = 'true';
     public $visible = 'true';
     public $labelLoaded = false; // Track if label has been loaded
+    public $searchOnSpace = 'false'; // Mode untuk search semua data ketika dropdown dibuka
 
     /**
      * Mount method to initialize dynamic queries and parameters.
@@ -61,7 +62,8 @@ class UiDropdownSelect extends Component
         $action = '',
         $buttonEnabled = 'true',
         $enabled = 'true',
-        $visible = 'true'
+        $visible = 'true',
+        $searchOnSpace = 'false'
     )
     {
         // Initialize dynamic properties
@@ -83,6 +85,7 @@ class UiDropdownSelect extends Component
         $this->visible = $visible;
         $this->onChanged = $onChanged;
         $this->inputClass = $inputClass;
+        $this->searchOnSpace = $searchOnSpace;
 
         // Don't load selected label immediately - use lazy loading
         // The label will be loaded when the component is first rendered
@@ -103,18 +106,28 @@ class UiDropdownSelect extends Component
         $rawSearchTerm = $this->textFieldSearch;
         $this->searchTerm = trim($rawSearchTerm);
 
-        Log::info('updatedTextFieldSearch called', [
-            'rawSearchTerm' => $rawSearchTerm,
-            'searchTerm' => $this->searchTerm,
-            'minSearchLength' => $this->minSearchLength
-        ]);
+        // Check if searchOnSpace is enabled
+        $isSpaceEnabled = in_array($this->searchOnSpace, ['true', true], true);
 
-        // Prevent search if term is empty or contains only spaces/whitespace
-        if (empty($this->searchTerm) || ctype_space($rawSearchTerm)) {
-            $this->options = [];
-            $this->showDropdown = false;
-            $this->highlightIndex = 0;
-            return;
+        // Handle empty search or space-only search
+        $isEmptyOrSpaceOnly = empty($this->searchTerm) || ctype_space($rawSearchTerm);
+
+        if ($isEmptyOrSpaceOnly) {
+            if ($isSpaceEnabled) {
+                // SearchOnSpace enabled - load all data when empty/space typed
+                $this->isSearching = true;
+                $this->showDropdown = true;
+                $this->searchAllData();
+                $this->highlightIndex = 0;
+                return;
+            } else {
+                // SearchOnSpace disabled - clear results but keep dropdown open
+                // User must explicitly close it (Escape or click away)
+                $this->options = [];
+                // Don't set showDropdown = false here - let it stay open
+                $this->highlightIndex = 0;
+                return;
+            }
         }
 
         // Add early return for overly long search terms to prevent timeout
@@ -282,6 +295,59 @@ class UiDropdownSelect extends Component
     }
 
     /**
+     * Search all data (for searchOnSpace mode)
+     */
+    public function searchAllData()
+    {
+        try {
+            if (!$this->query) {
+                $this->options = [];
+                $this->isSearching = false;
+                return;
+            }
+
+            // Get database connection
+            $connection = (strtolower($this->connection) === 'default')
+                ? Session::get('app_code')
+                : $this->connection;
+
+            // Execute original query with LIMIT for all data
+            $sqlQuery = $this->sanitizeSqlQuery($this->query);
+
+            // Check if query already has LIMIT clause
+            $finalQuery = $sqlQuery;
+            if (stripos($sqlQuery, 'LIMIT') === false) {
+                $finalQuery = $sqlQuery . ' LIMIT 100';
+            }
+
+            $results = DB::connection($connection)->select($finalQuery);
+
+            // Format results using enhanced display text logic for option list
+            $this->options = collect($results)->map(function($item) {
+                $id = (string)$this->getNestedProperty($item, $this->optionValue);
+                $text = $this->formatOptionListDisplayText($item);
+
+                return [
+                    'id' => $id,
+                    'text' => $text,
+                    'label' => $text // For compatibility
+                ];
+            })->filter(function($item) {
+                return $item['id'] !== null && $item['id'] !== 'null' && $item['id'] !== '';
+            })->toArray();
+        } catch (\Exception $e) {
+            $this->options = [];
+            Log::error('UiDropdownSelect searchAllData error', [
+                'message' => $e->getMessage(),
+                'query' => $this->query,
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+
+        $this->isSearching = false;
+    }
+
+    /**
      * Enhanced search logic based on DropdownSearchController
      */
     public function searchViaEnhancedLogic()
@@ -433,11 +499,6 @@ class UiDropdownSelect extends Component
         // Extract searchable fields from optionLabel
         $searchableFields = $this->extractSearchableFields($this->optionLabel);
 
-        Log::info('Extracted searchable fields', [
-            'optionLabel' => $this->optionLabel,
-            'searchableFields' => $searchableFields
-        ]);
-
         // If no searchable fields from optionLabel, use defaults or detect from query
         if (empty($searchableFields)) {
             $searchableFields = ['name', 'code']; // Default fields
@@ -485,11 +546,6 @@ class UiDropdownSelect extends Component
             // PostgreSQL syntax: UPPER(field::TEXT) instead of CAST(field AS CHAR)
             $searchConditions[] = "UPPER({$searchField}::TEXT) LIKE '%{$escapedSearchTerm}%'";
         }
-
-        Log::info('Built search conditions', [
-            'searchConditions' => $searchConditions,
-            'escapedSearchTerm' => $escapedSearchTerm
-        ]);
 
         // Check if searchConditions is empty
         if (empty($searchConditions)) {
@@ -805,6 +861,12 @@ class UiDropdownSelect extends Component
         $this->highlightIndex = 0;
         $this->options = [];
 
+        // If searchOnSpace is enabled, load all data when dropdown opens
+        $isSpaceEnabled = in_array($this->searchOnSpace, ['true', true], true);
+        if ($isSpaceEnabled) {
+            $this->searchAllData();
+        }
+
         // Dispatch event to focus search input
         $this->dispatch('focus-search-input');
     }
@@ -855,7 +917,7 @@ class UiDropdownSelect extends Component
     public function selectHighlightedOption()
     {
         if (empty($this->options)) return;
-        
+
         // Use the highlighted index to select
         $this->selectOptionFromList($this->highlightIndex);
     }
@@ -971,7 +1033,7 @@ class UiDropdownSelect extends Component
         if (!$this->labelLoaded && !empty($this->selectedValue)) {
             $this->loadSelectedLabel();
         }
-        
+
         return view('livewire.component.ui-dropdown-select');
     }
 }
