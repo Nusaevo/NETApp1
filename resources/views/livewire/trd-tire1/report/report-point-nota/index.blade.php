@@ -47,11 +47,6 @@
             {{-- <link rel="stylesheet" href="{{ asset('customs/css/invoice.css') }}"> --}}
             <style>
                 @media print {
-                    .page-info {
-                        display: none;
-                        bottom: 1px
-                    }
-
                     .card {
                         border: none !important;
                         box-shadow: none !important;
@@ -74,40 +69,19 @@
                     }
 
                     @page {
-                        margin: 1cm 1cm 2cm 1cm;
-
-                        @bottom-right {
-                            content: "Page " counter(page) " of " counter(pages);
-                            font-size: 12px;
-                            color: #666;
-                            font-family: Arial, sans-serif;
-                            margin-bottom: 0.5cm;
-                        }
+                        margin: 1cm 0.5cm 1cm 0.5cm;
                     }
-                }
 
-                @media screen {
-                    .page-info {
-                        position: fixed;
-                        bottom: 40px;
-                        right: 20px;
-                        font-size: 12px;
-                        color: #666;
-                        background: rgba(255, 255, 255, 0.9);
-                        padding: 5px 10px;
-                        border-radius: 3px;
-                        border: 1px solid #ddd;
-                        z-index: 1000;
-                    }
                 }
             </style>
             <div id="print">
                 <div class="card">
                     <div class="card-body">
                         <div class="container mb-5 mt-3">
-                            <div style="max-width:2480px; margin:auto; padding:20px; font-family: 'Calibri'; font-size: 14px;">
+                            <div
+                                style="max-width:2480px; margin:auto; font-family: 'Calibri'; font-size: 14px;">
                                 <h4 style="font-weight: bold;">TOKO BAN CAHAYA TERANG - SURABAYA</h4>
-                                <h3 style="text-decoration:underline; text-align:left; font-weight: bold;">
+                                <h3 style="text-decoration:underline; text-align:left; font-weight: bold; margin-top: -10px;">
                                     {!! $menuName !!}
                                 </h3>
                                 <p style="text-align:left; margin-bottom:0;">
@@ -118,9 +92,9 @@
                                     {{ $startCode ? \Carbon\Carbon::parse($startCode)->format('d-M-Y') : '-' }}
                                     s/d {{ $endCode ? \Carbon\Carbon::parse($endCode)->format('d-M-Y') : '-' }}
                                 </p>
-                                <div class="page-info">
+                                {{-- <div class="page-info">
                                     Page 1 of 1
-                                </div>
+                                </div> --}}
                                 <table style="width:100%; border-collapse:collapse;">
                                     <thead>
                                         {{-- baris grup header --}}
@@ -178,8 +152,10 @@
                                             {{-- Detail per nota --}}
                                             @foreach ($group['details'] as $row)
                                                 <tr>
-                                                    <td style="padding:4px 8px; border-left:1px solid #000; width: 100px; min-width: 100px; max-width: 100px; white-space: nowrap;">
-                                                        {{ $row->tgl_nota ? \Carbon\Carbon::parse($row->tgl_nota)->format('d-M-Y') : '-' }}</td>
+                                                    <td
+                                                        style="padding:4px 8px; border-left:1px solid #000; width: 100px; min-width: 100px; max-width: 100px; white-space: nowrap;">
+                                                        {{ $row->tgl_nota ? \Carbon\Carbon::parse($row->tgl_nota)->format('d-M-Y') : '-' }}
+                                                    </td>
                                                     <td style="padding:4px 8px;">
                                                         {{ $row->no_nota }}</td>
                                                     <td style="padding:4px 8px; text-align:left;">
@@ -235,39 +211,4 @@
         // Print the report
         window.print();
     }
-
-    // Update page info for screen display only
-    document.addEventListener('DOMContentLoaded', function() {
-        updatePageInfo();
-    });
-
-    function updatePageInfo() {
-        // Get the print content
-        const printContent = document.getElementById('print');
-        if (!printContent) return;
-
-        // Calculate content height
-        const contentHeight = printContent.scrollHeight;
-
-        // A4 page height in pixels (approximate)
-        const pageHeight = 900;
-
-        // Calculate total pages
-        const totalPages = Math.max(1, Math.ceil(contentHeight / pageHeight));
-
-        // Update page info for screen display only
-        const pageInfoElement = document.querySelector('.page-info');
-        if (pageInfoElement) {
-            pageInfoElement.textContent = `Page 1 of ${totalPages}`;
-        }
-    }
-
-    // Update page info when Livewire updates
-    document.addEventListener('livewire:load', function() {
-        updatePageInfo();
-    });
-
-    document.addEventListener('livewire:update', function() {
-        setTimeout(updatePageInfo, 100);
-    });
 </script>

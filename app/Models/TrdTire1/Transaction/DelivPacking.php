@@ -14,8 +14,6 @@ use Illuminate\Support\Facades\Log;
 
 class DelivPacking extends BaseModel
 {
-
-
     protected $table = 'deliv_packings';
     protected $fillable = [
         'trhdr_id',
@@ -27,6 +25,9 @@ class DelivPacking extends BaseModel
         'reffhdrtr_type',
         'reffhdrtr_code',
         'reffdtltr_seq',
+        'matl_id',
+        'matl_code',
+        'matl_uom',
         'matl_descr',
         'qty',
     ];
@@ -36,6 +37,7 @@ class DelivPacking extends BaseModel
         'tr_seq' => 'integer',
         'reffdtl_id' => 'integer',
         'reffhdr_id' => 'integer',
+        'matl_id' => 'integer',
     ];
 
     protected $appends = ['has_delivery', 'is_editable'];

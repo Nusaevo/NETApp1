@@ -140,12 +140,22 @@ class DeliveryService
     private function savePicking($headerData, $detailData)
     {
         $pickingData = [];
+        $trhdrId = $headerData['id'] ?? null;
+        $trType = $headerData['tr_type'] ?? null;
+        $trCode = $headerData['tr_code'] ?? null;
+        $trpackingSeq = $detailData['tr_seq'] ?? DelivPacking::where('id', $detailData['id'])->value('tr_seq');
+        $basePickingMeta = [
+            'trhdr_id' => $trhdrId,
+            'tr_type' => $trType,
+            'tr_code' => $trCode,
+            'trpacking_seq' => $trpackingSeq,
+        ];
 
         // Untuk JASA, tidak perlu melihat stok - langsung buat picking seperti PD
         $isJasa = $this->isMaterialJasa($detailData['matl_id']);
 
         if ($detailData['tr_type'] === 'PD' || ($detailData['tr_type'] === 'SD' && $isJasa)) {
-            $pickingData[] = [
+            $pickingData[] = array_merge($basePickingMeta, [
                 'id' => null,
                 'trpacking_id' => $detailData['id'],
                 'matl_id' => $detailData['matl_id'],
@@ -159,7 +169,7 @@ class DeliveryService
                 'qty' => $detailData['qty'],
                 'reffdtl_id' => $detailData['reffdtl_id'],
                 'trdtl_id' => $detailData['id'],
-            ];
+            ]);
         } else if ($detailData['tr_type'] === 'SD' && !$isJasa) {
             // Untuk SD non-JASA, tetap cek stok dari IvtBal
             $ivtBal = IvtBal::where('matl_id', $detailData['matl_id'])
@@ -170,7 +180,7 @@ class DeliveryService
                 ->get();
             $qty_remaining = $detailData['qty'];
             foreach ($ivtBal as $bal) {
-                $pickingData[] = [
+                $pickingData[] = array_merge($basePickingMeta, [
                     'id' => null,
                     'trpacking_id' => $detailData['id'],
                     'matl_id' => $detailData['matl_id'],
@@ -182,7 +192,7 @@ class DeliveryService
                     'ivt_id' => $bal->id,
                     'reffdtl_id' => $detailData['reffdtl_id'],
                     'trdtl_id' => $detailData['id'],
-                ];
+                ]);
                 if ($bal->qty_oh >= $qty_remaining) {
                     $pickingData[count($pickingData) - 1]['qty'] = $qty_remaining;
                     $qty_remaining = 0;
