@@ -26,6 +26,10 @@ class DelivPicking extends BaseModel
         'wh_code',
         'batch_code',
         'qty',
+        'trhdr_id',
+        'tr_type',
+        'tr_code',
+        'trpacking_seq',
     ];
     protected $casts = [
         'qty' => 'float',
@@ -34,6 +38,8 @@ class DelivPicking extends BaseModel
         'ivt_id' => 'integer',
         'matl_id' => 'integer',
         'wh_id' => 'integer',
+        'trhdr_id' => 'integer',
+        'trpacking_seq' => 'integer',
     ];
 
     protected $appends = ['has_delivery', 'is_editable'];

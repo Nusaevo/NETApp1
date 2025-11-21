@@ -404,14 +404,39 @@ class GenericExcelExport
     {
         foreach ($mergeCells as $mergeRange) {
             if (is_array($mergeRange)) {
-                // Handle array format: ['A1:D1']
                 foreach ($mergeRange as $range) {
-                    $sheet->mergeCells($range);
+                    $this->mergeRangeWithOffset($sheet, $range, $dataStartRow);
                 }
             } else {
-                // Handle string format: 'A1:D1'
-                $sheet->mergeCells($mergeRange);
+                $this->mergeRangeWithOffset($sheet, $mergeRange, $dataStartRow);
             }
         }
+    }
+
+    /**
+     * Merge a cell range while accounting for the starting row offset.
+     *
+     * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet
+     * @param string $range The range notation (e.g., A1:D1)
+     * @param int $dataStartRow
+     * @return void
+     */
+    private function mergeRangeWithOffset($sheet, string $range, int $dataStartRow): void
+    {
+        $offset = max($dataStartRow - 1, 0);
+        $pattern = '/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/i';
+
+        if (preg_match($pattern, $range, $matches)) {
+            $startColumn = strtoupper($matches[1]);
+            $startRow = (int) $matches[2] + $offset;
+            $endColumn = strtoupper($matches[3]);
+            $endRow = (int) $matches[4] + $offset;
+
+            $sheet->mergeCells("{$startColumn}{$startRow}:{$endColumn}{$endRow}");
+            return;
+        }
+
+        // Fallback to the original range if parsing fails
+        $sheet->mergeCells($range);
     }
 }

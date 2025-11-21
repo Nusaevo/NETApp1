@@ -67,37 +67,37 @@
                             width: 100% !important;
                         }
                         #print th, #print td {
-                            padding: 3px 4px !important;
-                            font-size:16px !important;
+                            padding: 1px 2px !important;
+                            font-size: 10px !important;
                             border: 1px solid #000 !important;
                             vertical-align: middle !important;
-                            line-height: 1.2 !important;
+                            line-height: 1.1 !important;
                         }
                         #print th {
                             background: #f9f9f9 !important;
                             font-weight: bold !important;
                             text-align: center !important;
-                            font-size:14px !important;
+                            font-size: 9px !important;
                         }
                         #print h3, #print h4 {
-                            margin: 8px 0 !important;
+                            margin: 4px 0 !important;
                             font-weight: bold !important;
-                            font-size:18px !important;
+                            font-size: 13px !important;
                         }
                         #print h3 {
-                            font-size:20px !important;
+                            font-size: 14px !important;
                         }
                         #print h4 {
-                            font-size:18px !important;
+                            font-size: 13px !important;
                         }
                         #print p {
-                            margin: 4px 0 !important;
-                            font-size:14px !important;
+                            margin: 2px 0 !important;
+                            font-size: 10px !important;
                         }
-                        /* Hilangkan margin/padding default print */
+                        /* Ukuran kertas F5: 165mm x 210mm (portrait) */
                         @page {
+                            size: 165mm 210mm landscape;
                             margin: 1cm 0.3cm 1cm 0.3cm;
-                            /* size: A4 landscape; */
                         }
                         /* Sembunyikan elemen yang tidak perlu di print */
                         .btn, .card-header, .card-footer, .page-info {
@@ -106,34 +106,38 @@
                         /* Pastikan konten tidak terpotong */
                         #print {
                             font-family: 'Calibri', Arial, sans-serif !important;
-                            font-size:12px !important;
+                            font-size: 10px !important;
                         }
                         /* Override font-size inline pada tabel saat print */
                         #print table th,
                         #print table td {
-                            font-size:16px !important;
-                            padding: 2px 3px !important;
+                            font-size: 10px !important;
+                            padding: 1px 2px !important;
                         }
-                        /* Header tabel diperbesar sesuai style utama */
+                        /* Header tabel */
                         #print table th {
-                            font-size:14px !important;
+                            font-size: 9px !important;
                         }
-                        /* Perbesar font untuk header grup yang vertical */
+                        /* Font untuk header grup yang vertical */
                         #print table th[style*="writing-mode"] {
-                            font-size:13px !important;
-                            min-width:35px !important;
-                            padding: 2px 3px !important;
+                            font-size: 9px !important;
+                            min-width: 20px !important;
+                            padding: 1px 2px !important;
                         }
                         /* Kompaktkan spacing untuk baris data */
                         #print table td br {
-                            line-height: 1.1 !important;
+                            line-height: 1.0 !important;
+                        }
+                        /* Kurangi max-width container untuk F5 */
+                        #print [style*="max-width"] {
+                            max-width: 100% !important;
                         }
                     }
                 </style>
                 <div class="card print-page">
                     <div class="card-body">
                         <div class="container mb-5 mt-1">
-                            <div style="max-width:2480px; margin:auto;">
+                            <div style="max-width:100%; margin:auto;">
                                 <h4>TOKO BAN CAHAYA TERANG - SURABAYA</h4>
                                 <h3 style="text-decoration:underline; text-align:left;">
                                     DATA PENJUALAN per Customer
@@ -194,15 +198,15 @@
                                 <table style="width:100%; border-collapse:collapse;">
                                     <thead>
                                         <tr>
-                                            <th rowspan="2" style="border: 1px solid #000; text-align: center; padding:4px 8px; background:#f9f9f9; font-weight:bold;">Customer</th>
-                                            <th rowspan="2" style="border: 1px solid #000; text-align: center; padding:4px 8px; background:#f9f9f9; font-weight:bold;">Alamat</th>
-                                            <th rowspan="2" style="border: 1px solid #000; text-align: center; padding:4px 8px; background:#f9f9f9; font-weight:bold;">Kota</th>
+                                            <th rowspan="2" style="border: 1px solid #000; text-align: center; padding:1px 2px; background:#f9f9f9; font-weight:bold; font-size:9px;">Customer</th>
+                                            <th rowspan="2" style="border: 1px solid #000; text-align: center; padding:1px 2px; background:#f9f9f9; font-weight:bold; font-size:9px;">Alamat</th>
+                                            <th rowspan="2" style="border: 1px solid #000; text-align: center; padding:1px 2px; background:#f9f9f9; font-weight:bold; font-size:9px;">Kota</th>
                                             @foreach ($groupColumns as $col)
-                                                <th style="text-align:center; padding:4px 8px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:15px; min-width:40px; border: 1px solid #000; background:#f9f9f9; font-weight:bold;" rowspan="2">
+                                                <th style="text-align:center; padding:1px 2px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:9px; min-width:20px; border: 1px solid #000; background:#f9f9f9; font-weight:bold;" rowspan="2">
                                                     {{ $col }}
                                                 </th>
                                             @endforeach
-                                            <th rowspan="2" style="text-align:center; padding:4px 8px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:15px; min-width:40px; border: 1px solid #000; background:#f9f9f9; font-weight:bold;">Total</th>
+                                            <th rowspan="2" style="text-align:center; padding:1px 2px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:9px; min-width:20px; border: 1px solid #000; background:#f9f9f9; font-weight:bold;">Total</th>
                                         </tr>
                                         {{-- Baris kedua header kosong karena header customer sudah dipecah --}}
                                     </thead>
@@ -239,9 +243,9 @@
                                                 @php
                                                     $customerParts = splitCustomer($customer);
                                                 @endphp
-                                                <td style="padding:4px 8px; border: 1px solid #000; font-size: 16px;">{{ $customerParts['name'] }}</td>
-                                                <td style="padding:4px 8px; border: 1px solid #000; font-size: 16px;">{{ $customerParts['address'] }}</td>
-                                                <td style="padding:4px 8px; border: 1px solid #000; font-size: 16px;">{{ $customerParts['city'] }}</td>
+                                                <td style="padding:1px 2px; border: 1px solid #000; font-size: 10px;">{{ $customerParts['name'] }}</td>
+                                                <td style="padding:1px 2px; border: 1px solid #000; font-size: 10px;">{{ $customerParts['address'] }}</td>
+                                                <td style="padding:1px 2px; border: 1px solid #000; font-size: 10px;">{{ $customerParts['city'] }}</td>
                                                 @foreach ($groupColumns as $col)
                                                     @php
                                                         $val = $row->$col ?? '';
@@ -253,13 +257,13 @@
                                                         $rowTotalPoint += $point;
                                                         $rowTotalSisa += $sisa;
                                                     @endphp
-                                                    <td style="text-align:center; padding:4px 8px; border: 1px solid #000">
+                                                    <td style="text-align:center; padding:1px 2px; border: 1px solid #000; font-size: 10px;">
                                                         {{ $qty ? $qty : '' }}<br>
                                                         <span style="color:#000;">{{ $point ? $point : '' }}</span><br>
                                                         <span style="color:#000;">{{ $sisa ? $sisa : '' }}</span>
                                                     </td>
                                                 @endforeach
-                                                <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold;">
+                                                <td style="text-align:center; padding:1px 2px; border: 1px solid #000; font-weight:bold; font-size: 10px;">
                                                     {{ $rowTotalQty ? $rowTotalQty : '' }}<br>
                                                     <span style="color:#000;">{{ $rowTotalPoint ? $rowTotalPoint : '' }}</span><br>
                                                     <span style="color:#000;">{{ $rowTotalSisa ? $rowTotalSisa : '' }}</span>
@@ -280,15 +284,15 @@
                                             }
                                         @endphp
                                         <tr>
-                                            <td colspan="3" style="padding:4px 8px; border: 1px solid #000; font-weight:bold; background:#f2f2f2;">Total</td>
+                                            <td colspan="3" style="padding:1px 2px; border: 1px solid #000; font-weight:bold; background:#f2f2f2; font-size: 10px;">Total</td>
                                             @foreach ($groupColumns as $col)
-                                                <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold; background:#f2f2f2;">
+                                                <td style="text-align:center; padding:1px 2px; border: 1px solid #000; font-weight:bold; background:#f2f2f2; font-size: 10px;">
                                                     {{ $colTotalsQty[$col] ? $colTotalsQty[$col] : '' }}<br>
                                                     <span style="color:#000;">{{ $colTotals[$col] ? $colTotals[$col] : '' }}</span><br>
                                                     <span style="color:#000;">{{ $colTotalsSisa[$col] ? $colTotalsSisa[$col] : '' }}</span>
                                                 </td>
                                             @endforeach
-                                            <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold; background:#f2f2f2;">
+                                            <td style="text-align:center; padding:1px 2px; border: 1px solid #000; font-weight:bold; background:#f2f2f2; font-size: 10px;">
                                                 {{ $grandTotalQty ? $grandTotalQty : '' }}<br>
                                                 <span style="color:#000;">{{ $grandTotal ? $grandTotal : '' }}</span><br>
                                                 <span style="color:#000;">{{ $grandTotalSisa ? $grandTotalSisa : '' }}</span>
