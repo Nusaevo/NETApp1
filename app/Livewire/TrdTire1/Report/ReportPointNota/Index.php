@@ -74,6 +74,7 @@ class Index extends BaseComponent
 
     public function search()
     {
+        // dd($bindings);
         if (isNullOrEmptyNumber($this->category)) {
             $this->dispatch('warning', __('generic.error.field_required', ['field' => "Code"]));
             $this->addError('category', "Mohon lengkapi");
@@ -120,7 +121,7 @@ class Index extends BaseComponent
                 COALESCE(sr.reward, 0) AS point,
                 (od.qty * COALESCE(sr.reward, 0)) AS total_point
             FROM order_dtls od
-            JOIN order_hdrs oh ON oh.id = od.trhdr_id AND oh.tr_type = 'SO' AND oh.status_code = 'X'
+            JOIN order_hdrs oh ON oh.id = od.trhdr_id AND oh.tr_type = 'SO' AND oh.status_code != 'X'
             JOIN partners p ON p.id = oh.partner_id
             $salesRewardJoin sales_rewards sr ON sr.code = :sr_code AND sr.matl_code = od.matl_code
             JOIN materials m ON m.id = od.matl_id AND m.brand = :brand
