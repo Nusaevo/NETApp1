@@ -3,10 +3,8 @@
     $blankValue = isset($type) && $type === 'int' ? '0' : '';
 
     // Menentukan class untuk kolom dan form-floating
-    // Check if we're inside a table (no label typically means table context)
-    $isInTable = empty($label);
-    $colClass = $isInTable ? 'w-100' : ('col-sm' . (!empty($label) ? ' mb-4' : ''));
-    $containerClass = !empty($label) ? 'form-floating flex-grow-1' : 'flex-grow-1 w-100';
+    $colClass = 'col-sm' . (!empty($label) ? ' mb-4' : '');
+    $containerClass = !empty($label) ? 'form-floating flex-grow-1' : 'flex-grow-1';
 
     // Determine input class based on whether there's a label
     // Height and padding now handled through CSS
@@ -20,12 +18,8 @@
     <div class="input-group">
         <div class="{{ $containerClass }} position-relative"
              x-data="{
-                open: @entangle('showDropdown'),
-                highlightIndex: @entangle('highlightIndex'),
-                getOptionsCount() {
-                    const items = document.querySelectorAll('.dropdown-option-item');
-                    return items.length;
-                },
+                open: @entangle('showDropdown').live,
+                highlightIndex: @entangle('highlightIndex').live,
                 focusSearch() {
                     this.$nextTick(() => {
                         const searchInput = this.$refs.searchInput;
@@ -34,49 +28,40 @@
                         }
                     });
                 },
-                scrollToHighlighted() {
-                    this.$nextTick(() => {
-                        const highlighted = document.querySelector('.option-highlighted');
-                        if (highlighted) {
-                            highlighted.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-                        }
-                    });
-                },
-                handleArrowDown() {
-                    setTimeout(() => {
-                        const count = this.getOptionsCount();
-                        if (count === 0) return;
-                        if (this.highlightIndex < count - 1) {
-                            this.highlightIndex++;
-                        } else {
-                            this.highlightIndex = 0;
-                        }
-                        this.scrollToHighlighted();
-                    }, 50);
+                getOptionsCount() {
+                    const items = document.querySelectorAll('.dropdown-option-item');
+                    return items.length;
                 },
                 handleArrowUp() {
-                    setTimeout(() => {
-                        const count = this.getOptionsCount();
-                        if (count === 0) return;
-                        if (this.highlightIndex > 0) {
-                            this.highlightIndex--;
-                        } else {
-                            this.highlightIndex = count - 1;
-                        }
-                        this.scrollToHighlighted();
-                    }, 50);
+                    if (window.Livewire && window.Livewire.find && window.Livewire.find('{{ $this->getId() }}')) {
+                        $wire.call('decrementHighlight');
+                    }
+                },
+                handleArrowDown() {
+                    if (window.Livewire && window.Livewire.find && window.Livewire.find('{{ $this->getId() }}')) {
+                        $wire.call('incrementHighlight');
+                    }
                 },
                 selectOption(value, label) {
+                    // Close dropdown first
                     this.open = false;
-                    $wire.call('selectOption', value, label);
+                    // Call Livewire method instead of JavaScript handling
+                    if (window.Livewire && window.Livewire.find && window.Livewire.find('{{ $this->getId() }}')) {
+                        $wire.call('selectOption', value, label);
+                    }
                 },
                 clearSelection() {
+                    // Close dropdown first
                     this.open = false;
-                    $wire.call('clearSelection');
+                    // Call Livewire method instead of JavaScript handling
+                    if (window.Livewire && window.Livewire.find && window.Livewire.find('{{ $this->getId() }}')) {
+                        $wire.call('clearSelection');
+                    }
                 }
              }"
              x-on:focus-search-input.window="focusSearch()"
-             :class="{ 'dropdown-open': open }">
+             :class="{ 'dropdown-open': open }"
+             wire:ignore.self>
 
             <!-- Hidden select for reference only (no wire:model needed since we use dispatch) -->
             <select id="{{ $id }}" name="{{ isset($model) ? $model : '' }}" wire:key="{{ $id }}"
@@ -89,18 +74,18 @@
             <div class="{{ $inputClass }} @error($model) is-invalid @enderror
                 @if (isset($enabled) && $enabled === 'false') disabled-gray @endif ui-dropdown-display"
                 {{-- Disable dropdown when in "View" mode or when "enabled" is "false" --}}
-                @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled style="pointer-events: none; opacity: 0.65; @if($isInTable) width: 100%; min-width: 250px; @endif" @else wire:click="openDropdown" @click="open = true; focusSearch()" style="cursor: pointer; @if($isInTable) width: 100%; min-width: 250px; @endif" @endif
+                @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled style="pointer-events: none; opacity: 0.65;" @else wire:click="openDropdown" @click="open = true; focusSearch()" style="cursor: pointer;" @endif
                 wire:loading.attr="disabled">
 
                 <!-- Display selected value (like option selected) -->
                 @if(!empty($selectedLabel))
                     <!-- Text container with proper overflow handling - backend handles formatting -->
-                    <span class="ui-dropdown-text" style="display: inline-block !important; max-width: calc(100% - 50px) !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; line-height: 1 !important; max-height: 1em !important;">
-                        {{ $selectedLabel }}
+                    <span class="ui-dropdown-text">
+                        {!! $selectedLabel !!}
                     </span>
                 @elseif(!empty($selectedValue) && !$labelLoaded)
-                    <!-- Loading state for lazy loading -->
-                    <span class="text-muted" style="display: inline-block !important; max-width: calc(100% - 50px) !important;">
+                    <!-- Loading state for lazy loading label -->
+                    <span class="text-muted">
                         <i class="fas fa-spinner fa-spin"></i> Loading...
                     </span>
                 @else
@@ -145,7 +130,7 @@
                  x-transition
                  class="position-absolute w-100 bg-white border rounded shadow"
                  style="top: calc(100% - 1px); left: 0; border-top: none; z-index: 9999; max-height: 300px; overflow: hidden;"
-                 @click.away="open = false; $wire.closeDropdown()">
+                 @click.away="open = false; if (window.Livewire && window.Livewire.find && window.Livewire.find('{{ $this->getId() }}')) { $wire.closeDropdown(); }">
 
         <!-- Search Input -->
         <div class="p-2 border-bottom">
@@ -156,8 +141,8 @@
                    placeholder="Ketik untuk mencari..."
                    @keydown.arrow-up.prevent="handleArrowUp()"
                    @keydown.arrow-down.prevent="handleArrowDown()"
-                   @keydown.enter.prevent="$wire.selectHighlightedOption()"
-                   @keydown.escape="open = false; $wire.closeDropdown()"
+                   @keydown.enter.prevent="if (window.Livewire && window.Livewire.find && window.Livewire.find('{{ $this->getId() }}')) { $wire.selectHighlightedOption(); }"
+                   @keydown.escape="open = false; if (window.Livewire && window.Livewire.find && window.Livewire.find('{{ $this->getId() }}')) { $wire.closeDropdown(); }"
                    autocomplete="off">
         </div>
 
@@ -191,22 +176,14 @@
             </div>
                         </li>
                     @endforeach
-                @elseif(!$isSearching)
-                    {{-- Show "No results found" when search is done but no results --}}
-                    @if(!empty($textFieldSearch) && strlen($textFieldSearch) >= $minSearchLength)
-                        <li class="px-3 py-2 text-muted">
-                            No results found
-                        </li>
-                    @elseif(empty($textFieldSearch) && $searchOnSpace === 'true' && $showDropdown)
-                        {{-- SearchOnSpace mode active but no data available --}}
-                        <li class="px-3 py-2 text-muted">
-                            No data available
-                        </li>
-                    @else
-                        <li class="px-3 py-2 text-muted">
-                            Type to search...
-                        </li>
-                    @endif
+                @elseif(!empty($textFieldSearch) && strlen($textFieldSearch) >= $minSearchLength && !$isSearching)
+                    <li class="px-3 py-2 text-muted">
+                        No results found
+                    </li>
+                @elseif(empty($textFieldSearch))
+                    <li class="px-3 py-2 text-muted">
+
+                    </li>
                 @endif
             </ul>
         </div>
