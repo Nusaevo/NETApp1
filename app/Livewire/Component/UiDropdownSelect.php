@@ -301,15 +301,8 @@ class UiDropdownSelect extends Component
                 ? Session::get('app_code')
                 : $this->connection;
 
-            Log::info('Search query:', [
-                'searchTerm' => $this->searchTerm,
-                'query' => $searchQuery . ' LIMIT 50'
-            ]);
-
             // Execute query with LIMIT 50
             $results = DB::connection($connection)->select($searchQuery . ' LIMIT 50');
-
-            Log::info('Search results count:', ['count' => count($results)]);
 
             // Format results using enhanced display text logic for option list
             $this->options = collect($results)->map(function($item) {
@@ -347,8 +340,6 @@ class UiDropdownSelect extends Component
             return $searchableFields;
         }
 
-        Log::info('extractSearchableFields input', ['optionLabel' => $optionLabel]);
-
         // Check if optionLabel contains placeholders {}
         if (preg_match_all('/\{([^}]+)\}/', $optionLabel, $matches)) {
             // Extract field names from placeholders
@@ -359,8 +350,6 @@ class UiDropdownSelect extends Component
                     $searchableFields[] = $field;
                 }
             }
-
-            Log::info('Extracted fields from placeholders', ['fields' => $searchableFields]);
         } else {
             // Convert simple field format to placeholder format for consistent handling
             // Support both comma and semicolon as separators
@@ -375,17 +364,10 @@ class UiDropdownSelect extends Component
                     $searchableFields[] = $field;
                 }
             }
-
-            Log::info('Extracted fields from simple format', [
-                'separator' => $separator,
-                'fields' => $searchableFields
-            ]);
         }
 
         return array_unique($searchableFields); // Remove duplicates
-    }
-
-    /**
+    }    /**
      * Helper method to sanitize and validate SQL query
      */
     private function sanitizeSqlQuery($query)
@@ -974,9 +956,11 @@ class UiDropdownSelect extends Component
 
     public function render()
     {
-        // Lazy load the selected label on first render
-        $this->loadSelectedLabel();
-
+        // Lazy load the selected label on first render only if there's a selected value
+        if (!$this->labelLoaded && !empty($this->selectedValue)) {
+            $this->loadSelectedLabel();
+        }
+        
         return view('livewire.component.ui-dropdown-select');
     }
 }

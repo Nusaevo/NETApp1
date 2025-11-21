@@ -21,6 +21,7 @@
         <div class="{{ $containerClass }} position-relative"
              x-data="{
                 open: @entangle('showDropdown'),
+                highlightIndex: 0,
                 focusSearch() {
                     this.$nextTick(() => {
                         const searchInput = this.$refs.searchInput;
@@ -136,17 +137,18 @@
         </div>
 
         <!-- Options list -->
-        <div wire:loading.remove wire:target="updatedTextFieldSearch"
+        <div wire:loading.remove wire:target="textFieldSearch"
              style="max-height: 250px; overflow-y: auto;">
             <ul class="list-unstyled m-0">
                 @if(!empty($options))
                     @foreach ($options as $i => $option)
-                        <li class="px-3 py-2 {{ $highlightIndex === $i ? 'bg-primary text-white' : 'bg-white text-dark' }}"
-                            wire:click="selectOptionFromList({{ $i }})"
-                            @mouseover="$wire.set('highlightIndex', {{ $i }})"
-                            style="cursor: pointer; transition: background-color 0.15s ease;"
-                            onmouseover="this.style.backgroundColor = this.classList.contains('bg-primary') ? '#0d6efd' : '#f8f9fa'"
-                            onmouseout="this.style.backgroundColor = this.classList.contains('bg-primary') ? '#0d6efd' : '#fff'">
+                        <li class="px-3 py-2"
+                            wire:key="option-{{ $option['id'] ?? $i }}"
+                            :class="highlightIndex === {{ $i }} ? 'bg-primary text-white' : 'bg-white text-dark'"
+                            wire:click.prevent="selectOptionFromList({{ $i }})"
+                            @click="highlightIndex = {{ $i }}"
+                            @mouseover="highlightIndex = {{ $i }}"
+                            style="cursor: pointer; transition: background-color 0.15s ease;">
                             @php
                 $optionText = $option['text'] ?? $option['label'] ?? 'No label';
             @endphp
