@@ -27,7 +27,9 @@ class Index extends BaseComponent
                     FROM partners
                     WHERE deleted_at IS NULL AND grp = 'C'",
     ];
-
+      protected $listeners = [
+        'DropdownSelected' => 'DropdownSelected'
+    ];
     public $materialQuery = "
         SELECT m.id, m.code, m.name
         FROM materials m

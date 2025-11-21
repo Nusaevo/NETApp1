@@ -42,7 +42,9 @@ class Index extends BaseComponent
         WHERE m.status_code = 'A'
         AND m.deleted_at IS NULL
     ";
-
+    protected $listeners = [
+        'DropdownSelected' => 'DropdownSelected'
+    ];
     protected function onPreRender()
     {
         $this->resetFilters();

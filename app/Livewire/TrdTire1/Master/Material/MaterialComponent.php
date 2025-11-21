@@ -65,6 +65,7 @@ class MaterialComponent extends BaseComponent
         'onNameChanged' => 'onNameChanged',  // Listen to onNameChanged
         'generateName' => 'generateName',
         'generateNameTag' => 'generateNameTag',
+        'DropdownSelected' => 'DropdownSelected'
     ];
     #endregion
 

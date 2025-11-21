@@ -70,6 +70,7 @@ class MaterialComponent extends BaseComponent
         'submitImages' => 'submitImages',
         'submitAttachmentsFromStorage' => 'submitAttachmentsFromStorage',
         'resetMaterial' => 'onReset',
+        'DropdownSelected' => 'DropdownSelected'
     ];
     #endregion
 

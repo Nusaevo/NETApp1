@@ -45,6 +45,7 @@ class Detail extends BaseComponent
         'clearDeviceTrust' => 'clearDeviceTrust',
         'setDeviceTrust' => 'setDeviceTrust',
         'groupChanged' => 'groupChanged',
+         'DropdownSelected' => 'DropdownSelected'
     ];
     #endregion
 

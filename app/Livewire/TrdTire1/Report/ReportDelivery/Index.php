@@ -13,6 +13,11 @@ class Index extends BaseComponent
     public $filterPartner = '';
     public $filterBrand = '';
     public $results = [];
+    protected $listeners = [
+        'onSrCodeChanged',
+        'selectedPrintDate' => 'onDateChanged',
+        'DropdownSelected' => 'DropdownSelected'
+    ];
     public $ddPartner = [
         'placeHolder' => "Ketik untuk cari customer ...",
         'optionLabel' => "code,name",

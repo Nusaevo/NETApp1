@@ -101,7 +101,8 @@ class MaterialComponent extends BaseComponent
         'changeStatus'  => 'changeStatus',
         'tagScanned' => 'tagScanned',
         'resetMaterial' => 'onReset',
-        'onPartnerChanged' => 'onPartnerChanged'
+        'onPartnerChanged' => 'onPartnerChanged',
+        'DropdownSelected' => 'DropdownSelected'
     ];
     #endregion
 

@@ -60,7 +60,8 @@ class Detail extends BaseComponent
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
         'delete' => 'delete',
-        'materialsSelected' => 'handleMaterialsSelected'
+        'materialsSelected' => 'handleMaterialsSelected',
+        'DropdownSelected' => 'DropdownSelected'
     ];
 
     // Cache untuk material data yang sudah di-load

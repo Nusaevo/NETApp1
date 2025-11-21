@@ -71,7 +71,8 @@ class Detail extends BaseComponent
         'updateTotalTax' => 'updateTotalTax',
         'toggleWarehouseDropdown' => 'toggleWarehouseDropdown',
         'onMaterialChanged' => 'onMaterialChanged',
-        'onTrCodeChanged' => 'onTrCodeChanged', // listener untuk perubahan tr_code
+        'onTrCodeChanged' => 'onTrCodeChanged', // listener untuk perubahan tr_code,
+        'DropdownSelected' => 'DropdownSelected'
     ];
     #endregion
 

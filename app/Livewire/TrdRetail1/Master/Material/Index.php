@@ -14,7 +14,8 @@ class Index extends BaseComponent
 
     protected $listeners = [
         'openBuyingPriceModal' => 'openBuyingPriceModal',
-        'openSellingPriceModal' => 'openSellingPriceModal'
+        'openSellingPriceModal' => 'openSellingPriceModal',
+        'DropdownSelected' => 'DropdownSelected'
     ];
 
     protected function onPreRender()

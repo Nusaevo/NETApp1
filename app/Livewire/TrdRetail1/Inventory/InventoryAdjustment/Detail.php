@@ -69,7 +69,8 @@ class Detail extends BaseComponent
         'changeStatus' => 'changeStatus',
         'delete' => 'delete',
         'refreshData' => 'refreshData',
-        'materialsSelected' => 'handleMaterialsSelected'
+        'materialsSelected' => 'handleMaterialsSelected',
+        'DropdownSelected' => 'DropdownSelected'
     ];
     #endregion
 

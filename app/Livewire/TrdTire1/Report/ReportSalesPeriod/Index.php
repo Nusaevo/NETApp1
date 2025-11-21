@@ -19,7 +19,9 @@ class Index extends BaseComponent
     public $endDate = '';
     public $dateFrom = '';
     public $dateTo = '';
-
+     protected $listeners = [
+        'DropdownSelected' => 'DropdownSelected'
+    ];
     protected function onPreRender()
     {
         $this->loadMasaOptions();

@@ -57,7 +57,8 @@ class Detail extends BaseComponent
         'delete' => 'delete',
         'tagScanned' => 'tagScanned',
         'saveCheck' => 'saveCheck',
-        'onPartnerChanged' => 'onPartnerChanged'
+        'onPartnerChanged' => 'onPartnerChanged',
+        'DropdownSelected' => 'DropdownSelected'
     ];
     #endregion
 

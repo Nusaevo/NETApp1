@@ -23,7 +23,9 @@ class Index extends BaseComponent
         'inputDetails.*.wp_name' => 'required',
         'inputDetails.*.wp_location' => 'required',
     ];
-
+    protected $listeners = [
+        'DropdownSelected' => 'DropdownSelected'
+    ];
     protected function onPreRender()
     {
         $this->setupDropdownPartner();

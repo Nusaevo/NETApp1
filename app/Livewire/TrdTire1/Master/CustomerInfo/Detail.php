@@ -86,6 +86,7 @@ class Detail extends BaseComponent
         'updateAmount'  => 'updateAmount',
         // 'salesTypeOnChanged' => 'salesTypeOnChanged', // tambahkan listener baru
         'refreshData'   => 'refreshData',
+        'DropdownSelected' => 'DropdownSelected'
     ];
 
     protected function onPreRender()

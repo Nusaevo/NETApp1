@@ -25,7 +25,9 @@ class Index extends BaseComponent
         AND m.deleted_at IS NULL
     ";
     protected $masterService;
-
+    protected $listeners = [
+        'DropdownSelected' => 'DropdownSelected'
+    ];
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
         // Get additionalParam from query string if not provided

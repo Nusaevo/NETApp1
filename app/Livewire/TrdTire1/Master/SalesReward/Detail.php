@@ -59,7 +59,9 @@ class Detail extends BaseComponent
     #endregion
 
     #region Populate Data methods
-
+    protected $listeners = [
+        'DropdownSelected' => 'DropdownSelected'
+    ];
     protected function onPreRender()
     {
         $this->customValidationAttributes  = [

@@ -25,7 +25,8 @@ class Index extends BaseComponent
     public $results = [];
 
     protected $listeners = [
-        'onSrCodeChanged'
+        'onSrCodeChanged'=> 'onSrCodeChanged',
+        'DropdownSelected' => 'DropdownSelected'
     ];
 
     protected function onPreRender()

@@ -67,11 +67,10 @@
         @endisset
     </div>
 @else
-<div class="ui-table-container"
-    style="margin: {{ $margin }}; padding: {{ $padding }}; width: {{ $width }}; height: {{ $height }}; overflow: hidden; display: flex; flex-direction: column;">
+<div >
 
     <!-- Scrollable Table Wrapper -->
-    <div class="table-scroll" style="width: 100%; height: 100%; overflow: auto;">
+    <div class="table-scroll" style="width: 100%; height: 100%;">
         <table {{ isset($id) ? 'id='.$id : 'id=customTableId' }} class="ui-table"
             style="width: max-content; min-width: 100%; border-collapse: collapse;">
             <thead style="position: sticky; top: 0; background-color: #f8f9fa; z-index: 10;">

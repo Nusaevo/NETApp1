@@ -26,7 +26,9 @@ class Index extends BaseComponent
     public $rowDetails = []; // Store detail data for expanded rows
     protected $masterService;
     public $groupBy = 'Tanggal';
-
+    protected $listeners = [
+        'DropdownSelected' => 'DropdownSelected'
+    ];
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
         parent::mount($action, $objectId, $actionValue, $objectIdValue, $additionalParam);

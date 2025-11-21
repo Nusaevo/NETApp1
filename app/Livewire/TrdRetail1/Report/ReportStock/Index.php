@@ -22,7 +22,9 @@ class Index extends BaseComponent
     public $filterName;
 
     protected $masterService;
-
+    protected $listeners = [
+        'DropdownSelected' => 'DropdownSelected'
+    ];
     /**
      * Dipanggil sebelum render pertama kali.
      */

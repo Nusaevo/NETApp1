@@ -28,7 +28,7 @@ use App\Http\Controllers\DropdownSearchController;
 
 Route::middleware('auth')->group(function () {
     // Dropdown Search Route
-    Route::get('/search-dropdown', [DropdownSearchController::class, 'search'])->name('dropdown.search');
+    //Route::get('/search-dropdown', [DropdownSearchController::class, 'search'])->name('dropdown.search');
 
     $livewireComponents = [];
     $livewireDirectory = app_path('Livewire');

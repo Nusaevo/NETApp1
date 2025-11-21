@@ -54,7 +54,8 @@ class Detail extends BaseComponent
         'changeItem'  => 'changeItem',
         'materialSaved' => 'materialSaved',
         'delete' => 'delete',
-        'saveCheck' => 'saveCheck'
+        'saveCheck' => 'saveCheck',
+        'DropdownSelected' => 'DropdownSelected'
     ];
     #endregion
 

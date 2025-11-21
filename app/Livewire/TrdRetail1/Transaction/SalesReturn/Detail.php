@@ -77,7 +77,8 @@ class Detail extends BaseComponent
         'changeStatus' => 'changeStatus',
         'delete' => 'delete',
         'materialsSelected' => 'handleMaterialsSelected',
-        'exchangeMaterialsSelected' => 'handleExchangeMaterialsSelected'
+        'exchangeMaterialsSelected' => 'handleExchangeMaterialsSelected',
+        'DropdownSelected' => 'DropdownSelected'
     ];
 
     // Cache untuk material data yang sudah di-load

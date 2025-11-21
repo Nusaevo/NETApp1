@@ -1726,3 +1726,119 @@ div[wire\:loading].loading-overlay {
     flex-direction: column;
     padding: 0.75rem !important;
 }
+
+/* ========================================
+   UI Dropdown Styling
+   ======================================== */
+
+/* Dropdown display container */
+.ui-dropdown-display {
+    display: flex !important;
+    align-items: center !important;
+    padding-right: 60px !important; /* Space for arrow and clear button */
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+/* Text within dropdown display */
+.ui-dropdown-text {
+    display: block !important;
+    white-space: nowrap !important; /* Force single line */
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    line-height: 1.2 !important;
+    color: #212529 !important;
+    font-size: 0.9rem !important;
+    max-height: 1.2em !important; /* Limit to 1 line */
+}
+
+/* Form floating adjustments for dropdown */
+.form-floating .ui-dropdown-display {
+    padding-top: 1rem !important;
+    padding-bottom: 0.25rem !important;
+    padding-right: 60px !important;
+}
+
+.form-floating .ui-dropdown-text {
+    font-size: 1rem !important;
+    padding-top: 0.125rem !important;
+}
+
+/* Ensure proper spacing in tables */
+.table .ui-dropdown-display {
+    min-height: 38px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* Force single-line text in table dropdown */
+.table .ui-dropdown-text,
+.ui-table .ui-dropdown-text,
+table .ui-dropdown-text {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-height: 1.2em !important;
+    line-height: 1.2 !important;
+}
+
+/* Clear button styling */
+.ui-dropdown-clear-btn {
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    border: 1px solid #dee2e6 !important;
+    background: #fff !important;
+    color: #6c757d !important;
+    font-size: 16px !important;
+    font-weight: normal !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+    z-index: 20 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    font-family: Arial, sans-serif !important;
+}
+
+.ui-dropdown-clear-btn:hover {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+    border-color: #dc3545 !important;
+    transform: translateY(-50%) scale(1.05) !important;
+}
+
+.ui-dropdown-clear-btn:active {
+    transform: translateY(-50%) scale(0.95) !important;
+    background-color: #c82333 !important;
+}
+
+.ui-dropdown-clear-btn:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25) !important;
+}
+
+/* Option list text formatting */
+.ui-dropdown-option-text {
+    line-height: 1.4 !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .ui-dropdown-display {
+        padding-right: 65px !important; /* More space for mobile */
+    }
+
+    .ui-dropdown-clear-btn {
+        width: 24px !important;
+        height: 24px !important;
+        font-size: 14px !important;
+        right: 35px !important;
+    }
+}
