@@ -18,8 +18,54 @@
     <div class="input-group">
         <div class="{{ $containerClass }} position-relative"
              x-data="{
-                open: @entangle('showDropdown').live,
-                highlightIndex: @entangle('highlightIndex').live,
+                open: {{ $showDropdown ? 'true' : 'false' }},
+                highlightIndex: {{ $highlightIndex ?? 0 }},
+                componentId: '{{ $this->getId() }}',
+                destroyed: false,
+                init() {
+                    // Check if component exists before setting up watchers
+                    this.$nextTick(() => {
+                        if (this.isComponentAlive()) {
+                            this.setupWatchers();
+                        }
+                    });
+
+                    // Listen for component destruction
+                    document.addEventListener('livewire:component-dehydrated', (e) => {
+                        if (e.detail.component.id === this.componentId) {
+                            this.destroyed = true;
+                        }
+                    });
+                },
+                setupWatchers() {
+                    try {
+                        // Safely setup watchers with null checks
+                        this.$watch('$wire.showDropdown', value => {
+                            if (!this.destroyed && this.isComponentAlive() && value !== undefined && value !== null) {
+                                this.open = value;
+                            }
+                        });
+                        this.$watch('$wire.highlightIndex', value => {
+                            if (!this.destroyed && this.isComponentAlive() && value !== undefined && value !== null) {
+                                this.highlightIndex = value;
+                            }
+                        });
+                    } catch (e) {
+                        // Silently handle watcher setup failures
+                    }
+                },
+                isComponentAlive() {
+                    if (this.destroyed) return false;
+                    try {
+                        return window.Livewire &&
+                               window.Livewire.find &&
+                               window.Livewire.find(this.componentId) &&
+                               typeof $wire !== 'undefined' &&
+                               $wire !== null;
+                    } catch (e) {
+                        return false;
+                    }
+                },
                 focusSearch() {
                     this.$nextTick(() => {
                         const searchInput = this.$refs.searchInput;
@@ -33,29 +79,60 @@
                     return items.length;
                 },
                 handleArrowUp() {
-                    if (window.Livewire && window.Livewire.find && window.Livewire.find('{{ $this->getId() }}')) {
-                        $wire.call('decrementHighlight');
+                    if (!this.destroyed && this.isComponentAlive()) {
+                        try {
+                            $wire.call('decrementHighlight');
+                        } catch (e) {
+                            // Silently handle failed calls
+                        }
                     }
                 },
                 handleArrowDown() {
-                    if (window.Livewire && window.Livewire.find && window.Livewire.find('{{ $this->getId() }}')) {
-                        $wire.call('incrementHighlight');
+                    if (!this.destroyed && this.isComponentAlive()) {
+                        try {
+                            $wire.call('incrementHighlight');
+                        } catch (e) {
+                            // Silently handle failed calls
+                        }
                     }
                 },
                 selectOption(value, label) {
-                    // Close dropdown first
                     this.open = false;
-                    // Call Livewire method instead of JavaScript handling
-                    if (window.Livewire && window.Livewire.find && window.Livewire.find('{{ $this->getId() }}')) {
-                        $wire.call('selectOption', value, label);
+                    if (!this.destroyed && this.isComponentAlive()) {
+                        try {
+                            $wire.call('selectOption', value, label);
+                        } catch (e) {
+                            // Silently handle failed calls
+                        }
                     }
                 },
                 clearSelection() {
-                    // Close dropdown first
                     this.open = false;
-                    // Call Livewire method instead of JavaScript handling
-                    if (window.Livewire && window.Livewire.find && window.Livewire.find('{{ $this->getId() }}')) {
-                        $wire.call('clearSelection');
+                    if (!this.destroyed && this.isComponentAlive()) {
+                        try {
+                            $wire.call('clearSelection');
+                        } catch (e) {
+                            // Silently handle failed calls
+                        }
+                    }
+                },
+                closeDropdown() {
+                    this.open = false;
+                    if (!this.destroyed && this.isComponentAlive()) {
+                        try {
+                            $wire.call('closeDropdown');
+                        } catch (e) {
+                            // Silently handle failed calls
+                        }
+                    }
+                },
+                selectHighlighted() {
+                    if (!this.destroyed && this.isComponentAlive()) {
+                        try {
+                            $wire.call('selectHighlightedOption');
+                        } catch (e) {
+                            // Silently handle failed calls
+                        }
                     }
                 }
              }"
@@ -130,7 +207,7 @@
                  x-transition
                  class="position-absolute w-100 bg-white border rounded shadow"
                  style="top: calc(100% - 1px); left: 0; border-top: none; z-index: 9999; max-height: 300px; overflow: hidden;"
-                 @click.away="open = false; if (window.Livewire && window.Livewire.find && window.Livewire.find('{{ $this->getId() }}')) { $wire.closeDropdown(); }">
+                 @click.away="if (!destroyed) { closeDropdown(); }"
 
         <!-- Search Input -->
         <div class="p-2 border-bottom">
@@ -141,8 +218,8 @@
                    placeholder="Ketik untuk mencari..."
                    @keydown.arrow-up.prevent="handleArrowUp()"
                    @keydown.arrow-down.prevent="handleArrowDown()"
-                   @keydown.enter.prevent="if (window.Livewire && window.Livewire.find && window.Livewire.find('{{ $this->getId() }}')) { $wire.selectHighlightedOption(); }"
-                   @keydown.escape="open = false; if (window.Livewire && window.Livewire.find && window.Livewire.find('{{ $this->getId() }}')) { $wire.closeDropdown(); }"
+                   @keydown.enter.prevent="selectHighlighted()"
+                   @keydown.escape="closeDropdown()"
                    autocomplete="off">
         </div>
 
