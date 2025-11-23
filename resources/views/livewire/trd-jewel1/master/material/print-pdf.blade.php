@@ -34,11 +34,15 @@
         let line = '';
 
         for (let i = 0; i < words.length; i++) {
-            if ((line + words[i]).length > maxLength) {
+            // Check if adding this word would exceed maxLength
+            let testLine = line + words[i];
+            if (testLine.length > maxLength && line.trim() !== '') {
+                // If current line is not empty, start new line
                 formattedText += line.trim() + '\n';
-                line = '';
+                line = words[i] + ' ';
+            } else {
+                line += words[i] + ' ';
             }
-            line += words[i] + ' ';
         }
 
         formattedText += line.trim();
@@ -54,14 +58,13 @@
     function formatBOMText(text, bomCount) {
         if (bomCount <= 3) {
             // Normal vertical layout untuk ≤ 3 items
-            return formatText(text, 14);
+            return formatText(text, 20);
         } else {
-            // Split pada spasi ke-2, ke-4, dst untuk BOM
-            // "1 EM:0.98 35 TP:0.65 74 RD:0.72 1 GD:23 1 GD:1221"
+            // Smart BOM formatting - group items by pairs
             const words = text.split(' ');
             const bomItems = [];
 
-            // Group every 2 words sebagai satu item
+            // Group setiap 2 kata sebagai satu item BOM (qty + type:value)
             for (let i = 0; i < words.length; i += 2) {
                 if (words[i] && words[i + 1]) {
                     bomItems.push(words[i] + ' ' + words[i + 1]);
@@ -71,19 +74,25 @@
             }
 
             if (bomItems.length === 0) {
-                return formatText(text, 12);
+                return formatText(text, 20);
             }
 
             let result = '';
+            let currentLine = '';
+
             for (let i = 0; i < bomItems.length; i++) {
-                if (i > 0 && i % 2 === 0) {
-                    result += '\n'; // New line setelah 2 items
-                } else if (i > 0) {
-                    result += ' '; // Spasi antara items di baris yang sama
+                let testLine = currentLine + (currentLine ? ' ' : '') + bomItems[i];
+
+                // Jika menambah item ini melebihi 20 karakter, buat baris baru
+                if (testLine.length > 20 && currentLine !== '') {
+                    result += currentLine + '\n';
+                    currentLine = bomItems[i];
+                } else {
+                    currentLine = testLine;
                 }
-                result += bomItems[i];
             }
 
+            result += currentLine;
             return result;
         }
     }
@@ -144,7 +153,7 @@
         flex-direction: column;
         align-items: flex-start;
         /* Posisikan di kiri secara horizontal */
-        padding-left: 4cm;
+        padding-left: 3.5cm;
     }
 
     .label-code,
@@ -163,7 +172,7 @@
     .label-code {
         font-size: 16px;
         font-weight: bold;
-        margin-top: -6mm;
+        margin-top: -8mm;
         font-family: Arial;
         /* Geser sedikit ke atas */
     }
@@ -179,7 +188,7 @@
         font-size: 10px; /* Ukuran font lebih besar */
         font-family: Arial;
         font-weight: bold;
-        padding-left: 5px; /* Adjust the value as needed */
+        padding-left: 3px; /* Adjust the value as needed */
         text-shadow: 0.25px 0px 0px black, -0.25px 0px 0px black; /* Menambahkan shadow untuk efek lebih tebal */
         -webkit-text-stroke: 0.2px black; /* Efek stroke tipis untuk ketebalan */
     }
@@ -191,7 +200,7 @@
         word-break: break-word;
         font-weight: bold;
         white-space: pre-wrap;
-        padding-left: 5px;
+        padding-left: 0px;
         letter-spacing: -0.1px;
         text-shadow: 0.25px 0px 0px black, -0.25px 0px 0px black;
         -webkit-text-stroke: 0.2px black;
