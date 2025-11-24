@@ -24,12 +24,12 @@ class PaymentService
         // dd($headerData, $detailData, $sourceData, $advanceData, $overAmt);
         try {
 
-            $amtAdvance = array_sum(array_column($advanceData, 'amt'));
-            $amtDetail = array_sum(array_column($detailData, 'amt'));
-            $amtSource = array_sum(array_column($sourceData, 'amt'));
-            if (($amtSource + $amtAdvance) !=  ($amtDetail + $overAmt)) {
-                throw new Exception('Total sumber pembayaran tidak sesuai dengan total pembayaran dan uang muka.');
-            }
+            // $amtAdvance = array_sum(array_column($advanceData, 'amt'));
+            // $amtDetail = array_sum(array_column($detailData, 'amt'));
+            // $amtSource = array_sum(array_column($sourceData, 'amt'));
+            // if (($amtSource + $amtAdvance) !=  ($amtDetail + $overAmt)) {
+            //     throw new Exception('Total sumber pembayaran tidak sesuai dengan total pembayaran dan uang muka.');
+            // }
             // dd($headerData, $detailData, $sourceData, $advanceData, $overAmt);
 
             // Simpan header

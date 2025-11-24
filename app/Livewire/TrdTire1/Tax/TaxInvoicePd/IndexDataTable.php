@@ -4,7 +4,7 @@ namespace App\Livewire\TrdTire1\Tax\TaxInvoicePd;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
-use App\Models\TrdTire1\Transaction\{DelivHdr, DelivPacking, DelivPicking, BillingHdr};
+use App\Models\TrdTire1\Transaction\{DelivHdr, DelivPacking, DelivPicking, BillingHdr, OrderHdr};
 use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
@@ -17,10 +17,9 @@ use Exception;
 
 class IndexDataTable extends BaseDataTableComponent
 {
-    public $selectedItems = [];
     public $filters = [];
-    public $bulkSelectedIds = null;
-
+    public $selectedRows = [];
+    public $taxDocNumInput = '';
     protected $listeners = ['clearSelections' => 'clearSelections'];
 
     protected $model = DelivHdr::class;
@@ -29,6 +28,16 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setSearchDisabled();
         $this->setDefaultSort('tr_date', 'desc');
         $this->setDefaultSort('tr_code', 'desc');
+    }
+
+    public function configure(): void
+    {
+        parent::configure();
+
+        $this->setBulkActionsStatus(false);
+        $this->setConfigurableAreas([
+            'after-toolbar' => 'livewire.trd-tire1.tax.tax-invoice-pd.custom-filters',
+        ]);
     }
 
     public function builder(): Builder
@@ -42,8 +51,34 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function clearSelections(): void
     {
-        $this->clearSelected();
-        $this->bulkSelectedIds = null;
+        $this->selectedRows = [];
+        $this->taxDocNumInput = '';
+    }
+
+    public function updatedSelectedRows($value): void
+    {
+        $currentSelection = array_values(array_unique(array_filter($this->selectedRows)));
+        $this->selectedRows = $currentSelection;
+
+        $this->syncTaxInputValue();
+    }
+
+    private function syncTaxInputValue(): void
+    {
+        $items = $this->selectedItems;
+
+        if (empty($items)) {
+            $this->taxDocNumInput = '';
+            return;
+        }
+
+        $existingNumbers = collect($items)
+            ->pluck('faktur')
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->unique()
+            ->values();
+
+        $this->taxDocNumInput = $existingNumbers->count() === 1 ? $existingNumbers->first() : '';
     }
 
     /**
@@ -71,6 +106,18 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
+            Column::make("Pilih", "id")
+                ->format(function ($value, $row) {
+                    return '
+                        <div class="text-center">
+                            <input type="checkbox"
+                                   class="form-check-input custom-checkbox"
+                                   wire:model.live="selectedRows"
+                                   value="' . $row->id . '"
+                                   id="pd-checkbox-' . $row->id . '">
+                        </div>';
+                })
+                ->html(),
             Column::make($this->trans("tr_type"), "tr_type")
                 ->hideIf(true)
                 ->sortable(),
@@ -223,6 +270,39 @@ class IndexDataTable extends BaseDataTableComponent
         ];
     }
 
+    public function getSelectedItemsProperty(): array
+    {
+        $selectedIds = $this->selectedRows;
+
+        if (empty($selectedIds)) {
+            return [];
+        }
+
+        $delivHdrs = DelivHdr::whereIn('id', $selectedIds)
+            ->with('Partner', 'DelivPacking')
+            ->get(['id', 'tr_code', 'partner_id']);
+
+        return $delivHdrs->map(function ($deliv) {
+            $billingHdr = $this->getBillingHdrFromDelivHdr($deliv);
+
+            $delivPacking = $deliv->DelivPacking->first();
+            $orderHdr = null;
+            if ($delivPacking && $delivPacking->reffhdrtr_code) {
+                $orderHdr = OrderHdr::where('tr_code', $delivPacking->reffhdrtr_code)
+                    ->where('tr_type', 'PO')
+                    ->first();
+            }
+
+            return [
+                'id' => $deliv->id,
+                'nomor_nota' => $deliv->tr_code,
+                'nama' => $deliv->Partner ? $deliv->Partner->name : '',
+                'faktur' => $billingHdr ? ($billingHdr->taxinv_num ?: '') : '',
+                'total_amt' => $orderHdr ? rupiah($orderHdr->amt ?? 0) : rupiah(0),
+            ];
+        })->toArray();
+    }
+
     public function filters(): array
     {
         return [
@@ -289,85 +369,70 @@ class IndexDataTable extends BaseDataTableComponent
             }, true),
         ];
     }
-    public function bulkActions(): array
+    public function saveTaxInvoiceNumbers(): void
     {
-        return [
-            'nomorFaktur' => 'Set Nomor Faktur',
-            'deleteNomorFaktur' => 'Hapus Nomor Faktur',
-            // 'cetakProsesDate' => 'Cetak Proses Faktur Pajak',
-            // 'transferKeCTMS' => 'Transfer ke CTMS',
-        ];
-    }
-
-    public function nomorFaktur()
-    {
-        if (count($this->getSelected()) === 0) {
-            $this->dispatch('error', 'Tidak ada item yang dipilih.');
+        if (count($this->selectedRows) === 0) {
+            $this->dispatch('error', 'Pilih minimal satu surat jalan terlebih dahulu.');
             return;
         }
 
-        $selectedItems = DelivHdr::whereIn('id', $this->getSelected())
-            ->with('Partner', 'DelivPacking')
-            ->get(['id', 'tr_code', 'partner_id'])
-            ->map(function ($deliv) {
-                $billingHdr = $this->getBillingHdrFromDelivHdr($deliv);
+        $delivHdrs = DelivHdr::whereIn('id', $this->selectedRows)->get(['id', 'tr_code']);
 
-                // Get PO OrderHdr from DelivPacking reffhdrtr_code for total_amt
-                $delivPacking = $deliv->DelivPacking->first();
-                $orderHdr = null;
-                if ($delivPacking && $delivPacking->reffhdrtr_code) {
-                    $orderHdr = \App\Models\TrdTire1\Transaction\OrderHdr::where('tr_code', $delivPacking->reffhdrtr_code)
-                        ->where('tr_type', 'PO')
-                        ->first();
-                }
-
-                return [
-                    'id' => $deliv->id,
-                    'nomor_nota' => $deliv->tr_code,
-                    'nama' => $deliv->Partner ? $deliv->Partner->name : '',
-                    'faktur' => $billingHdr ? ($billingHdr->taxinv_num ?: '') : '',
-                    'total_amt' => $orderHdr ? rupiah($orderHdr->amt ?? 0) : rupiah(0),
-                ];
-            })
-            ->toArray();
-
-        $this->dispatch('openNomorFakturModal', orderIds: $this->getSelected(), selectedItems: $selectedItems, actionType: 'set');
-    }
-
-
-    public function deleteNomorFaktur()
-    {
-        if (count($this->getSelected()) === 0) {
-            $this->dispatch('error', 'Tidak ada item yang dipilih.');
+        if ($delivHdrs->isEmpty()) {
+            $this->dispatch('error', 'Data surat jalan tidak ditemukan.');
             return;
         }
 
-        $selectedItems = DelivHdr::whereIn('id', $this->getSelected())
-            ->with('Partner', 'DelivPacking')
-            ->get(['id', 'tr_code', 'partner_id'])
-            ->map(function ($deliv) {
-                $billingHdr = $this->getBillingHdrFromDelivHdr($deliv);
+        $numRaw = trim((string) $this->taxDocNumInput);
 
-                // Get PO OrderHdr from DelivPacking reffhdrtr_code for total_amt
-                $delivPacking = $deliv->DelivPacking->first();
-                $orderHdr = null;
-                if ($delivPacking && $delivPacking->reffhdrtr_code) {
-                    $orderHdr = \App\Models\TrdTire1\Transaction\OrderHdr::where('tr_code', $delivPacking->reffhdrtr_code)
-                        ->where('tr_type', 'PO')
-                        ->first();
-                }
+        if ($numRaw === '' || !ctype_digit($numRaw) || intval($numRaw) <= 0) {
+            $this->dispatch('error', 'Nomor faktur harus diisi dan hanya boleh angka.');
+            return;
+        }
 
-                return [
-                    'id' => $deliv->id,
-                    'nomor_nota' => $deliv->tr_code,
-                    'nama' => $deliv->Partner ? $deliv->Partner->name : '',
-                    'faktur' => $billingHdr ? ($billingHdr->taxinv_num ?: '') : '',
-                    'total_amt' => $orderHdr ? rupiah($orderHdr->amt ?? 0) : rupiah(0),
-                ];
-            })
-            ->toArray();
+        foreach ($delivHdrs as $delivHdr) {
+            $billingHdr = $this->getBillingHdrFromDelivHdr($delivHdr);
+            if (!$billingHdr) {
+                $this->dispatch('error', "Billing untuk surat jalan {$delivHdr->tr_code} tidak ditemukan.");
+                return;
+            }
 
-        $this->dispatch('openNomorFakturModal', orderIds: $this->getSelected(), selectedItems: $selectedItems, actionType: 'delete');
+            $billingHdr->taxinv_num = $numRaw;
+            $billingHdr->save();
+        }
+
+        $this->clearSelections();
+        $this->taxDocNumInput = '';
+        $this->dispatch('refreshDatatable');
+        $this->dispatch('success', 'Nomor faktur berhasil disimpan.');
+    }
+
+    public function deleteTaxInvoiceNumbers(): void
+    {
+        if (count($this->selectedRows) === 0) {
+            $this->dispatch('error', 'Pilih minimal satu surat jalan terlebih dahulu.');
+            return;
+        }
+
+        $delivHdrs = DelivHdr::whereIn('id', $this->selectedRows)->get(['id', 'tr_code']);
+
+        if ($delivHdrs->isEmpty()) {
+            $this->dispatch('error', 'Data surat jalan tidak ditemukan.');
+            return;
+        }
+
+        foreach ($delivHdrs as $delivHdr) {
+            $billingHdr = $this->getBillingHdrFromDelivHdr($delivHdr);
+            if ($billingHdr) {
+                $billingHdr->taxinv_num = '';
+                $billingHdr->save();
+            }
+        }
+
+        $this->clearSelections();
+        $this->taxDocNumInput = '';
+        $this->dispatch('refreshDatatable');
+        $this->dispatch('success', 'Nomor faktur berhasil dihapus.');
     }
 
 
@@ -457,6 +522,6 @@ class IndexDataTable extends BaseDataTableComponent
     #[On('refreshDatatable')]
     public function refreshDatatable()
     {
-        $this->clearSelected();
+        $this->clearSelections();
     }
 }

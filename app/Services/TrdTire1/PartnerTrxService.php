@@ -208,7 +208,9 @@ class PartnerTrxService
     public function saveAutoAraFromPayment(array $headerData, array $detailData)
     {
         // dd($headerData, $detailData);
-        $dbPartnertrHdr = PartnertrHdr::where('tr_type', 'ARA')
+        // $dbPartnertrHdr = PartnertrHdr::where('tr_type', 'ARA')
+        $dbPartnertrHdr = PartnertrHdr::withTrashed()
+            ->where('tr_type', 'ARA')
             ->where('tr_code', $headerData['tr_code'])
             ->first();
         if ($dbPartnertrHdr) {
@@ -216,6 +218,9 @@ class PartnerTrxService
             if ($headerData['amt'] == 0) {
                 $dbPartnertrHdr->delete();
             } else {
+                if ($dbPartnertrHdr->trashed()) {
+                    $dbPartnertrHdr->restore();
+                }
                 $dbPartnertrHdr->fill($headerData);
                 // dd($dbPartnertrHdr->isDirty(),$dbPartnertrHdr);
                 if ($dbPartnertrHdr->isDirty()) {
@@ -273,8 +278,8 @@ class PartnerTrxService
 
         foreach ($dbPartnertrDtl as $detail) {
             if (!in_array($detail->id, $saveIds)) {
-                $this->partnerBalanceService->delPartnerLog(0, $partnertrDtl->id);
-                $partnertrDtl->delete();
+                $this->partnerBalanceService->delPartnerLog(0, $detail->id);
+                $detail->delete();
             }
         }
 
