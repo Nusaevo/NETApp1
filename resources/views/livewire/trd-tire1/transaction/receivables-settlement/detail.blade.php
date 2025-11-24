@@ -22,8 +22,7 @@
                                         query="SELECT id, code, name, address, city FROM partners WHERE deleted_at IS NULL AND grp = 'C'"
                                         optionValue="id" optionLabel="{code};{name};{address};{city}"
                                         placeHolder="Type to search customer..." :selectedValue="$inputs['partner_id']" required="true"
-                                        :action="$actionValue" enabled="true" type="int"
-                                        onChanged="onPartnerChanged" />
+                                        :action="$actionValue" enabled="true" type="int" onChanged="onPartnerChanged" />
                                     <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     <x-ui-text-field label="Nomor Transaksi" model="inputs.tr_code" :action="$actionValue"
@@ -131,7 +130,7 @@
 
                         <x-slot name="button">
                             <x-ui-button clickEvent="addPaymentItem" cssClass="btn btn-primary" iconPath="add.svg"
-                                button-name="Add" :action="$actionValue"/>
+                                button-name="Add" :action="$actionValue" />
                         </x-slot>
                     </x-ui-table>
                 </x-ui-card>
@@ -142,7 +141,7 @@
                     <x-ui-table id="Table">
                         <!-- Define table headers -->
                         <x-slot name="headers">
-                            <th style="width: 25px; text-align: center;"></th>
+                            {{-- <th style="width: 25px; text-align: center;"></th> --}}
                             <th style="width: 150px; text-align: center;">Nomor Nota</th>
                             <th style="width: 150px; text-align: center;">Tanggal Jatuh tempo</th>
                             <th style="width: 50px; text-align: center;">Total Piutang</th>
@@ -156,13 +155,13 @@
                         <x-slot name="rows">
                             @foreach ($input_details as $key => $input_detail)
                                 <tr wire:key="detail-{{ $input_detail['billhdr_id'] ?? $key }}">
-                                    <td style="text-align: center;">
+                                    {{-- <td style="text-align: center;">
                                         <input type="checkbox"
                                             wire:model="input_details.{{ $key }}.is_selected"
                                             wire:change="onNotaSelectionChanged"
                                             {{ $actionValue === 'Edit' ? 'disabled' : '' }}
                                             style="width: 18px; height: 18px; cursor: {{ $actionValue === 'Edit' ? 'not-allowed' : 'pointer' }};">
-                                    </td>
+                                    </td> --}}
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.billhdrtr_code"
                                             label="" :action="$actionValue" enabled="false" type="text" />
@@ -186,14 +185,12 @@
                                     <td style="text-align: center;">
                                         <x-ui-toggle-switch model="input_details.{{ $key }}.is_lunas"
                                             onChanged="toggleLunas({{ $key }})" :action="$actionValue"
-                                            enabled="true" :showLabel="false" :label="$input_detail['is_lunas'] ? 'Lunas' : 'Belum Lunas'" />
+                                            enabled="true" :showLabel="false" :label="($input_detail['is_lunas'] ?? false) ? 'Lunas' : 'Belum Lunas'" />
                                     </td>
                                     <td style="text-align: center;">
-                                        @if ($actionValue === 'Create')
-                                            <x-ui-button :clickEvent="'deleteNotaItem(' . $key . ')'" button-name="" loading="true"
-                                                :action="$actionValue" cssClass="btn-danger text-danger"
-                                                iconPath="delete.svg" />
-                                        @endif
+                                        <x-ui-button :clickEvent="'deleteNotaItem(' . $key . ')'" button-name="" loading="true"
+                                            :action="$actionValue" cssClass="btn-danger text-danger"
+                                            iconPath="delete.svg" />
                                     </td>
                                 </tr>
                             @endforeach
@@ -206,7 +203,7 @@
                                     <x-ui-dropdown-search label="Pilih Nota" model="selectedNotaId" :query="$notaQuery"
                                         optionValue="id" optionLabel="tr_code,outstanding_amt_formatted,due_date"
                                         placeHolder="Pilih nota untuk ditambahkan..." :selectedValue="$selectedNotaId"
-                                        :action="$actionValue" :enabled="$isPanelEnabled" type="int"
+                                        :action="$actionValue" enabled="true" type="int"
                                         onChanged="onNotaSelected" searchOnSpace="true" />
                                 </div>
                             @else
@@ -214,8 +211,8 @@
                                     <small>Pilih customer terlebih dahulu untuk menampilkan daftar nota</small>
                                 </div>
                             @endif
-                            <x-ui-button clickEvent="payItem" cssClass="btn btn-primary"
-                                button-name="Auto Pelunasan" :action="$actionValue"/>
+                            <x-ui-button clickEvent="payItem" cssClass="btn btn-primary" button-name="Auto Pelunasan"
+                                :action="$actionValue" />
                         </x-slot>
                     </x-ui-table>
                 </x-ui-card>

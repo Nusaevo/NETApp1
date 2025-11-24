@@ -185,6 +185,11 @@ class Detail extends BaseComponent
 
     private function loadPaymentData()
     {
+        // Reset arrays sebelum memuat data baru (untuk menghindari data bertambah saat ganti tr_code)
+        $this->input_details = [];
+        $this->input_payments = [];
+        $this->input_advance = [];
+
         // Method untuk load data payment yang dipanggil dari berbagai tempat
         $this->inputs = populateArrayFromModel($this->object);
         $this->inputs['partner_name'] = $this->object->partner ? ($this->object->partner->code . ' - ' . $this->object->partner->name) : '';
@@ -197,9 +202,12 @@ class Detail extends BaseComponent
         // Hitung total piutang customer untuk mode edit
         $this->calculateTotalPiutangCustomer($this->object->partner_id);
 
-        // Set flag bahwa data sudah dimuat untuk mode edit
+        if (!empty($this->object->partner_id)) {
+            $this->updateNotaQuery($this->object->partner_id);
+        }
+
         $this->isDataLoaded = true;
-        $this->isPanelEnabled = "false"; // Disable panel karena sudah ada data
+        $this->isPanelEnabled = "false";
 
         // Dispatch event to refresh partner dropdown with loaded partner_id
         $this->dispatch('resetSelect2Dropdowns', [
@@ -403,12 +411,19 @@ class Detail extends BaseComponent
     private function loadDetails()
     {
         if (!empty($this->object)) {
+            // Reset input_details sebelum memuat data baru
+            $this->input_details = [];
+
             $this->object_detail = PaymentDtl::where('trhdr_id', $this->object->id)
                 ->orderBy('tr_seq')
                 ->get();
 
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[] = $detail->toArray();
+
+                // Inisialisasi field default terlebih dahulu
+                $this->input_details[$key]['is_lunas'] = false;
+                $this->input_details[$key]['amt_adjustment'] = 0;
 
                 $billingHdr = BillingHdr::find($detail->billhdr_id);
 				if ($billingHdr) {
@@ -420,22 +435,25 @@ class Detail extends BaseComponent
 					$baseAmt = ($billingHdr->amt + ($billingHdr->amt_shipcost ?? 0)) - ($billingHdr->amt_reff ?? 0);
 					$this->input_details[$key]['amtbill'] =  $baseAmt;
 					$this->input_details[$key]['outstanding_amt'] = $baseAmt + $detail->amt;
+                } else {
+                    // Jika billingHdr tidak ditemukan, set nilai default
+                    $this->input_details[$key]['due_date'] = $detail->tr_date ?? date('Y-m-d');
+                    $this->input_details[$key]['amtbill'] = $detail->amt ?? 0;
+                    $this->input_details[$key]['outstanding_amt'] = $detail->amt ?? 0;
                 }
 
-                $this->input_details[$key]['is_selected'] = false;
                 $cnData = PartnertrDtl::where('tr_type', '=', 'ARA')
                     ->where('tr_code', '=', $detail->tr_code)
                     ->where('partnerbal_id', '=', $detail->partnerbal_id)
                     ->first();
                 // dd($detail, $cnData);
 
-                if (!$cnData) {
-                    $this->input_details[$key]['is_lunas'] = false;
-                    $this->input_details[$key]['amt_adjustment'] = 0;
-                } else {
+                if ($cnData) {
                     $this->input_details[$key]['is_lunas'] = true;
                     $this->input_details[$key]['amt_adjustment'] = $cnData->amt;
-                    $this->input_details[$key]['outstanding_amt'] -= $cnData->amt;
+                    if (isset($this->input_details[$key]['outstanding_amt'])) {
+                        $this->input_details[$key]['outstanding_amt'] -= $cnData->amt;
+                    }
                 }
             }
 
@@ -729,138 +747,10 @@ class Detail extends BaseComponent
         ]);
     }
 
-    public function onNotaSelectionChanged()
-    {
-        if (!$this->isDataLoaded || $this->actionValue === 'Edit') {
-            return;
-        }
-
-        // Reset amount untuk semua nota
-        foreach ($this->input_details as $key => $detail) {
-            $this->input_details[$key]['amt'] = 0;
-        }
-
-        // Reset advance amount juga
-        foreach ($this->input_advance as $key => $advance) {
-            $this->input_advance[$key]['amt'] = 0;
-        }
-
-        // Update total amount
-        $this->updateTotalAmt();
-
-        // Tidak otomatis melakukan auto pelunasan
-        // User harus klik "Auto Pelunasan" secara manual
-    }
-
     public function payItem()
     {
-        $selectedNotes = 0;
-        foreach ($this->input_details as $key => $detail) {
-            if (!empty($detail['is_selected'])) {
-                $selectedNotes++;
-            }
-        }
-
-        if ($selectedNotes > 0) {
-            $this->paySelectedNotas();
-        } else {
-            $this->payAllNotasByDueDate();
-        }
-    }
-
-    private function paySelectedNotas()
-    {
-        $totalAdvance = 0;
-        foreach ($this->input_advance as $advance) {
-            if (!empty($advance['amtAdvBal']) && is_numeric($advance['amtAdvBal'])) {
-                $totalAdvance += (float)$advance['amtAdvBal'];
-            }
-        }
-
-        $totalPayment = 0;
-        foreach ($this->input_payments as $payment) {
-            $totalPayment += is_numeric($payment['amt']) ? (float)$payment['amt'] : 0;
-        }
-
-        $totalAvailable = $totalAdvance + $totalPayment;
-
-        $selectedDetails = [];
-        foreach ($this->input_details as $key => $detail) {
-            if (!empty($detail['is_selected'])) {
-                $selectedDetails[] = [
-                    'key' => $key,
-                    'due_date' => isset($detail['due_date']) ? strtotime($detail['due_date']) : 0,
-                    'outstanding_amt' => (isset($detail['outstanding_amt']) && is_numeric($detail['outstanding_amt'])) ? (float)$detail['outstanding_amt'] : 0,
-                ];
-            }
-        }
-        usort($selectedDetails, function ($a, $b) {
-            return $a['due_date'] <=> $b['due_date'];
-        });
-
-        foreach ($this->input_details as $key => $detail) {
-            $this->input_details[$key]['amt'] = 0;
-        }
-        foreach ($this->input_advance as $key => $advance) {
-            $this->input_advance[$key]['amt'] = 0;
-        }
-
-        $remaining = $totalAvailable;
-        $advanceUsed = 0;
-
-        foreach ($selectedDetails as $item) {
-            $key = $item['key'];
-            $outstanding = $item['outstanding_amt'];
-            if ($remaining <= 0) {
-                $this->input_details[$key]['amt'] = 0;
-            } else {
-                $toPay = min($outstanding, $remaining);
-                $this->input_details[$key]['amt'] = round($toPay, 2);
-                $remaining -= $toPay;
-
-                // Track berapa advance yang  digunakan
-                if ($advanceUsed < $totalAdvance) {
-                    $advanceForThisNote = min($toPay, $totalAdvance - $advanceUsed);
-                    $advanceUsed += $advanceForThisNote;
-                }
-            }
-        }
-
-        $remainingAdvanceUsed = $advanceUsed;
-        foreach ($this->input_advance as $key => $advance) {
-            if ($remainingAdvanceUsed <= 0) break;
-
-            $amtAdvBal = !empty($advance['amtAdvBal']) && is_numeric($advance['amtAdvBal'])
-                ? (float)$advance['amtAdvBal'] : 0;
-
-            if ($amtAdvBal > 0) {
-                $useFromThisAdvance = min($amtAdvBal, $remainingAdvanceUsed);
-                $this->input_advance[$key]['amt'] = $useFromThisAdvance;
-                $remainingAdvanceUsed -= $useFromThisAdvance;
-            }
-        }
-
-        // Pengecekan: jika total piutang = total bayar, set toggle adjustment menjadi false
-        $totalPiutang = 0;
-        $totalBayar = 0;
-
-        foreach ($selectedDetails as $item) {
-            $key = $item['key'];
-            $totalPiutang += $item['outstanding_amt'];
-            $totalBayar += $this->input_details[$key]['amt'];
-        }
-
-        // Jika total piutang sama dengan total bayar, set toggle adjustment menjadi false
-        if (abs($totalPiutang - $totalBayar) < 0.01) { // Gunakan toleransi kecil untuk perbandingan float
-            foreach ($selectedDetails as $item) {
-                $key = $item['key'];
-                $this->input_details[$key]['is_lunas'] = false;
-                $this->input_details[$key]['amt_adjustment'] = 0;
-            }
-        }
-
-        $this->updateTotalAmt();
-        // $this->dispatch('success', 'Pembayaran berhasil dibagi ke nota yang dipilih menggunakan advance dan payment sesuai outstanding dan urutan jatuh tempo.');
+        // Langsung panggil payAllNotasByDueDate karena selection sudah dihapus
+        $this->payAllNotasByDueDate();
     }
 
     // Method untuk membayar semua nota berdasarkan due date (logika original)
@@ -1253,7 +1143,6 @@ class Detail extends BaseComponent
         $newDetail['amt'] = 0;
         $newDetail['amtbill'] = $outstandingAmt;
         $newDetail['outstanding_amt'] = $outstandingAmt;
-        $newDetail['is_selected'] = false;
         $newDetail['is_lunas'] = false;
         $newDetail['amt_adjustment'] = 0;
 
@@ -1288,6 +1177,7 @@ class Detail extends BaseComponent
             if (!empty($this->inputs['partner_id'])) {
                 $this->updateNotaQuery($this->inputs['partner_id']);
             }
+            $this->payItem();
 
             $this->dispatch('success', 'Nota ' . ($deletedNota['billhdrtr_code'] ?? '') . ' berhasil dihapus dari daftar pembayaran.');
         } catch (Exception $e) {
