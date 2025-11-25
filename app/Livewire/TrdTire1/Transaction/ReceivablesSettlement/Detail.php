@@ -806,12 +806,13 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['amt'] = 0;
             } else {
                 $toPay = min($outstanding, $remaining);
-                $this->input_details[$key]['amt'] = round($toPay, 2);
-                $remaining -= $toPay;
+                $roundedToPay = round($toPay, 2);
+                $this->input_details[$key]['amt'] = $roundedToPay;
+                $remaining -= $roundedToPay; // Gunakan nilai yang sudah dibulatkan untuk konsistensi
 
                 // Track berapa advance yang sudah digunakan
                 if ($advanceUsed < $totalAdvance) {
-                    $advanceForThisNote = min($toPay, $totalAdvance - $advanceUsed);
+                    $advanceForThisNote = min($roundedToPay, $totalAdvance - $advanceUsed);
                     $advanceUsed += $advanceForThisNote;
                 }
             }
@@ -838,12 +839,17 @@ class Detail extends BaseComponent
 
         foreach ($details as $item) {
             $key = $item['key'];
-            $totalPiutang += $item['outstanding_amt'];
-            $totalBayar += $this->input_details[$key]['amt'];
+            $totalPiutang += round($item['outstanding_amt'], 2); // Bulatkan untuk konsistensi
+            $totalBayar += round($this->input_details[$key]['amt'], 2); // Bulatkan untuk konsistensi
         }
 
+        // Bulatkan total untuk perbandingan yang lebih akurat
+        $totalPiutang = round($totalPiutang, 2);
+        $totalBayar = round($totalBayar, 2);
+
         // Jika total piutang sama dengan total bayar, set toggle adjustment menjadi false
-        if (abs($totalPiutang - $totalBayar) < 0.01) { // Gunakan toleransi kecil untuk perbandingan float
+        // Gunakan perbandingan eksak setelah pembulatan untuk menghindari masalah presisi float
+        if ($totalPiutang == $totalBayar) {
             foreach ($details as $item) {
                 $key = $item['key'];
                 $this->input_details[$key]['is_lunas'] = false;
