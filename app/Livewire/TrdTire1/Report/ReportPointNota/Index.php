@@ -116,11 +116,60 @@ class Index extends BaseComponent
                 oh.tr_code AS no_nota,
                 od.matl_code AS kode_brg,
                 od.matl_descr AS nama_barang,
-                p.name AS nama_pelanggan,
-                p.city AS kota_pelanggan,
+                CASE
+                    -- Logika CUSTOMER LAIN-LAIN untuk GT RADIAL atau GAJAH TUNGGAL
+                    WHEN sr.brand IS NOT NULL
+                         AND sr.brand IN ('GT RADIAL', 'GAJAH TUNGGAL')
+                         AND (p.partner_chars->>'GT' = 'false' OR p.partner_chars->>'GT' IS NULL)
+                    THEN 'CUSTOMER LAIN-LAIN'
+                    -- Logika CUSTOMER LAIN-LAIN untuk IRC
+                    WHEN sr.brand IS NOT NULL
+                         AND sr.brand = 'IRC'
+                         AND (p.partner_chars->>'IRC' = 'false' OR p.partner_chars->>'IRC' IS NULL)
+                    THEN 'CUSTOMER LAIN-LAIN'
+                    -- Logika CUSTOMER LAIN-LAIN untuk ZENEOS
+                    WHEN sr.brand IS NOT NULL
+                         AND sr.brand = 'ZENEOS'
+                         AND (p.partner_chars->>'ZN' = 'false' OR p.partner_chars->>'ZN' IS NULL)
+                    THEN 'CUSTOMER LAIN-LAIN'
+                    -- Default: tampilkan nama customer normal
+                    ELSE p.name
+                END AS nama_pelanggan,
+                CASE
+                    -- Jika CUSTOMER LAIN-LAIN, kosongkan kota
+                    WHEN sr.brand IS NOT NULL
+                         AND sr.brand IN ('GT RADIAL', 'GAJAH TUNGGAL')
+                         AND (p.partner_chars->>'GT' = 'false' OR p.partner_chars->>'GT' IS NULL)
+                    THEN ''
+                    WHEN sr.brand IS NOT NULL
+                         AND sr.brand = 'IRC'
+                         AND (p.partner_chars->>'IRC' = 'false' OR p.partner_chars->>'IRC' IS NULL)
+                    THEN ''
+                    WHEN sr.brand IS NOT NULL
+                         AND sr.brand = 'ZENEOS'
+                         AND (p.partner_chars->>'ZN' = 'false' OR p.partner_chars->>'ZN' IS NULL)
+                    THEN ''
+                    ELSE p.city
+                END AS kota_pelanggan,
                 od.qty AS total_ban,
                 COALESCE(sr.reward, 0) AS point,
-                (od.qty * COALESCE(sr.reward, 0)) AS total_point
+                (od.qty * COALESCE(sr.reward, 0)) AS total_point,
+                -- Field untuk sorting: 1 untuk CUSTOMER LAIN-LAIN, 0 untuk customer normal
+                CASE
+                    WHEN sr.brand IS NOT NULL
+                         AND sr.brand IN ('GT RADIAL', 'GAJAH TUNGGAL')
+                         AND (p.partner_chars->>'GT' = 'false' OR p.partner_chars->>'GT' IS NULL)
+                    THEN 1
+                    WHEN sr.brand IS NOT NULL
+                         AND sr.brand = 'IRC'
+                         AND (p.partner_chars->>'IRC' = 'false' OR p.partner_chars->>'IRC' IS NULL)
+                    THEN 1
+                    WHEN sr.brand IS NOT NULL
+                         AND sr.brand = 'ZENEOS'
+                         AND (p.partner_chars->>'ZN' = 'false' OR p.partner_chars->>'ZN' IS NULL)
+                    THEN 1
+                    ELSE 0
+                END AS is_lain_lain
             FROM order_dtls od
             JOIN order_hdrs oh ON oh.id = od.trhdr_id AND oh.tr_type = 'SO' AND oh.status_code != 'X'
             JOIN partners p ON p.id = oh.partner_id
@@ -129,7 +178,7 @@ class Index extends BaseComponent
             WHERE od.tr_type = 'SO'
                 $whereDate
                 $whereSalesReward
-            ORDER BY oh.tr_date ASC, p.name, oh.tr_code, od.matl_code
+            ORDER BY is_lain_lain ASC, nama_pelanggan, oh.tr_date ASC, oh.tr_code, od.matl_code
         ";
         // dd($query);
 
@@ -138,7 +187,13 @@ class Index extends BaseComponent
         // Grouping per customer
         $grouped = [];
         foreach ($rows as $row) {
-            $customerKey = $row->nama_pelanggan . ' - ' . $row->kota_pelanggan;
+            // Untuk CUSTOMER LAIN-LAIN, tidak perlu menambahkan kota
+            if ($row->nama_pelanggan === 'CUSTOMER LAIN-LAIN') {
+                $customerKey = 'CUSTOMER LAIN-LAIN';
+            } else {
+                $customerKey = $row->nama_pelanggan . ' - ' . $row->kota_pelanggan;
+            }
+
             if (!isset($grouped[$customerKey])) {
                 $grouped[$customerKey] = [
                     'customer' => $customerKey,
@@ -151,6 +206,22 @@ class Index extends BaseComponent
             $grouped[$customerKey]['total_ban'] += $row->total_ban;
             $grouped[$customerKey]['total_point'] += $row->total_point;
         }
+
+        // Sort hasil: CUSTOMER LAIN-LAIN muncul di akhir
+        uasort($grouped, function($a, $b) {
+            $aIsLainLain = $a['customer'] === 'CUSTOMER LAIN-LAIN';
+            $bIsLainLain = $b['customer'] === 'CUSTOMER LAIN-LAIN';
+
+            // Jika salah satu adalah CUSTOMER LAIN-LAIN, letakkan di akhir
+            if ($aIsLainLain && !$bIsLainLain) {
+                return 1; // $a di akhir
+            }
+            if (!$aIsLainLain && $bIsLainLain) {
+                return -1; // $b di akhir
+            }
+            // Jika keduanya sama (keduanya LAIN-LAIN atau keduanya normal), urutkan berdasarkan nama
+            return strcmp($a['customer'], $b['customer']);
+        });
 
         $this->results = array_values($grouped);
     }
