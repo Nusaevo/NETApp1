@@ -201,7 +201,7 @@
                             @if (!empty($inputs['partner_id']))
                                 <div wire:key="nota-dropdown-{{ count($input_details) }}">
                                     <x-ui-dropdown-search label="Pilih Nota" model="selectedNotaId" :query="$notaQuery"
-                                        optionValue="id" optionLabel="tr_code,outstanding_amt_formatted,due_date"
+                                        optionValue="id" optionLabel="due_date,outstanding_amt_formatted,tr_code"
                                         placeHolder="Pilih nota untuk ditambahkan..." :selectedValue="$selectedNotaId"
                                         :action="$actionValue" enabled="true" type="int"
                                         onChanged="onNotaSelected" searchOnSpace="true" />
