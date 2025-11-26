@@ -172,7 +172,7 @@
     .label-code {
         font-size: 16px;
         font-weight: bold;
-        margin-top: -8mm;
+        margin-top: -6mm;
         font-family: Arial;
         /* Geser sedikit ke atas */
     }
