@@ -78,10 +78,10 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="container mb-5 mt-3">
-                            <div
-                                style="max-width:2480px; margin:auto; font-family: 'Calibri'; font-size: 14px;">
+                            <div style="max-width:2480px; margin:auto; font-family: 'Calibri'; font-size: 14px;">
                                 <h4 style="font-weight: bold;">TOKO BAN CAHAYA TERANG - SURABAYA</h4>
-                                <h3 style="text-decoration:underline; text-align:left; font-weight: bold; margin-top: -10px;">
+                                <h3
+                                    style="text-decoration:underline; text-align:left; font-weight: bold; margin-top: -10px;">
                                     {!! $menuName !!}
                                 </h3>
                                 <p style="text-align:left; margin-bottom:0;">
@@ -195,6 +195,19 @@
                                                 </td>
                                             </tr>
                                         @endforeach
+                                        {{-- Grand Total Row --}}
+                                        <tr>
+                                            <td colspan="4">
+                                            </td>
+                                            <td style="text-align: center; font-weight: bold;">
+                                                {{ fmod($grandTotalBan, 1) == 0 ? number_format($grandTotalBan, 0) : number_format($grandTotalBan, 2) }}
+                                            </td>
+                                            <td>
+                                            </td>
+                                            <td style="text-align: center; font-weight: bold;">
+                                                {{ fmod($grandTotalPoint, 1) == 0 ? number_format($grandTotalPoint, 0) : number_format($grandTotalPoint, 2) }}
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>

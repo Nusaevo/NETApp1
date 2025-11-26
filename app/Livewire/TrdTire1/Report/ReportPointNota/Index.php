@@ -24,6 +24,8 @@ class Index extends BaseComponent
     protected $masterService;
 
     public $results = [];
+    public $grandTotalBan = 0;
+    public $grandTotalPoint = 0;
 
     protected $listeners = [
         'onSrCodeChanged'=>'onSrCodeChanged',
@@ -224,6 +226,10 @@ class Index extends BaseComponent
         });
 
         $this->results = array_values($grouped);
+
+        // Calculate grand totals
+        $this->grandTotalBan = array_sum(array_column($this->results, 'total_ban'));
+        $this->grandTotalPoint = array_sum(array_column($this->results, 'total_point'));
     }
 
     public function resetFilters()
@@ -233,6 +239,8 @@ class Index extends BaseComponent
         $this->endCode = '';
         $this->point_flag = false;
         $this->results = [];
+        $this->grandTotalBan = 0;
+        $this->grandTotalPoint = 0;
     }
 
     public function render()
@@ -244,6 +252,8 @@ class Index extends BaseComponent
     public function resetResult()
     {
         $this->results = [];
+        $this->grandTotalBan = 0;
+        $this->grandTotalPoint = 0;
     }
 
     public function downloadExcel()
@@ -316,7 +326,9 @@ class Index extends BaseComponent
                     // Add styling to remove borders from detail rows
                     $rowStyles[] = [
                         'rowIndex' => $currentRowIndex,
-                        'removeBorders' => true
+                        'removeBorders' => true,
+                        'alignment' => Alignment::HORIZONTAL_CENTER,
+                        'alignmentCells' => ['E', 'F', 'G'] // Total Ban, Point, dan Total Point
                     ];
                     $currentRowIndex++;
                 }
@@ -335,7 +347,10 @@ class Index extends BaseComponent
                     'rowIndex' => $currentRowIndex,
                     'bold' => true,
                     'backgroundColor' => 'F0F8FF',
-                    'removeBorders' => true
+                    'removeBorders' => true,
+                    'alignment' => Alignment::HORIZONTAL_CENTER,
+                    'alignmentRange' => ['A', 'D'], // Nama partner (merged A:D)
+                    'alignmentCells' => ['E', 'G'] // Total Ban dan Total Point
                 ];
                 $mergeCells[] = 'A' . ($currentRowIndex + 1) . ':D' . ($currentRowIndex + 1); // Merge A to D for customer total
                 $currentRowIndex++;
@@ -346,6 +361,25 @@ class Index extends BaseComponent
                     $currentRowIndex++;
                 }
             }
+
+            // Add grand total row
+            $excelData[] = [
+                '',
+                '',
+                '',
+                '',
+                fmod($this->grandTotalBan, 1) == 0 ? number_format($this->grandTotalBan, 0) : number_format($this->grandTotalBan, 2),
+                '',
+                fmod($this->grandTotalPoint, 1) == 0 ? number_format($this->grandTotalPoint, 0) : number_format($this->grandTotalPoint, 2)
+            ];
+            $rowStyles[] = [
+                'rowIndex' => $currentRowIndex,
+                'bold' => true,
+                'removeBorders' => true,
+                'alignment' => Alignment::HORIZONTAL_CENTER,
+                'alignmentCells' => ['E', 'G'] // Total Ban dan Total Point
+            ];
+            $currentRowIndex++;
 
             // Create title and subtitle
             $title = 'LAPORAN POINT NOTA';
