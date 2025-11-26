@@ -856,7 +856,10 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['amt_adjustment'] = 0;
             }
         } else {
-            $this->dispatch('warning', 'Total piutang dan total pembayaran tidak sama, jangan lupa lakukan adjustment.');
+            $this->dispatch('notify-swal', [
+                'type' => 'warning',
+                'message' => 'Total piutang dan total pembayaran tidak sama, jangan lupa lakukan adjustment.',
+            ]);
         }
 
         $this->updateTotalAmt();
