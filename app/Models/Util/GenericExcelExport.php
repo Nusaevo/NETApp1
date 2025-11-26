@@ -151,6 +151,11 @@ class GenericExcelExport
                 $this->applyMergeCells($sheet, $sheetData['mergeCells'], $dataStartRow);
             }
 
+            // Apply alignment to merged cells after merging (if specified in rowStyles)
+            if (!empty($sheetData['rowStyles']) && !empty($sheetData['mergeCells'])) {
+                $this->applyMergedCellAlignment($sheet, $sheetData['rowStyles'], $sheetData['mergeCells'], $dataStartRow);
+            }
+
             // Protect specific columns
             if($sheetData['allowInsert'] == false)
             {
@@ -390,6 +395,25 @@ class GenericExcelExport
                     $sheet->getStyle($range)->applyFromArray($style);
                 }
             }
+
+            // Apply alignment if specified
+            if (!empty($rowStyle['alignment']) || !empty($rowStyle['alignmentCells'])) {
+                $alignment = $rowStyle['alignment'] ?? Alignment::HORIZONTAL_CENTER;
+
+                if (!empty($rowStyle['alignmentCells'])) {
+                    // Apply alignment to specific cells
+                    foreach ($rowStyle['alignmentCells'] as $column) {
+                        $cellRange = $column . $rowNumber;
+                        $sheet->getStyle($cellRange)->getAlignment()->setHorizontal($alignment);
+                    }
+                } elseif (!empty($rowStyle['alignmentRange'])) {
+                    // Apply alignment to a range of columns
+                    $startColumn = $rowStyle['alignmentRange'][0];
+                    $endColumn = $rowStyle['alignmentRange'][1];
+                    $range = $startColumn . $rowNumber . ':' . $endColumn . $rowNumber;
+                    $sheet->getStyle($range)->getAlignment()->setHorizontal($alignment);
+                }
+            }
         }
     }
 
@@ -438,5 +462,36 @@ class GenericExcelExport
 
         // Fallback to the original range if parsing fails
         $sheet->mergeCells($range);
+    }
+
+    /**
+     * Apply alignment to merged cells after merging.
+     *
+     * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet The worksheet object.
+     * @param array $rowStyles Array of row styling configurations.
+     * @param array $mergeCells Array of merged cell ranges.
+     * @param int $dataStartRow The starting row number for data.
+     */
+    private function applyMergedCellAlignment($sheet, array $rowStyles, array $mergeCells, int $dataStartRow)
+    {
+        foreach ($rowStyles as $rowStyle) {
+            // Check if this row has alignmentRange (for merged cells)
+            if (!empty($rowStyle['alignmentRange']) && !empty($rowStyle['alignment'])) {
+                // Handle negative row indices (relative to end of data)
+                if ($rowStyle['rowIndex'] < 0) {
+                    $highestRow = $sheet->getHighestRow();
+                    $rowNumber = $highestRow + $rowStyle['rowIndex'] + 1;
+                } else {
+                    $rowNumber = $dataStartRow + $rowStyle['rowIndex'];
+                }
+
+                $startColumn = $rowStyle['alignmentRange'][0];
+                $endColumn = $rowStyle['alignmentRange'][1];
+                $range = $startColumn . $rowNumber . ':' . $endColumn . $rowNumber;
+
+                // Apply alignment directly to the range (which should be merged)
+                $sheet->getStyle($range)->getAlignment()->setHorizontal($rowStyle['alignment']);
+            }
+        }
     }
 }
