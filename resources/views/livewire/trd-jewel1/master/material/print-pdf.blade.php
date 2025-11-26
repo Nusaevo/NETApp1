@@ -153,7 +153,7 @@
         flex-direction: column;
         align-items: flex-start;
         /* Posisikan di kiri secara horizontal */
-        padding-left: 3.5cm;
+        padding-left: 4cm;
     }
 
     .label-code,
