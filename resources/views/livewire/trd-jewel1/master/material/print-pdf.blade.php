@@ -58,7 +58,7 @@
     function formatBOMText(text, bomCount) {
         if (bomCount <= 3) {
             // Normal vertical layout untuk ≤ 3 items
-            return formatText(text, 20);
+            return formatText(text, 18);
         } else {
             // Smart BOM formatting - group items by pairs
             const words = text.split(' ');
@@ -74,7 +74,7 @@
             }
 
             if (bomItems.length === 0) {
-                return formatText(text, 20);
+                return formatText(text, 18);
             }
 
             let result = '';
@@ -83,8 +83,8 @@
             for (let i = 0; i < bomItems.length; i++) {
                 let testLine = currentLine + (currentLine ? ' ' : '') + bomItems[i];
 
-                // Jika menambah item ini melebihi 20 karakter, buat baris baru
-                if (testLine.length > 20 && currentLine !== '') {
+                // Jika menambah item ini melebihi 18 karakter, buat baris baru
+                if (testLine.length > 18 && currentLine !== '') {
                     result += currentLine + '\n';
                     currentLine = bomItems[i];
                 } else {
