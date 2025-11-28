@@ -68,7 +68,7 @@
                         }
                         #print th, #print td {
                             padding: 1px 2px !important;
-                            font-size: 10px !important;
+                            font-size: 14px !important;
                             border: 1px solid #000 !important;
                             vertical-align: middle !important;
                             line-height: 1.1 !important;
@@ -77,7 +77,7 @@
                             background: #f9f9f9 !important;
                             font-weight: bold !important;
                             text-align: center !important;
-                            font-size: 9px !important;
+                            font-size: 14px !important;
                         }
                         #print h3, #print h4 {
                             margin: 4px 0 !important;
@@ -111,16 +111,16 @@
                         /* Override font-size inline pada tabel saat print */
                         #print table th,
                         #print table td {
-                            font-size: 10px !important;
+                            font-size: 14px !important;
                             padding: 1px 2px !important;
                         }
                         /* Header tabel */
                         #print table th {
-                            font-size: 9px !important;
+                            font-size: 12px !important;
                         }
                         /* Font untuk header grup yang vertical */
                         #print table th[style*="writing-mode"] {
-                            font-size: 9px !important;
+                            font-size: 12px !important;
                             min-width: 20px !important;
                             padding: 1px 2px !important;
                         }
@@ -151,6 +151,9 @@
                                     s/d {{ $endCode ? \Carbon\Carbon::parse($endCode)->format('d-M-Y') : '-' }}
                                 </p>
                                 @php
+                                    // Cek apakah brand IRC berdasarkan category
+                                    $isIrcBrand = stripos($category ?? '', 'IRC') !== false;
+
                                     // Ambil kolom dinamis dari hasil crosstab
                                     $columns = [];
                                     if (count($results)) {
@@ -198,15 +201,17 @@
                                 <table style="width:100%; border-collapse:collapse;">
                                     <thead>
                                         <tr>
-                                            <th rowspan="2" style="border: 1px solid #000; text-align: center; padding:1px 2px; background:#f9f9f9; font-weight:bold; font-size:9px;">Customer</th>
-                                            <th rowspan="2" style="border: 1px solid #000; text-align: center; padding:1px 2px; background:#f9f9f9; font-weight:bold; font-size:9px;">Alamat</th>
-                                            <th rowspan="2" style="border: 1px solid #000; text-align: center; padding:1px 2px; background:#f9f9f9; font-weight:bold; font-size:9px;">Kota</th>
+                                            <th rowspan="2" style="border: 1px solid #000; text-align: center; padding:1px 2px; background:#f9f9f9; font-weight:bold; font-size:12px;">Customer</th>
+                                            @if($isIrcBrand)
+                                            <th rowspan="2" style="border: 1px solid #000; text-align: center; padding:1px 2px; background:#f9f9f9; font-weight:bold; font-size:12px;">Alamat</th>
+                                            @endif
+                                            <th rowspan="2" style="border: 1px solid #000; text-align: center; padding:1px 2px; background:#f9f9f9; font-weight:bold; font-size:12px;">Kota</th>
                                             @foreach ($groupColumns as $col)
-                                                <th style="text-align:center; padding:1px 2px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:9px; min-width:20px; border: 1px solid #000; background:#f9f9f9; font-weight:bold;" rowspan="2">
+                                                <th style="text-align:center; padding:1px 2px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:12px; min-width:20px; border: 1px solid #000; background:#f9f9f9; font-weight:bold;" rowspan="2">
                                                     {{ $col }}
                                                 </th>
                                             @endforeach
-                                            <th rowspan="2" style="text-align:center; padding:1px 2px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:9px; min-width:20px; border: 1px solid #000; background:#f9f9f9; font-weight:bold;">Total</th>
+                                            <th rowspan="2" style="text-align:center; padding:1px 2px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:12px; min-width:20px; border: 1px solid #000; background:#f9f9f9; font-weight:bold;">Total</th>
                                         </tr>
                                         {{-- Baris kedua header kosong karena header customer sudah dipecah --}}
                                     </thead>
@@ -243,9 +248,11 @@
                                                 @php
                                                     $customerParts = splitCustomer($customer);
                                                 @endphp
-                                                <td style="padding:1px 2px; border: 1px solid #000; font-size: 10px;">{{ $customerParts['name'] }}</td>
-                                                <td style="padding:1px 2px; border: 1px solid #000; font-size: 10px;">{{ $customerParts['address'] }}</td>
-                                                <td style="padding:1px 2px; border: 1px solid #000; font-size: 10px;">{{ $customerParts['city'] }}</td>
+                                                <td style="padding:1px 2px; border: 1px solid #000; font-size: 13px;">{{ $customerParts['name'] }}</td>
+                                                @if($isIrcBrand)
+                                                <td style="padding:1px 2px; border: 1px solid #000; font-size: 13px;">{{ $customerParts['address'] }}</td>
+                                                @endif
+                                                <td style="padding:1px 2px; border: 1px solid #000; font-size: 13px;">{{ $customerParts['city'] }}</td>
                                                 @foreach ($groupColumns as $col)
                                                     @php
                                                         $val = $row->$col ?? '';
@@ -257,13 +264,13 @@
                                                         $rowTotalPoint += $point;
                                                         $rowTotalSisa += $sisa;
                                                     @endphp
-                                                    <td style="text-align:center; padding:1px 2px; border: 1px solid #000; font-size: 10px;">
+                                                    <td style="text-align:center; padding:1px 2px; border: 1px solid #000; font-size: 13px;">
                                                         {{ $qty ? $qty : '' }}<br>
                                                         <span style="color:#000;">{{ $point ? $point : '' }}</span><br>
                                                         <span style="color:#000;">{{ $sisa ? $sisa : '' }}</span>
                                                     </td>
                                                 @endforeach
-                                                <td style="text-align:center; padding:1px 2px; border: 1px solid #000; font-weight:bold; font-size: 10px;">
+                                                <td style="text-align:center; padding:1px 2px; border: 1px solid #000; font-weight:bold; font-size: 13px;">
                                                     {{ $rowTotalQty ? $rowTotalQty : '' }}<br>
                                                     <span style="color:#000;">{{ $rowTotalPoint ? $rowTotalPoint : '' }}</span><br>
                                                     <span style="color:#000;">{{ $rowTotalSisa ? $rowTotalSisa : '' }}</span>
@@ -284,15 +291,15 @@
                                             }
                                         @endphp
                                         <tr>
-                                            <td colspan="3" style="padding:1px 2px; border: 1px solid #000; font-weight:bold; background:#f2f2f2; font-size: 10px;">Total</td>
+                                            <td colspan="{{ $isIrcBrand ? '3' : '2' }}" style="padding:1px 2px; border: 1px solid #000; font-weight:bold; background:#f2f2f2; font-size: 13px;">Total</td>
                                             @foreach ($groupColumns as $col)
-                                                <td style="text-align:center; padding:1px 2px; border: 1px solid #000; font-weight:bold; background:#f2f2f2; font-size: 10px;">
+                                                <td style="text-align:center; padding:1px 2px; border: 1px solid #000; font-weight:bold; background:#f2f2f2; font-size: 13px;">
                                                     {{ $colTotalsQty[$col] ? $colTotalsQty[$col] : '' }}<br>
                                                     <span style="color:#000;">{{ $colTotals[$col] ? $colTotals[$col] : '' }}</span><br>
                                                     <span style="color:#000;">{{ $colTotalsSisa[$col] ? $colTotalsSisa[$col] : '' }}</span>
                                                 </td>
                                             @endforeach
-                                            <td style="text-align:center; padding:1px 2px; border: 1px solid #000; font-weight:bold; background:#f2f2f2; font-size: 10px;">
+                                            <td style="text-align:center; padding:1px 2px; border: 1px solid #000; font-weight:bold; background:#f2f2f2; font-size: 13px;">
                                                 {{ $grandTotalQty ? $grandTotalQty : '' }}<br>
                                                 <span style="color:#000;">{{ $grandTotal ? $grandTotal : '' }}</span><br>
                                                 <span style="color:#000;">{{ $grandTotalSisa ? $grandTotalSisa : '' }}</span>
