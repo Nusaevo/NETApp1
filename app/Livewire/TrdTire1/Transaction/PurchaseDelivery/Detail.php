@@ -76,7 +76,7 @@ class Detail extends BaseComponent
         'inputs.tr_code' => 'required',
         'inputs.wh_code' => 'required',
         'inputs.partner_id' => 'required',
-        'input_details.*.qty' => 'required',
+        // 'input_details.*.qty' => 'required',
     ];
 
     protected $listeners = [
@@ -650,9 +650,9 @@ class Detail extends BaseComponent
             }
         }
 
-        // Validasi qty tidak boleh lebih dari qty_order
+        // Validasi qty tidak boleh lebih dari qty_order (hanya untuk item dengan qty > 0)
         foreach ($this->input_details as $index => $detail) {
-            if (isset($detail['qty']) && isset($detail['qty_order'])) {
+            if (isset($detail['qty']) && !empty($detail['qty']) && $detail['qty'] > 0 && isset($detail['qty_order'])) {
                 if ($detail['qty'] > $detail['qty_order']) {
                     throw new Exception("Quantity tidak boleh lebih dari quantity belum dikirim {$detail['qty_order']} untuk item no " . ($index + 1));
                 }
@@ -674,7 +674,15 @@ class Detail extends BaseComponent
         }
 
         $headerData = $this->inputs;
-        $detailData = $this->input_details;
+        // Filter input_details: hanya simpan item dengan qty > 0 (tidak null dan tidak 0)
+        $detailData = array_filter($this->input_details, function($detail) {
+            return isset($detail['qty']) && !empty($detail['qty']) && $detail['qty'] > 0;
+        });
+
+        // Validasi: harus ada minimal satu item dengan qty > 0
+        if (empty($detailData)) {
+            throw new Exception('Minimal harus ada satu item dengan quantity lebih dari 0 untuk disimpan.');
+        }
 
         $deliveryService = app(DeliveryService::class);
         $result = $deliveryService->saveDelivery($headerData, $detailData);
