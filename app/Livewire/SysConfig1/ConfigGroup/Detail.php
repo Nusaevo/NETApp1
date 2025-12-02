@@ -53,9 +53,11 @@ class Detail extends BaseComponent
         if ($this->isEditOrView()) {
             $this->object = ConfigGroup::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
-            $this->applicationChanged();
+            $this->selectedMenus = []; // Clear menus first
             $this->populateSelectedRights();
             $this->populateSelectedUsers();
+            // Dispatch after data is populated
+            $this->dispatch('applicationChanged', appId: $this->inputs['app_id'], selectedMenus: $this->selectedMenus);
         }
     }
 
