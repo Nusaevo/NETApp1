@@ -33,8 +33,7 @@ class RightDataTable extends BaseDataTableComponent
 
     public function applicationChanged($appId, $selectedMenus)
     {
-        // Clear previous data to ensure fresh render
-        $this->selectedRows = [];
+        // Update data without clearing to prevent visible refresh
         $this->appId = $appId;
         $this->selectedRows = $selectedMenus ?: [];
         $this->dispatch('renderRightTable');
