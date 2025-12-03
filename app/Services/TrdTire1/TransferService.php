@@ -364,8 +364,12 @@ class TransferService
             $billingHdr2->setConnection('TrdTire2');
             $billingHdr2->fill($billingHdr->toArray());
             $billingHdr2->partner_id = $partner2Id; // Update dengan partner ID TrdTire2
-            $billingHdr2->taxinv_date = now(); // Set taxinv_date dengan tanggal sekarang
+            $billingHdr2->tax_process_date = now(); // Set tax_process_date dengan tanggal sekarang (tanggal transfer berhasil)
             $billingHdr2->save();
+
+            // Update tax_process_date di TrdTire1 juga
+            $billingHdr->tax_process_date = now();
+            $billingHdr->save();
 
             // Transfer Billing Order - Gunakan query langsung untuk menghindari masalah relasi
             $billingOrders = BillingOrder::where('trhdr_id', $billingHdr->id)
