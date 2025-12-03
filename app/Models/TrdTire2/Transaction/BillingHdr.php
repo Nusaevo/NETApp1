@@ -40,6 +40,7 @@ class BillingHdr extends BaseModel
         'amt_shipcost',
         'amt_reff',
         'print_date',
+        'tax_process_date',
     ];
 
     protected $casts = [
