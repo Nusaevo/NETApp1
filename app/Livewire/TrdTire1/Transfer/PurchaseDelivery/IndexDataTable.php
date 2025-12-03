@@ -4,7 +4,7 @@ namespace App\Livewire\TrdTire1\Transfer\PurchaseDelivery;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
-use App\Models\TrdTire1\Transaction\{DelivHdr, DelivPacking, DelivPicking};
+use App\Models\TrdTire1\Transaction\{DelivHdr, DelivPacking, DelivPicking, BillingHdr};
 use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\Status;
@@ -184,7 +184,7 @@ class IndexDataTable extends BaseDataTableComponent
             $this->createTextFilter('Nomor Surat Jalan', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }, true),
-            $this->createTextFilter('Nomor Nota', 'reffhdrtr_code', 'Cari Kode Referensi', function (Builder $builder, string $value) {
+            $this->createTextFilter('Nomor Nota Pembelian', 'reffhdrtr_code', 'Cari Kode Referensi', function (Builder $builder, string $value) {
                 $builder->whereExists(function ($query) use ($value) {
                     $query->select(DB::raw(1))
                         ->from('deliv_packings')
@@ -215,6 +215,74 @@ class IndexDataTable extends BaseDataTableComponent
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });
             }, true),
+            SelectFilter::make('Status Transfer', 'transfer_status')
+                ->options([
+                    '' => 'All',
+                    'transferred' => 'Sudah Transfer',
+                    'not_transferred' => 'Belum Transfer',
+                ])
+                ->filter(function ($builder, $value) {
+                    if ($value !== '') {
+                        if ($value === 'transferred') {
+                            // Filter untuk delivery yang sudah ditransfer (billing memiliki tax_process_date)
+                            // Cek melalui billhdr_id langsung atau melalui OrderHdr yang direferensikan
+                            $builder->where(function ($query) {
+                                // Cek melalui billhdr_id langsung
+                                $query->whereExists(function ($subQuery) {
+                                    $subQuery->select(DB::raw(1))
+                                        ->from('billing_hdrs')
+                                        ->whereRaw('billing_hdrs.id = deliv_hdrs.billhdr_id')
+                                        ->where('billing_hdrs.tr_type', 'APB')
+                                        ->whereNotNull('billing_hdrs.tax_process_date');
+                                })
+                                // Atau cek melalui OrderHdr yang direferensikan di DelivPacking
+                                ->orWhereExists(function ($subQuery) {
+                                    $subQuery->select(DB::raw(1))
+                                        ->from('deliv_packings')
+                                        ->join('order_hdrs', function ($join) {
+                                            $join->on('order_hdrs.tr_code', '=', 'deliv_packings.reffhdrtr_code')
+                                                ->where('order_hdrs.tr_type', '=', 'PO');
+                                        })
+                                        ->join('billing_hdrs', function ($join) {
+                                            $join->on('billing_hdrs.tr_code', '=', 'order_hdrs.tr_code')
+                                                ->where('billing_hdrs.tr_type', '=', 'APB')
+                                                ->whereNotNull('billing_hdrs.tax_process_date');
+                                        })
+                                        ->whereRaw('deliv_packings.trhdr_id = deliv_hdrs.id')
+                                        ->where('deliv_packings.tr_type', 'PD');
+                                });
+                            });
+                        } elseif ($value === 'not_transferred') {
+                            // Filter untuk delivery yang belum ditransfer
+                            $builder->where(function ($query) {
+                                // Tidak ada billing dengan tax_process_date melalui billhdr_id
+                                // DAN tidak ada billing dengan tax_process_date melalui OrderHdr
+                                $query->whereNotExists(function ($subQuery) {
+                                    $subQuery->select(DB::raw(1))
+                                        ->from('billing_hdrs')
+                                        ->whereRaw('billing_hdrs.id = deliv_hdrs.billhdr_id')
+                                        ->where('billing_hdrs.tr_type', 'APB')
+                                        ->whereNotNull('billing_hdrs.tax_process_date');
+                                })
+                                ->whereNotExists(function ($subQuery) {
+                                    $subQuery->select(DB::raw(1))
+                                        ->from('deliv_packings')
+                                        ->join('order_hdrs', function ($join) {
+                                            $join->on('order_hdrs.tr_code', '=', 'deliv_packings.reffhdrtr_code')
+                                                ->where('order_hdrs.tr_type', '=', 'PO');
+                                        })
+                                        ->join('billing_hdrs', function ($join) {
+                                            $join->on('billing_hdrs.tr_code', '=', 'order_hdrs.tr_code')
+                                                ->where('billing_hdrs.tr_type', '=', 'APB')
+                                                ->whereNotNull('billing_hdrs.tax_process_date');
+                                        })
+                                        ->whereRaw('deliv_packings.trhdr_id = deliv_hdrs.id')
+                                        ->where('deliv_packings.tr_type', 'PD');
+                                });
+                            });
+                        }
+                    }
+                }),
         ];
     }
 

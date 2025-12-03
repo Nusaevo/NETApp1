@@ -19,26 +19,25 @@
                         <x-ui-card title="Main Information">
                             <x-ui-padding>
                                 <div class="row">
-                                    <div class="row">
+                                    {{-- <div class="row">
                                         <x-ui-option model="inputs.sales_type" :options="['I' => 'MOTOR', 'O' => 'MOBIL']" type="radio"
                                             layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
                                             onChanged="salesTypeOnChanged" />
                                         <x-ui-option model="inputs.tax_doc_flag" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']"
                                             type="checkbox" layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
                                             :checked="$inputs['tax_doc_flag']" onChanged="onTaxDocFlagChanged" />
-                                    </div>
+                                    </div> --}}
                                     <div class="row">
-                                        <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
-                                            :action="$actionValue" required="true" enabled="true"
-                                            onChanged="onTrDateChanged" />
                                         <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
                                             type="text" :action="$actionValue" required="true"
                                             clickEvent="trCodeOnClick"
                                             capslockMode="true"
-                                            buttonName="Nomor Nota Baru"
-                                            enabled="true" :buttonEnabled="true"
+                                            enabled="true"
                                             onChanged="onTrCodeChanged"
                                             placeHolder="Edit nomor nota dan tekan enter untuk cari nota lain, klik nomor baru untuk create" />
+                                        <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
+                                            :action="$actionValue" required="true" enabled="true"
+                                            onChanged="onTrDateChanged" />
                                     </div>
                                     <div class="row">
                                         <x-ui-dropdown-search label="Customer" model="inputs.partner_id"
@@ -91,7 +90,7 @@
                                             model="inputs.due_date" type="date" :action="$actionValue" required="true"
                                             :enabled="$isPanelEnabled" />
                                         <x-ui-text-field label="{{ $this->trans('reff_code') }}"
-                                            model="inputs.note" type="text" :action="$actionValue"
+                                            model="inputs.reff_code" type="text" :action="$actionValue"
                                             required="false" />
                                         <x-ui-text-field label="Biaya pengiriman" model="inputs.amt_shipcost"
                                             type="number" :action="$actionValue" required="false" enabled="true" />

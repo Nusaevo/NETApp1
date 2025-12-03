@@ -183,7 +183,7 @@ class IndexDataTable extends BaseDataTableComponent
             $this->createTextFilter('Nomor Surat Jalan', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }, true),
-            $this->createTextFilter('Nomor Nota', 'reffhdrtr_code', 'Cari Kode Referensi', function (Builder $builder, string $value) {
+            $this->createTextFilter('Nomor Nota Pembelian', 'reffhdrtr_code', 'Cari Kode Referensi', function (Builder $builder, string $value) {
                 $builder->whereExists(function ($query) use ($value) {
                     $query->select(DB::raw(1))
                         ->from('deliv_packings')
