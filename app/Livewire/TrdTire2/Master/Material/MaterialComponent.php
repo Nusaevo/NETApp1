@@ -83,7 +83,7 @@ class MaterialComponent extends BaseComponent
     protected function onPreRender()
     {
         $this->customActionValue = 'Edit';
-        $this->baseRoute = $this->appCode . '.Master.Material.Detail';
+        $this->baseRoute = $this->redirectAppCode . '.Master.Material.Detail';
         $this->customValidationAttributes  = [
             'materials'                => $this->trans('input'),
             'materials.*'              => $this->trans('input'),

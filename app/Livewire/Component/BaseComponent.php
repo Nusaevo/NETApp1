@@ -23,6 +23,7 @@ class BaseComponent extends Component
     public $status = '';
     public $permissions;
     public $appCode;
+    public $redirectAppCode;
     public $baseRoute;
     public $langBasePath;
     public $baseRenderRoute;
@@ -62,6 +63,13 @@ class BaseComponent extends Component
         try {
             $this->additionalParam = $additionalParam;
             $this->appCode = Session::get('app_code', '');
+            $this->redirectAppCode = $this->appCode; // Store original for database operations
+
+            // If app_code is trdtire2, treat it as trdtire1 for routing/UI purposes
+            if ($this->appCode === 'TrdTire2') {
+                $this->redirectAppCode = 'TrdTire1'; // For redirect operations, also use TrdTire1
+            }
+
             $this->setActionAndObject($action, $objectId);
             $this->setActionValue($action, $actionValue);
             $this->setObjectIdValue($objectId, $objectIdValue);

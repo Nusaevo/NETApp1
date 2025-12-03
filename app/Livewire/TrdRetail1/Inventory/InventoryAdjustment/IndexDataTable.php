@@ -38,7 +38,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
            Column::make($this->trans("tr_id"), "tr_id")
                 ->format(function ($value, $row) {
-                    return '<a href="' . route($this->appCode.'.Inventory.InventoryAdjustment.Detail', [
+                    return '<a href="' . route($this->redirectAppCode.'.Inventory.InventoryAdjustment.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->id)
                         ]) . '">' . $row->tr_id . '</a>';
@@ -51,7 +51,7 @@ class IndexDataTable extends BaseDataTableComponent
             // tr_id
             // Column::make($this->trans("tr_code"), "tr_code")
             //     ->format(function ($value, $row) {
-            //         return '<a href="' . route($this->appCode . '.Inventory.InventoryAdjustment.Detail', [
+            //         return '<a href="' . route($this->redirectAppCode . '.Inventory.InventoryAdjustment.Detail', [
             //             'action' => encryptWithSessionKey('Edit'),
             //             'objectId' => encryptWithSessionKey((string)$row->id)  // Ensure it's a string
             //         ]) . '">' . $row->tr_code . '</a>';

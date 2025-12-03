@@ -296,7 +296,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("Nomor Nota"), "DeliveryHdr.tr_code")
                 ->format(function ($value, $row) {
                     if ($row->partner_id && $row->OrderHdr && $row->DeliveryHdr) {
-                        return '<a href="' . route($this->appCode . '.Transaction.SalesOrder.Detail', [
+                        return '<a href="' . route($this->redirectAppCode . '.Transaction.SalesOrder.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->OrderHdr->id)
                         ]) . '">' . $row->DeliveryHdr->tr_code . '</a>';
@@ -345,7 +345,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("Customer"), "Partner.name")
                 ->format(function ($value, $row) {
                     if ($row->Partner && $row->Partner->name) {
-                        return '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
+                        return '<a href="' . route($this->redirectAppCode . '.Master.Partner.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->partner_id)
                         ]) . '">' . $row->Partner->name . '</a>';
@@ -532,7 +532,7 @@ class IndexDataTable extends BaseDataTableComponent
                 $this->dispatch('success', 'Nota berhasil dicetak dengan tanggal tagih ' . $this->tanggalTagih);
 
                 // Redirect to print view
-                return redirect()->route($this->appCode . '.Transaction.SalesBilling.PrintPdf', [
+                return redirect()->route($this->redirectAppCode . '.Transaction.SalesBilling.PrintPdf', [
                     'action' => encryptWithSessionKey('Edit'),
                     'objectId' => encryptWithSessionKey(json_encode($selectedOrderIds)),
                 ]);

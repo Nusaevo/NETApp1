@@ -163,7 +163,7 @@ class DebtListComponent extends DetailComponent
             return;
         }
 
-        return redirect()->route($this->appCode . '.Transaction.DebtSettlement.Detail', [
+        return redirect()->route($this->redirectAppCode . '.Transaction.DebtSettlement.Detail', [
             'action' => encryptWithSessionKey('Edit'),
             'objectId' => encryptWithSessionKey($this->object->id)
         ]);

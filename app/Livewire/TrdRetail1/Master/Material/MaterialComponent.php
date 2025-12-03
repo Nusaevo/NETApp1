@@ -575,7 +575,7 @@ class MaterialComponent extends BaseComponent
                 if ($itemBarcodeString !== (string) $this->input_details[$index]['barcode']) {
                     $this->dispatch('error', 'Mohon save item terlebih dahulu');
                 } else {
-                    return redirect()->route($this->appCode . '.Master.Material.PrintPdf', [
+                    return redirect()->route($this->redirectAppCode . '.Master.Material.PrintPdf', [
                         'action' => encryptWithSessionKey('Edit'),
                         'objectId' => encryptWithSessionKey($itemId),
                     ]);

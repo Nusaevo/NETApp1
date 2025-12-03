@@ -358,7 +358,7 @@ class Detail extends BaseComponent
                 ($this->actionValue === 'Create' ? 'disimpan' : 'diperbarui') . '.');
 
             return redirect()->route(
-                $this->appCode . '.Transaction.PurchaseDelivery.Detail',
+                $this->redirectAppCode . '.Transaction.PurchaseDelivery.Detail',
                 [
                     'action'   => encryptWithSessionKey('Edit'),
                     'objectId' => encryptWithSessionKey($this->object->id),

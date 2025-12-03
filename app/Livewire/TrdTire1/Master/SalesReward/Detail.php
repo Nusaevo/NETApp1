@@ -427,7 +427,7 @@ class Detail extends BaseComponent
             // $this->notaCount++;
             $this->updateVersionNumber2();
             // Logika cetak nota jual
-            return redirect()->route($this->appCode . '.Master.SalesReward.PrintPdf', [
+            return redirect()->route($this->redirectAppCode . '.Master.SalesReward.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey((string)$this->object->id)
             ]);

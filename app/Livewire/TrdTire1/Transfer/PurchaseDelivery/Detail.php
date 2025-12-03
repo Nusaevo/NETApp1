@@ -529,7 +529,7 @@ class Detail extends BaseComponent
         // Jika mode Create, redirect ke mode Create baru (reset form)
         if ($this->actionValue === 'Create') {
             return redirect()->route(
-                $this->appCode . '.Transaction.PurchaseDelivery.Detail',
+                $this->redirectAppCode . '.Transaction.PurchaseDelivery.Detail',
                 [
                     'action'   => encryptWithSessionKey('Create'),
                 ]
@@ -537,7 +537,7 @@ class Detail extends BaseComponent
         } else {
             // Jika mode Edit, tetap redirect ke mode Edit
             return redirect()->route(
-                $this->appCode . '.Transaction.PurchaseDelivery.Detail',
+                $this->redirectAppCode . '.Transaction.PurchaseDelivery.Detail',
                 [
                     'action'   => encryptWithSessionKey($this->actionValue),
                     'objectId' => encryptWithSessionKey($this->object->id),

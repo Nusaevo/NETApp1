@@ -54,7 +54,7 @@ class IndexDataTable extends BaseDataTableComponent
             // Column::make($this->trans("tr_code"), "tr_code")
             //     ->format(function ($value, $row) {
             //         if ($row->partner_id) {
-            //             return '<a href="' . route($this->appCode . '.Transaction.DebtSettlement.Detail', [
+            //             return '<a href="' . route($this->redirectAppCode . '.Transaction.DebtSettlement.Detail', [
             //                 'action' => encryptWithSessionKey('Edit'),
             //                 'objectId' => encryptWithSessionKey($row->id)
             //             ]) . '">' . $row->tr_code . '</a>';
@@ -66,7 +66,7 @@ class IndexDataTable extends BaseDataTableComponent
             // Column::make($this->trans("supplier"), "partner_id")
             //     ->format(function ($value, $row) {
             //         if ($row->Partner && $row->Partner->name) {
-            //             return '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
+            //             return '<a href="' . route($this->redirectAppCode . '.Master.Partner.Detail', [
             //                 'action' => encryptWithSessionKey('Edit'),
             //                 'objectId' => encryptWithSessionKey($row->partner_id)
             //             ]) . '">' . $row->Partner->name . '</a>';

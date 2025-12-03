@@ -381,7 +381,7 @@ class Detail extends BaseComponent
         }
 
         if ($this->actionValue == 'Create') {
-            return redirect()->route($this->appCode . '.Transaction.SalesOrder.Detail', [
+            return redirect()->route($this->redirectAppCode . '.Transaction.SalesOrder.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);
@@ -426,7 +426,7 @@ class Detail extends BaseComponent
             $this->notaCount++;
             $this->updateVersionNumber2();
             // Logika cetak nota jual
-            return redirect()->route($this->appCode . '.Transaction.SalesOrder.PrintPdf', [
+            return redirect()->route($this->redirectAppCode . '.Transaction.SalesOrder.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);
@@ -441,7 +441,7 @@ class Detail extends BaseComponent
             $this->suratJalanCount++;
             $this->updateVersionNumber2();
             // Logika cetak surat jalan
-            return redirect()->route($this->appCode . '.Transaction.SalesDelivery.PrintPdf', [
+            return redirect()->route($this->redirectAppCode . '.Transaction.SalesDelivery.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);        } catch (Exception $e) {

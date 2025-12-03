@@ -22,6 +22,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
     public $customRoute;
     public $langBasePath;
     public $appCode;
+    public $redirectAppCode;
     public $isComponent = false;
     public $baseRenderRoute;
     public $permissions = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
@@ -58,6 +59,12 @@ abstract class BaseDataTableComponent extends DataTableComponent
             $this->baseRoute = Route::currentRouteName();
         }
         $this->appCode = Session::get('app_code', '');
+        $this->redirectAppCode = $this->appCode; // Store original for database operations
+
+        // If app_code is trdtire2, treat it as trdtire1 for routing/UI purposes
+        if ($this->appCode === 'TrdTire2') {
+            $this->redirectAppCode = 'TrdTire1'; // For redirect operations, also use TrdTire1
+        }
 
         $this->route = ConfigMenu::getRoute($this->baseRoute);
         $this->baseRenderRoute = strtolower($this->route);

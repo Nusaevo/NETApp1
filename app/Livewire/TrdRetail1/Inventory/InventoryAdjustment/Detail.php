@@ -601,7 +601,7 @@ class Detail extends BaseComponent
         }
 
         if ($this->actionValue == 'Create') {
-            return redirect()->route($this->appCode . '.Inventory.InventoryAdjustment.Detail', [
+            return redirect()->route($this->redirectAppCode . '.Inventory.InventoryAdjustment.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);
