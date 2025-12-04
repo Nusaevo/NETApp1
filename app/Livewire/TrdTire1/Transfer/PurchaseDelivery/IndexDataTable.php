@@ -26,7 +26,12 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return DelivHdr::with(['DelivPacking.DelivPickings', 'Partner'])
+            ->leftJoin('billing_hdrs', function ($join) {
+                $join->on('billing_hdrs.id', '=', 'deliv_hdrs.billhdr_id')
+                    ->where('billing_hdrs.tr_type', 'APB');
+            })
             ->where('deliv_hdrs.tr_type', 'PD')
+            ->select('deliv_hdrs.*', 'billing_hdrs.tax_process_date as billing_tax_process_date')
             ->orderBy('deliv_hdrs.updated_at', 'desc')
             ->orderBy('deliv_hdrs.tr_date', 'desc')
             ->orderBy('deliv_hdrs.tr_code', 'desc');
@@ -120,6 +125,24 @@ class IndexDataTable extends BaseDataTableComponent
                     return '0';
                 })
                 ->html()
+                ->sortable(),
+            Column::make('Tgl Transfer', 'billing_tax_process_date')
+                ->label(function ($row) {
+                    // Cek dari attribute billing_tax_process_date yang sudah di-join
+                    if (isset($row->billing_tax_process_date) && $row->billing_tax_process_date) {
+                        return \Carbon\Carbon::parse($row->billing_tax_process_date)->format('d-m-Y');
+                    }
+                    // Fallback: cek melalui relasi jika ada
+                    if ($row->billhdr_id) {
+                        $billingHdr = BillingHdr::where('id', $row->billhdr_id)
+                            ->where('tr_type', 'APB')
+                            ->first();
+                        if ($billingHdr && $billingHdr->tax_process_date) {
+                            return \Carbon\Carbon::parse($billingHdr->tax_process_date)->format('d-m-Y');
+                        }
+                    }
+                    return '-';
+                })
                 ->sortable(),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {

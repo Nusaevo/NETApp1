@@ -15,7 +15,7 @@
             <div class="card-body">
                 <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
                     <small class="text-muted">
-                        Pilih satu atau lebih surat jalan pada tabel, isi nomor faktur langsung di sini, lalu simpan.
+                        Pilih satu atau lebih surat jalan pada tabel, isi nomor faktur dan tanggal faktur langsung di sini, lalu simpan.
                     </small>
                     <div class="btn-group">
                         <button type="button"
@@ -47,15 +47,24 @@
                         Belum ada data yang dipilih. Centang surat jalan di kolom paling kiri untuk mulai mengisi nomor faktur.
                     </div>
                 @else
-                    <div class="mb-2">
-                        <label class="form-label mb-1 small text-muted">Nomor Faktur (digunakan untuk semua nota terpilih)</label>
-                        <input type="text"
-                               class="form-control form-control-sm"
-                               placeholder="Masukkan nomor faktur"
-                               wire:model.defer="taxDocNumInput"
-                               maxlength="20"
-                               inputmode="numeric"
-                               pattern="[0-9]*">
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label mb-1 small text-muted">Nomor Faktur (digunakan untuk semua nota terpilih)</label>
+                            <input type="text"
+                                   class="form-control form-control-sm"
+                                   placeholder="Masukkan nomor faktur"
+                                   wire:model.defer="taxDocNumInput"
+                                   maxlength="20"
+                                   inputmode="numeric"
+                                   pattern="[0-9]*">
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label mb-1 small text-muted">Tanggal Faktur (digunakan untuk semua nota terpilih)</label>
+                            <input type="date"
+                                   class="form-control form-control-sm"
+                                   placeholder="Masukkan tanggal faktur"
+                                   wire:model.defer="taxDocDateInput">
+                        </div>
                     </div>
 
                 @endif
