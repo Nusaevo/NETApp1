@@ -58,7 +58,7 @@ class IndexDataTable extends BaseDataTableComponent
                     return sprintf(
                         '<a href="%s">%s</a>',
                         route(
-                            $this->appCode . '.Master.Partner.Detail',
+                            $this->redirectAppCode . '.Master.Partner.Detail',
                             [
                                 'action'   => encryptWithSessionKey('Edit'),
                                 'objectId' => encryptWithSessionKey($row->id),

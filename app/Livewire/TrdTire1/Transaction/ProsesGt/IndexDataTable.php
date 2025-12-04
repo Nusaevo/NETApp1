@@ -100,7 +100,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable()
                 ->format(fn($value, $row) =>
                     $row->orderHdr
-                        ? '<a href="'.route($this->appCode.'.Transaction.SalesOrder.Detail', [
+                        ? '<a href="'.route($this->redirectAppCode.'.Transaction.SalesOrder.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->orderHdr->id)
                         ]).'">'.$row->orderHdr->tr_code.'</a>'
@@ -470,7 +470,7 @@ class IndexDataTable extends BaseDataTableComponent
             'sr_code' => $selectedSrCode
         ];
 
-        return redirect()->route($this->appCode . '.Transaction.ProsesGt.PrintPdf', [
+        return redirect()->route($this->redirectAppCode . '.Transaction.ProsesGt.PrintPdf', [
             'action' => encryptWithSessionKey('Print'),
             'objectId' => encryptWithSessionKey(json_encode($orderIds)),
             'additionalParam' => encryptWithSessionKey(json_encode($paramArray)),

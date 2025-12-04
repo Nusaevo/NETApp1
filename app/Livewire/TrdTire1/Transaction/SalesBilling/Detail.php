@@ -237,7 +237,7 @@ class Detail extends BaseComponent
         }
         $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
         if ($this->actionValue == 'Create') {
-            return redirect()->route($this->appCode . '.Transaction.PurchaseOrder.Detail', [
+            return redirect()->route($this->redirectAppCode . '.Transaction.PurchaseOrder.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);

@@ -39,7 +39,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans('tr_id'), 'tr_id')
                 ->format(function ($value, $row) {
                     return '<a href="' .
-                        route($this->appCode . '.Transaction.SalesOrder.Detail', [
+                        route($this->redirectAppCode . '.Transaction.SalesOrder.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->id),
                         ]) .
@@ -53,7 +53,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->format(function ($value, $row) {
                     if ($row->partner_id) {
                         return '<a href="' .
-                            route($this->appCode . '.Master.Partner.Detail', [
+                            route($this->redirectAppCode . '.Master.Partner.Detail', [
                                 'action' => encryptWithSessionKey('Edit'),
                                 'objectId' => encryptWithSessionKey($row->partner_id),
                             ]) .
@@ -77,7 +77,7 @@ class IndexDataTable extends BaseDataTableComponent
                     $matlCodes = $orderDtl->pluck('matl_code', 'matl_id');
                     $links = $matlCodes->map(function ($code, $id) {
                         return '<a href="' .
-                            route($this->appCode . '.Master.Material.Detail', [
+                            route($this->redirectAppCode . '.Master.Material.Detail', [
                                 'action' => encryptWithSessionKey('Edit'),
                                 'objectId' => encryptWithSessionKey($id),
                             ]) .
@@ -108,7 +108,7 @@ class IndexDataTable extends BaseDataTableComponent
                     'custom_actions' => [
                         [
                             'label' => 'Print',
-                            'route' => route($this->appCode . '.Transaction.SalesOrder.PrintPdf', [
+                            'route' => route($this->redirectAppCode . '.Transaction.SalesOrder.PrintPdf', [
                                 'action' => encryptWithSessionKey('Edit'),
                                 'objectId' => encryptWithSessionKey($row->id),
                             ]),

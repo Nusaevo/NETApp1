@@ -46,7 +46,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make($this->trans("code"), "code")
                 ->format(function ($value, $row) {
-                    return '<a href="' . route($this->appCode . '.Master.Material.Detail', [
+                    return '<a href="' . route($this->redirectAppCode . '.Master.Material.Detail', [
                         'action'   => encryptWithSessionKey('Edit'),
                         'objectId' => encryptWithSessionKey($row->id)
                     ]) . '">' . $row->code . '</a>';

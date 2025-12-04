@@ -438,7 +438,7 @@ class Detail extends BaseComponent
         $objectId = $this->actionValue === 'Create' ? $this->object->id : $this->object->id;
 
         return redirect()->route(
-            $this->appCode . '.Transaction.ChequeTransaction.Detail',
+            $this->redirectAppCode . '.Transaction.ChequeTransaction.Detail',
             [
                 'action'   => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($objectId),

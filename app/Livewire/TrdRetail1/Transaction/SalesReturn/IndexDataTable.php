@@ -37,7 +37,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make($this->trans("tr_id"), "tr_id")
                 ->format(function ($value, $row) {
-                        return '<a href="' . route($this->appCode.'.Transaction.SalesReturn.Detail', [
+                        return '<a href="' . route($this->redirectAppCode.'.Transaction.SalesReturn.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->id)
                         ]) . '">' . $row->tr_id . '</a>';
@@ -49,7 +49,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("customer"), "partner_id")
                 ->format(function ($value, $row) {
                     if ($row->partner_id) {
-                        return '<a href="' . route($this->appCode.'.Master.Partner.Detail', [
+                        return '<a href="' . route($this->redirectAppCode.'.Master.Partner.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->partner_id)
                         ]) . '">' . $row->Partner->name . '</a>';
@@ -118,7 +118,7 @@ class IndexDataTable extends BaseDataTableComponent
                         'custom_actions' => [
                             [
                                 'label' => 'Print',
-                                'route' => route($this->appCode.'.Transaction.SalesReturn.PrintPdf', [
+                                'route' => route($this->redirectAppCode.'.Transaction.SalesReturn.PrintPdf', [
                                     'action' => encryptWithSessionKey('Edit'),
                                     'objectId' => encryptWithSessionKey($row->id)
                                 ]),

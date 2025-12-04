@@ -266,7 +266,7 @@ class Detail extends BaseComponent
 
         $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'DebtSettlement_LASTID');
         if ($this->actionValue == 'Create') {
-            return redirect()->route($this->appCode . '.Transaction.DebtSettlement.Detail', [
+            return redirect()->route($this->redirectAppCode . '.Transaction.DebtSettlement.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);

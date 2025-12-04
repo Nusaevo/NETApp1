@@ -51,7 +51,7 @@ class IndexDataTable extends BaseDataTableComponent
                         return '<span class="text-muted">Material not found</span>';
                     }
                     return '<a href="' .
-                        route($this->appCode . '.Master.Material.Detail', [
+                        route($this->redirectAppCode . '.Master.Material.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->Material->id),
                         ]) .

@@ -120,7 +120,7 @@ class MaterialComponent extends BaseComponent
     {
         $this->panelEnabled = $this->actionValue == 'Create' ? 'true' : 'false';
         $this->customActionValue = 'Edit';
-        $this->baseRoute = $this->appCode.'.Master.Material.Detail';
+        $this->baseRoute = $this->redirectAppCode.'.Master.Material.Detail';
         // $this->langBasePath = 'trd-jewel1/master/material/detail';
         $this->customValidationAttributes  = [
             'materials'                => $this->trans('input'),
@@ -367,7 +367,7 @@ class MaterialComponent extends BaseComponent
         }
 
         if(!$this->isComponent && $this->actionValue == "Create"){
-            return redirect()->route($this->appCode.'.Master.Material.Detail', [
+            return redirect()->route($this->redirectAppCode.'.Master.Material.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);
@@ -771,7 +771,7 @@ class MaterialComponent extends BaseComponent
             return;
         }
 
-        $url = route($this->appCode.'.Master.Material.PrintPdf', [
+        $url = route($this->redirectAppCode.'.Master.Material.PrintPdf', [
             "action" => encryptWithSessionKey('Edit'),
             "objectId" => encryptWithSessionKey($this->object->id)
         ]);

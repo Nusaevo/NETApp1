@@ -32,7 +32,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans('code'), 'code')
                 ->format(function ($value, $row) {
                     return '<a href="' .
-                        route($this->appCode . '.Master.Partner.Detail', [
+                        route($this->redirectAppCode . '.Master.Partner.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->id),
                         ]) .

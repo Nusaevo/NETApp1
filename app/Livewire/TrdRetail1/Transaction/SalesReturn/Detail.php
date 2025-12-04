@@ -191,13 +191,13 @@ class Detail extends BaseComponent
 
         // Redirect handling
         if ($this->actionValue === 'Create') {
-            return redirect()->route($this->appCode . '.Transaction.SalesReturn.Detail', [
+            return redirect()->route($this->redirectAppCode . '.Transaction.SalesReturn.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id ?? $this->exchange_object->id),
             ]);
         }
         if ($this->isPrint) {
-            return redirect()->route($this->appCode . '.Transaction.SalesReturn.PrintPdf', [
+            return redirect()->route($this->redirectAppCode . '.Transaction.SalesReturn.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id ?? $this->exchange_object->id),
             ]);

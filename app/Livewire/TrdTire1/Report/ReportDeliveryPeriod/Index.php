@@ -156,7 +156,7 @@ class Index extends BaseComponent
             'type' => 'cetakLaporanPengiriman'
         ];
 
-        return redirect()->route($this->appCode . '.Transaction.PurchaseDelivery.PrintPdf', [
+        return redirect()->route($this->redirectAppCode . '.Transaction.PurchaseDelivery.PrintPdf', [
             'action' => encryptWithSessionKey('Edit'),
             'objectId' => encryptWithSessionKey(''),
             'additionalParam' => encryptWithSessionKey(json_encode($paramArray)),

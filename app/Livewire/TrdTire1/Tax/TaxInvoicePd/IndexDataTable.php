@@ -20,6 +20,7 @@ class IndexDataTable extends BaseDataTableComponent
     public $filters = [];
     public $selectedRows = [];
     public $taxDocNumInput = '';
+    public $taxDocDateInput = '';
     protected $listeners = ['clearSelections' => 'clearSelections'];
 
     protected $model = DelivHdr::class;
@@ -53,6 +54,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $this->selectedRows = [];
         $this->taxDocNumInput = '';
+        $this->taxDocDateInput = '';
     }
 
     public function updatedSelectedRows($value): void
@@ -69,6 +71,7 @@ class IndexDataTable extends BaseDataTableComponent
 
         if (empty($items)) {
             $this->taxDocNumInput = '';
+            $this->taxDocDateInput = '';
             return;
         }
 
@@ -79,6 +82,14 @@ class IndexDataTable extends BaseDataTableComponent
             ->values();
 
         $this->taxDocNumInput = $existingNumbers->count() === 1 ? $existingNumbers->first() : '';
+
+        $existingDates = collect($items)
+            ->pluck('taxinv_date')
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->unique()
+            ->values();
+
+        $this->taxDocDateInput = $existingDates->count() === 1 ? $existingDates->first() : '';
     }
 
     /**
@@ -129,7 +140,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make($this->trans("Nomor Surat Jalan"), "tr_code")
                 ->format(function ($value, $row) {
-                    return '<a href="' . route($this->appCode . '.Transaction.PurchaseDelivery.Detail', [
+                    return '<a href="' . route($this->redirectAppCode . '.Transaction.PurchaseDelivery.Detail', [
                         'action' => encryptWithSessionKey('Edit'),
                         'objectId' => encryptWithSessionKey((string)$row->id)
                     ]) . '">' . $row->tr_code . '</a>';
@@ -144,7 +155,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("supplier"), "partner_id")
                 ->format(function ($value, $row) {
                     return $row->Partner ?
-                        '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
+                        '<a href="' . route($this->redirectAppCode . '.Master.Partner.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->partner_id)
                         ]) . '">' . $row->Partner->name . '</a>' :
@@ -298,6 +309,7 @@ class IndexDataTable extends BaseDataTableComponent
                 'nomor_nota' => $deliv->tr_code,
                 'nama' => $deliv->Partner ? $deliv->Partner->name : '',
                 'faktur' => $billingHdr ? ($billingHdr->taxinv_num ?: '') : '',
+                'taxinv_date' => $billingHdr && $billingHdr->taxinv_date ? \Carbon\Carbon::parse($billingHdr->taxinv_date)->format('Y-m-d') : '',
                 'total_amt' => $orderHdr ? rupiah($orderHdr->amt ?? 0) : rupiah(0),
             ];
         })->toArray();
@@ -390,6 +402,17 @@ class IndexDataTable extends BaseDataTableComponent
             return;
         }
 
+        $dateRaw = trim((string) $this->taxDocDateInput);
+        $dateValue = null;
+        if ($dateRaw !== '') {
+            try {
+                $dateValue = \Carbon\Carbon::parse($dateRaw)->format('Y-m-d');
+            } catch (\Exception $e) {
+                $this->dispatch('error', 'Format tanggal faktur tidak valid.');
+                return;
+            }
+        }
+
         foreach ($delivHdrs as $delivHdr) {
             $billingHdr = $this->getBillingHdrFromDelivHdr($delivHdr);
             if (!$billingHdr) {
@@ -398,13 +421,15 @@ class IndexDataTable extends BaseDataTableComponent
             }
 
             $billingHdr->taxinv_num = $numRaw;
+            $billingHdr->taxinv_date = $dateValue;
             $billingHdr->save();
         }
 
         $this->clearSelections();
         $this->taxDocNumInput = '';
+        $this->taxDocDateInput = '';
         $this->dispatch('refreshDatatable');
-        $this->dispatch('success', 'Nomor faktur berhasil disimpan.');
+        $this->dispatch('success', 'Nomor faktur dan tanggal faktur berhasil disimpan.');
     }
 
     public function deleteTaxInvoiceNumbers(): void
@@ -425,14 +450,16 @@ class IndexDataTable extends BaseDataTableComponent
             $billingHdr = $this->getBillingHdrFromDelivHdr($delivHdr);
             if ($billingHdr) {
                 $billingHdr->taxinv_num = '';
+                $billingHdr->taxinv_date = null;
                 $billingHdr->save();
             }
         }
 
         $this->clearSelections();
         $this->taxDocNumInput = '';
+        $this->taxDocDateInput = '';
         $this->dispatch('refreshDatatable');
-        $this->dispatch('success', 'Nomor faktur berhasil dihapus.');
+        $this->dispatch('success', 'Nomor faktur dan tanggal faktur berhasil dihapus.');
     }
 
 
@@ -461,7 +488,7 @@ class IndexDataTable extends BaseDataTableComponent
                 'selectedPrintDate' => $selectedPrintDate,
                 'type' => 'cetakProsesDate'
             ];
-            return redirect()->route($this->appCode . '.Tax.TaxInvoice.PrintPdf', [
+            return redirect()->route($this->redirectAppCode . '.Tax.TaxInvoice.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey(''),
                 'additionalParam' => encryptWithSessionKey(json_encode($paramArray)),

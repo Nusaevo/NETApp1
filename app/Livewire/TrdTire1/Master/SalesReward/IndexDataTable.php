@@ -53,7 +53,7 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             Column::make("Kode Program", "code")
                 ->format(function ($value, $row) {
-                    return '<a href="' . route($this->appCode . '.Master.SalesReward.Detail', [
+                    return '<a href="' . route($this->redirectAppCode . '.Master.SalesReward.Detail', [
                         'action' => encryptWithSessionKey('Edit'),
                         'objectId' => encryptWithSessionKey($row->id)
                     ]) . '">' . $row->code . '</a>';

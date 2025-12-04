@@ -143,7 +143,7 @@ class UomListComponent extends DetailComponent
                 if ($itemBarcodeString !== (string) $this->input_details[$index]['barcode']) {
                     $this->dispatch('error',"Mohon save item terlebih dahulu");
                 }else{
-                    return redirect()->route($this->appCode.'.Master.Material.PrintPdf', ["action" => encryptWithSessionKey('Edit'),'objectId' => encryptWithSessionKey($itemId)]);
+                    return redirect()->route($this->redirectAppCode.'.Master.Material.PrintPdf', ["action" => encryptWithSessionKey('Edit'),'objectId' => encryptWithSessionKey($itemId)]);
                 }
             } else {
             }

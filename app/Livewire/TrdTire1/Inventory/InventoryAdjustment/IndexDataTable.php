@@ -39,7 +39,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make($this->trans("Nomor Transaksi"), "tr_code")
                 ->format(function ($value, $row) {
-                    return '<a href="' . route($this->appCode . '.Inventory.InventoryAdjustment.Detail', [
+                    return '<a href="' . route($this->redirectAppCode . '.Inventory.InventoryAdjustment.Detail', [
                         'action' => encryptWithSessionKey('Edit'),
                         'objectId' => encryptWithSessionKey((string)$row->id)
                     ]) . '">' . $row->tr_code . '</a>';

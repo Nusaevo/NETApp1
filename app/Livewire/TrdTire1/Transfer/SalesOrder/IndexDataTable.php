@@ -25,15 +25,29 @@ class IndexDataTable extends BaseDataTableComponent
         // $this->setDefaultSort('updated_at', 'desc');
     }
 
+    public function configure(): void
+    {
+        parent::configure();
+
+        $this->setConfigurableAreas([
+            'after-toolbar' => 'livewire.trd-tire1.transfer.sales-order.custom-filters',
+        ]);
+    }
+
     public function builder(): Builder
     {
         return OrderHdr::with(['OrderDtl', 'Partner', 'DelivHdr', 'BillingHdr'])
+            ->leftJoin('billing_hdrs', function ($join) {
+                $join->on('billing_hdrs.tr_code', '=', 'order_hdrs.tr_code')
+                    ->where('billing_hdrs.tr_type', 'ARB');
+            })
             ->where('order_hdrs.tr_type', 'SO')
             ->whereIn('order_hdrs.status_code', [Status::PRINT, Status::OPEN, Status::SHIP, Status::BILL])
             ->where('order_hdrs.tax_doc_flag', 1)
             ->whereHas('DelivHdr', function ($query) {
                 $query->where('tr_type', 'SD');
-            });
+            })
+            ->select('order_hdrs.*', 'billing_hdrs.tax_process_date as billing_tax_process_date');
             // ->orderBy('order_hdrs.updated_at', 'desc');
     }
     public function columns(): array
@@ -54,7 +68,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("tr_code"), "tr_code")
                 ->format(function ($value, $row) {
                     if ($row->partner_id) {
-                        return '<a href="' . route($this->appCode . '.Transaction.SalesOrder.Detail', [
+                        return '<a href="' . route($this->redirectAppCode . '.Transaction.SalesOrder.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->id)
                         ]) . '">' . $row->tr_code . '</a>';
@@ -66,7 +80,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("Customer"), "partner_id")
                 ->format(function ($value, $row) {
                     if ($row->Partner && $row->Partner->name) {
-                        return '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
+                        return '<a href="' . route($this->redirectAppCode . '.Master.Partner.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->partner_id)
                         ]) . '">' . $row->Partner->name . '</a>';
@@ -104,6 +118,18 @@ class IndexDataTable extends BaseDataTableComponent
                     ];
                     return $statusMap[$value] ?? 'Unknown';
                 }),
+            Column::make('Tgl Transfer', 'billing_tax_process_date')
+                ->label(function ($row) {
+                    // Cek dari relasi BillingHdr terlebih dahulu, jika tidak ada cek dari attribute billing_tax_process_date
+                    if ($row->BillingHdr && $row->BillingHdr->tax_process_date) {
+                        return \Carbon\Carbon::parse($row->BillingHdr->tax_process_date)->format('d-m-Y');
+                    }
+                    if (isset($row->billing_tax_process_date) && $row->billing_tax_process_date) {
+                        return \Carbon\Carbon::parse($row->billing_tax_process_date)->format('d-m-Y');
+                    }
+                    return '-';
+                })
+                ->sortable(),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [

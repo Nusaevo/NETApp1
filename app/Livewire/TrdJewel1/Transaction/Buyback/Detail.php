@@ -231,7 +231,7 @@ class Detail extends BaseComponent
             $this->object_detail[$index]->save();
         }
         if ($this->actionValue == 'Create') {
-            return redirect()->route($this->appCode.'.Transaction.Buyback.Detail', [
+            return redirect()->route($this->redirectAppCode.'.Transaction.Buyback.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);
