@@ -1144,6 +1144,36 @@ class Detail extends BaseComponent
         }
     }
 
+    private function recalculateTotals()
+    {
+        // Reset totals
+        $this->total_amount = 0;
+        $this->total_discount = 0;
+        $this->total_dpp = 0;
+        $this->total_tax = 0;
+
+        // Recalculate totals from all remaining items
+        foreach ($this->input_details as $detail) {
+            // Total header dipengaruhi tax_code
+            if ($this->inputs['tax_code'] === 'E') {
+                // Exclude PPN pada harga item; total = DPP + PPN
+                $this->total_amount += ($detail['amt_beforetax'] ?? 0) + ($detail['amt_tax'] ?? 0);
+            } else {
+                // Include atau Non PPN: total = amt (sudah termasuk/ tanpa PPN sesuai kebijakan)
+                $this->total_amount += $detail['amt'] ?? 0;
+            }
+            $this->total_discount += $detail['disc_amt'] ?? 0;
+            $this->total_dpp += $detail['amt_beforetax'] ?? 0;
+            $this->total_tax += $detail['amt_tax'] ?? 0;
+        }
+
+        // Format as Rupiah
+        $this->total_amount = rupiah($this->total_amount);
+        $this->total_discount = rupiah($this->total_discount);
+        $this->total_dpp = rupiah($this->total_dpp);
+        $this->total_tax = rupiah($this->total_tax);
+    }
+
     public function deleteItem($index)
     {
         if ($this->isDeliv || (isset($this->input_details[$index]['has_delivery']) && $this->input_details[$index]['has_delivery'])) {
@@ -1156,6 +1186,10 @@ class Detail extends BaseComponent
             }
             unset($this->input_details[$index]);
             $this->input_details = array_values($this->input_details);
+            
+            // Recalculate totals after deletion
+            $this->recalculateTotals();
+            
             $this->dispatch('success', __('generic.string.delete_item'));
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));

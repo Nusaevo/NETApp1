@@ -34,6 +34,11 @@ class IndexDataTable extends BaseDataTableComponent
         ]);
     }
 
+    public function showBulkActionsDropdownAlpine(): bool
+    {
+        return false;
+    }
+
     public function builder(): Builder
     {
         return OrderHdr::with(['OrderDtl', 'Partner', 'DelivHdr', 'BillingHdr'])
@@ -255,7 +260,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function bulkActions(): array
     {
         return [
-            'transferKeCTMS' => 'Transfer ke CTMS',
+            'transferKeCTMS' => '',
         ];
     }
 
@@ -285,6 +290,9 @@ class IndexDataTable extends BaseDataTableComponent
                     $successMessage .= " Terdapat " . count($results['errors']) . " error.";
                 }
                 $this->dispatch('success', $successMessage);
+
+                // Unselect semua checkbox setelah transfer berhasil
+                $this->clearSelected();
 
                 // Refresh page setelah transfer berhasil
                 $this->dispatch('refreshPage');
