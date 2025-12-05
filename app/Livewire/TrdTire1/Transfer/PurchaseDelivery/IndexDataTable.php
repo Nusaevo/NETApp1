@@ -23,6 +23,20 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setDefaultSort('tr_code', 'desc');
     }
 
+    public function configure(): void
+    {
+        parent::configure();
+
+        $this->setConfigurableAreas([
+            'after-toolbar' => 'livewire.trd-tire1.transfer.purchase-delivery.custom-filters',
+        ]);
+    }
+
+    public function showBulkActionsDropdownAlpine(): bool
+    {
+        return false;
+    }
+
     public function builder(): Builder
     {
         return DelivHdr::with(['DelivPacking.DelivPickings', 'Partner'])
@@ -312,7 +326,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function bulkActions(): array
     {
         return [
-            'transferKeCTMS' => 'Transfer ke CTMS',
+            'transferKeCTMS' => '',
         ];
     }
 
@@ -342,6 +356,9 @@ class IndexDataTable extends BaseDataTableComponent
                     $successMessage .= " Terdapat " . count($results['errors']) . " error.";
                 }
                 $this->dispatch('success', $successMessage);
+
+                // Unselect semua checkbox setelah transfer berhasil
+                $this->clearSelected();
 
                 // Refresh page setelah transfer berhasil
                 $this->dispatch('refreshPage');
