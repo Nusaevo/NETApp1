@@ -282,7 +282,7 @@ class Detail extends BaseComponent
         $exchangeInputs['tr_type'] = $this->exchangeTrType;
 
         // Use the same tr_id from Sales Return for exchange items
-        // This ensures both return and exchange are linked by the same transaction ID
+        // Exchange dan Return menggunakan tr_id yang sama untuk linking
         if (isset($this->inputs['tr_id']) && !empty($this->inputs['tr_id'])) {
             $exchangeInputs['tr_id'] = $this->inputs['tr_id'];
             $this->exchange_object->tr_id = $this->inputs['tr_id'];
@@ -297,7 +297,7 @@ class Detail extends BaseComponent
             }
 
             $detail['tr_seq'] = $index + 1;
-            $detail['tr_id'] = $this->inputs['tr_id']; // Use Sales Return tr_id
+            $detail['tr_id'] = $this->inputs['tr_id']; // Use Sales Return tr_id (sama dengan Return)
             $detail['trhdr_id'] = $this->exchange_object->id;
             $detail['tr_type'] = $this->exchangeTrType;
             $detail['wh_code'] = $this->exchange_wh_code;
