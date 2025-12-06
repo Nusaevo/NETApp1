@@ -196,6 +196,14 @@ class OrderHdr extends BaseModel
                 'billingTrType' => 'APB',
                 'paymentTrType' => 'APP',
             ];
+        } elseif ($trType === 'SOR') {
+            // Sales Order Return (Exchange) - gunakan delivery type SDE
+            // Perlakuan sama dengan SD (mengurangi stok), tapi tr_type berbeda
+            return [
+                'delivTrType'   => 'SDE', // Sales Delivery Exchange
+                'billingTrType' => 'ARBE', // AR Billing Exchange
+                'paymentTrType' => 'ARPE', // AR Payment Exchange
+            ];
         } else {
             // Untuk 'SO' atau tipe lainnya
             return [
