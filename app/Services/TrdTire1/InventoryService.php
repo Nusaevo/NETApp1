@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\TrdTire1\Master\{MatlUom, Material};
 use App\Models\TrdTire1\Inventories\IvttrHdr;
 use App\Models\TrdTire1\Inventories\{IvtLog, IvtBal, IvttrDtl};
-use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderDtl, OrderHdr};
+use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, DelivPicking, OrderDtl, OrderHdr};
 use Carbon\Carbon;
 
 class InventoryService
@@ -29,15 +29,22 @@ class InventoryService
             return;
         }
 
+        // Skip reservation untuk Sales Return (SR) karena menggunakan delivery flow
+        if ($headerData['tr_type'] === 'SR') {
+            return;
+        }
+
         $trQty = $detailData['qty'];
         $qty = 0;
+        $priceBeforeTax = 0; // Default value
+
         if ($headerData['tr_type'] === 'PO' || $headerData['tr_type'] === 'SO') {
             $qty = $trQty;
-            $priceBeforeTax = $detailData['price_beforetax'];
+            $priceBeforeTax = $detailData['price_beforetax'] ?? 0;
         } else if ($headerData['tr_type'] === 'PD' || $headerData['tr_type'] === 'SD') {
             $qty = -$trQty;
             $orderDtl = OrderDtl::find($detailData['reffdtl_id']);
-            $priceBeforeTax = $orderDtl->price_beforetax;
+            $priceBeforeTax = $orderDtl->price_beforetax ?? 0;
         }
         // dd($detailData);
         $ivtBal = IvtBal::updateOrCreate(
@@ -492,4 +499,78 @@ class InventoryService
 
         return true;
     }
+
+    #region Sales Return Delivery Inventory Log
+    /**
+     * Buat ivt_logs dari DelivPicking untuk Sales Return Delivery
+     * Method ini membuat inventory log dari delivery picking untuk Sales Return
+     *
+     * @param DelivHdr $delivHdr Delivery header
+     * @param DelivPicking $picking Delivery picking
+     * @param OrderDtl $orderDtl Order detail untuk mendapatkan price_beforetax
+     * @return void
+     */
+    public function createIvtLogFromDeliveryPicking($delivHdr, $picking, $orderDtl)
+    {
+        // Skip jika material adalah JASA
+        $material = Material::find($picking->matl_id);
+        if ($material && strtoupper(trim($material->type_code ?? '')) === 'S') {
+            return;
+        }
+
+        // Hapus log lama jika ada
+        $this->delIvtLog('SRD', $delivHdr->id, $picking->id);
+
+        // Untuk Sales Return Delivery, qty adalah positif (menambah stock)
+        $qty = $picking->qty;
+        $price = $orderDtl->price_beforetax ?? 0;
+
+        // Update atau create IvtBal
+        $ivtBal = IvtBal::updateOrCreate([
+            'matl_id' => $picking->matl_id,
+            'matl_uom' => $picking->matl_uom,
+            'wh_id' => $picking->wh_id,
+            'batch_code' => $picking->batch_code ?? '',
+        ], [
+            'matl_code' => $picking->matl_code,
+            'wh_code' => $picking->wh_code,
+        ]);
+
+        // Tambah qty_oh (return stock)
+        $ivtBal->qty_oh += $qty;
+        $ivtBal->save();
+
+        // Update ivt_id di picking
+        $picking->ivt_id = $ivtBal->id;
+        $picking->save();
+
+        // Buat IvtLog
+        $logData = [
+            'tr_date' => $delivHdr->tr_date ?? date('Y-m-d'),
+            'trdtl_id' => $picking->id,
+            'trhdr_id' => $delivHdr->id,
+            'tr_type' => 'SRD',
+            'tr_code' => $delivHdr->tr_code,
+            'tr_seq' => $picking->trpacking_seq,
+            'tr_seq2' => $picking->tr_seq,
+            'ivt_id' => $ivtBal->id,
+            'matl_id' => $picking->matl_id,
+            'matl_code' => $picking->matl_code,
+            'matl_uom' => $picking->matl_uom,
+            'wh_id' => $picking->wh_id,
+            'wh_code' => $picking->wh_code,
+            'batch_code' => $picking->batch_code ?? '',
+            'tr_qty' => $qty,
+            'qty' => $qty, // Positive untuk return
+            'price_beforetax' => $price,
+            'price_cogs' => 0,
+            'qty_running' => 0,
+            'tr_desc' => 'Delivery Return ' . $delivHdr->tr_code,
+            'reff_id' => 0,
+            'process_flag' => '',
+        ];
+
+        IvtLog::create($logData);
+    }
+    #endregion
 }

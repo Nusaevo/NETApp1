@@ -28,24 +28,29 @@
                                             :checked="$inputs['tax_doc_flag']" onChanged="onTaxDocFlagChanged" />
                                     </div> --}}
                                     <div class="row">
-                                        <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
+                                        <x-ui-text-field label="Tanggal Return" model="inputs.tr_date" type="date"
+                                            :action="$actionValue" required="true" enabled="true"
+                                            onChanged="onTrDateChanged" />
+                                        <x-ui-text-field label="Nomor Return" model="inputs.tr_code"
                                             type="text" :action="$actionValue" required="true"
                                             clickEvent="trCodeOnClick"
                                             capslockMode="true"
-                                            enabled="true"
+                                            buttonName="Nomor Nota Baru"
+                                            enabled="true" :buttonEnabled="true"
                                             onChanged="onTrCodeChanged"
                                             placeHolder="Edit nomor nota dan tekan enter untuk cari nota lain, klik nomor baru untuk create" />
-                                        <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
-                                            :action="$actionValue" required="true" enabled="true"
-                                            onChanged="onTrDateChanged" />
                                     </div>
                                     <div class="row">
-                                        <x-ui-dropdown-search label="Customer" model="inputs.partner_id"
-                                            optionValue="id" :query="$ddPartner['query']" :optionLabel="$ddPartner['optionLabel']" :placeHolder="$ddPartner['placeHolder']"
-                                            :selectedValue="$inputs['partner_id']" required="true" :action="$actionValue" enabled="true"
-                                            type="int" onChanged="onPartnerChanged" />
+                                        {{-- Dropdown search dari tr_code sales order type SO --}}
+                                        <x-ui-dropdown-search label="Nota Penjualan" model="inputs.reff_code"
+                                            optionValue="tr_code" :query="$ddSalesOrder['query']" :optionLabel="$ddSalesOrder['optionLabel']" :placeHolder="$ddSalesOrder['placeHolder']"
+                                            :selectedValue="$inputs['reff_code'] ?? ''" required="false" :action="$actionValue" enabled="true"
+                                            type="string" onChanged="onSalesOrderChanged($event.target.value)" />
+                                        <x-ui-dropdown-select label="Customer" model="inputs.partner_id"
+                                            :options="$partnerOptions" :selectedValue="$inputs['partner_id']" required="true"
+                                            :action="$actionValue" enabled="false" onChanged="onPartnerChanged" />
                                     </div>
-                                    <div class="row" wire:key="ship-to-wrapper-{{ $inputs['partner_id'] ?? 'none' }}">
+                                    {{-- <div class="row" wire:key="ship-to-wrapper-{{ $inputs['partner_id'] ?? 'none' }}">
                                         <x-ui-dropdown-select label="{{ $this->trans('ship_to') }}" clickEvent=""
                                             model="inputs.ship_to_name" :selectedValue="$inputs['ship_to_name']" :options="$shipOptions"
                                             required="true" :action="$actionValue" onChanged="onShipToChanged($event.target.value)" />
@@ -90,11 +95,11 @@
                                             model="inputs.due_date" type="date" :action="$actionValue" required="true"
                                             :enabled="$isPanelEnabled" />
                                         <x-ui-text-field label="{{ $this->trans('reff_code') }}"
-                                            model="inputs.reff_code" type="text" :action="$actionValue"
+                                            model="inputs.note" type="text" :action="$actionValue"
                                             required="false" />
                                         <x-ui-text-field label="Biaya pengiriman" model="inputs.amt_shipcost"
                                             type="number" :action="$actionValue" required="false" enabled="true" />
-                                    </div>
+                                    </div> --}}
                                 </div>
                             </x-ui-padding>
                         </x-ui-card>
@@ -118,7 +123,7 @@
                             <!-- Define table rows -->
                             <x-slot name="rows">
                                 @foreach ($input_details ?? [] as $key => $input_detail)
-                                    <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
+                                    <tr wire:key="sales-return-item-{{ $key }}-{{ $input_detail['matl_id'] ?? 'new' }}-{{ $input_detail['reffdtl_id'] ?? 'new' }}-{{ $input_detail['id'] ?? 'new' }}">
                                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                                         <td>
                                             <x-ui-dropdown-search label=""
@@ -159,10 +164,10 @@
                                     </tr>
                                 @endforeach
                             </x-slot>
-                            <x-slot name="button">
+                            {{-- <x-slot name="button">
                                 <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
                                     button-name="Tambah" :enabled="$isDeliv ? 'false' : 'true'" />
-                            </x-slot>
+                            </x-slot> --}}
                         </x-ui-table>
                     </x-ui-card>
                     <br>

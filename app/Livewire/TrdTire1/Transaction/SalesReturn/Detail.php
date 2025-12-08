@@ -5,7 +5,7 @@ namespace App\Livewire\TrdTire1\Transaction\SalesReturn;
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl, DelivHdr, DelivDtl, BillingHdr, BillingDtl};
 use App\Models\TrdTire1\Master\{Partner, Material, MatlUom};
-use App\Models\SysConfig1\ConfigConst;
+use App\Models\SysConfig1\{ConfigConst, ConfigSnum};
 use App\Enums\Status;
 use App\Services\SysConfig1\ConfigService;
 use App\Services\TrdTire1\OrderService;
@@ -35,7 +35,7 @@ class Detail extends BaseComponent
     public $total_tax = 0;
     public $total_dpp = 0;
     public $total_discount = 0;
-    public $trType = "SO";
+    public $trType = "SR";
     public $matl_action = 'Create';
     public $matl_objectId = null;
     public $currency = [];
@@ -43,6 +43,7 @@ class Detail extends BaseComponent
     public $currencyRate = 0;
     public $npwpOptions = [];
     public $shipOptions = [];
+    public $partnerOptions = [];
     public $isPanelEnabled = "false";
     public $payer = "true";
     public $isDeliv = false; // True jika ada delivery pada salah satu detail
@@ -62,6 +63,15 @@ class Detail extends BaseComponent
         'query' => "SELECT id,code,name,address,city
                     FROM partners
                     WHERE deleted_at IS NULL AND grp = 'C'",
+    ];
+
+    public $ddSalesOrder = [
+        'placeHolder' => "Ketik untuk cari sales order ...",
+        'optionLabel' => "tr_code",
+        'query' => "SELECT tr_code, partner_code, tr_date
+                    FROM order_hdrs
+                    WHERE deleted_at IS NULL AND tr_type = 'SO' AND status_code IN ('O', 'P', 'S','T')
+                    ORDER BY tr_date DESC, tr_code DESC",
     ];
 
     // Detail (item) properties
@@ -249,6 +259,9 @@ class Detail extends BaseComponent
         $this->SOSend = $this->masterService->getSOSendData();
         $this->paymentTerms = $this->masterService->getPaymentTerm();
         // $this->warehouses = $this->masterService->getWarehouse();
+
+        // Load partner options untuk dropdown
+        $this->loadPartnerOptions();
 
         if ($this->isEditOrView() && !empty($this->objectIdValue)) {
             // Load object berdasarkan objectIdValue jika ada
@@ -536,6 +549,13 @@ class Detail extends BaseComponent
             return;
         }
 
+        // Recalculate semua item sebelum save untuk memastikan semua field terisi dengan benar
+        foreach ($this->input_details as $key => $detail) {
+            if (!empty($detail['matl_id']) && !empty($detail['qty']) && !empty($detail['price'])) {
+                $this->calcItemAmount($key);
+            }
+        }
+
         // Prepare data
         $headerData = $this->prepareHeaderData();
         $detailData = $this->prepareDetailData();
@@ -546,7 +566,8 @@ class Detail extends BaseComponent
         $headerData['amt_adjustdtl'] = $totals['amt_adjustdtl'];
          // dd($headerData, $detailData);
         if ($this->actionValue === 'Create') {
-            $result = $this->orderService->saveOrder($headerData, $detailData);
+            // Gunakan method baru untuk Sales Return yang membuat delivery data
+            $result = $this->orderService->saveOrderSalesReturn($headerData, $detailData);
             if (!$result) {
                 throw new Exception('Gagal membuat Nota penjualan');
             }
@@ -558,6 +579,7 @@ class Detail extends BaseComponent
                 $this->object->save();
             }
         } else {
+            // Untuk edit mode, tetap gunakan saveOrder biasa
             $result = $this->orderService->saveOrder($headerData, $detailData);
             if (!$result) {
                 throw new Exception('Gagal mengubah Nota penjualan');
@@ -574,6 +596,9 @@ class Detail extends BaseComponent
     private function prepareHeaderData()
     {
         $headerData = $this->inputs;
+
+        // Ensure tr_type is set to SR for Sales Return
+        $headerData['tr_type'] = $this->trType; // "SR"
 
         if ($this->actionValue === 'Create') {
             $headerData['status_code'] = Status::OPEN;
@@ -624,27 +649,40 @@ class Detail extends BaseComponent
             $this->resetToCreateModeInternal();
         }
 
-        // Tambahkan pengecekan sales_type
-
-        if (empty($this->inputs['sales_type'])) {
-            $this->dispatch('error', 'Silakan pilih Tipe Kendaraan terlebih dahulu sebelum generate Nomor.');
-            return;
-        }
-
         // Tambahkan pengecekan tr_date
         if (empty($this->inputs['tr_date'])) {
             $this->dispatch('error', 'Silakan pilih Tanggal Transaksi terlebih dahulu sebelum generate Nomor.');
             return;
         }
 
-        $salesType = $this->inputs['sales_type'];
-        $taxDocFlag = !empty($this->inputs['tax_doc_flag']);
-        $trDate = $this->inputs['tr_date'];
+        try {
+            // Ambil tr_code dari ConfigSnum dengan code SALES_RETURN
+            $configSnum = ConfigSnum::where('code', 'SALES_RETURN')->first();
 
-        // Generate new tr_code and store in temporary variable
-        $newTrCode = app(MasterService::class)->getNewTrCode($this->trType,$salesType,$taxDocFlag,$trDate);
-        $this->generatedTrCode = $newTrCode;
-        $this->inputs['tr_code'] = $newTrCode;
+            if (!$configSnum) {
+                throw new Exception("Configuration untuk code SALES_RETURN tidak ditemukan.");
+            }
+
+            // Generate new ID
+            $newId = $configSnum->last_cnt + $configSnum->step_cnt;
+            if ($newId > $configSnum->wrap_high) {
+                $newId = $configSnum->wrap_low;
+            }
+
+            // Update last_cnt di ConfigSnum
+            $configSnum->last_cnt = $newId;
+            $configSnum->save();
+
+            // Format tr_code (contoh: SR000001)
+            $format = 'SR%03d';
+            $newTrCode = sprintf($format, $newId);
+
+            // Store generated tr_code
+            $this->generatedTrCode = $newTrCode;
+            $this->inputs['tr_code'] = $newTrCode;
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Gagal generate nomor transaksi: ' . $e->getMessage());
+        }
     }
 
     public function onTrCodeChanged()
@@ -790,6 +828,9 @@ class Detail extends BaseComponent
 
         // Reset detail items
         $this->input_details = [];
+
+        // Reset reff_code
+        $this->inputs['reff_code'] = '';
 
         // Reset NPWP
         $this->npwpDetails = [
@@ -1083,32 +1124,51 @@ class Detail extends BaseComponent
 
     public function calcItemAmount($key)
     {
+        // Pastikan key ada di input_details
+        if (!isset($this->input_details[$key])) {
+            return;
+        }
+
         if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
             // Calculate basic amount with discount
-            $qty = $this->input_details[$key]['qty'];
-            $price = $this->input_details[$key]['price'];
-            $discount = $this->input_details[$key]['disc_pct'] / 100;
-            $taxValue = $this->inputs['tax_pct'] / 100;
+            $qty = floatval($this->input_details[$key]['qty'] ?? 0);
+            $price = floatval($this->input_details[$key]['price'] ?? 0);
+            $discount = floatval($this->input_details[$key]['disc_pct'] ?? 0) / 100;
+            $taxPct = floatval($this->inputs['tax_pct'] ?? 0);
+            $taxValue = $taxPct / 100;
             $priceAfterDisc = round($price * (1 - $discount), 0);
-            $priceBeforeTax = round($priceAfterDisc / (1 + $taxValue), 0);
+
+            // Initialize priceBeforeTax to avoid undefined variable error
+            $priceBeforeTax = $priceAfterDisc; // Default value
+            if ($taxValue > 0 && (1 + $taxValue) != 0) {
+                $priceBeforeTax = round($priceAfterDisc / (1 + $taxValue), 0);
+            }
+
             // dd($this->inputs['tax_code'], $price, $priceAfterDisc, $priceBeforeTax, $taxValue);
             $this->input_details[$key]['disc_amt'] = round($qty * $price * $discount, 0);
 
             $this->input_details[$key]['amt'] = 0;
             $this->input_details[$key]['amt_beforetax'] = 0;
             $this->input_details[$key]['amt_tax'] = 0;
-            if ($this->inputs['tax_code'] === 'I') {
+
+            $taxCode = $this->inputs['tax_code'] ?? 'N';
+            if ($taxCode === 'I') {
                 $this->input_details[$key]['price_beforetax'] = $priceBeforeTax;
                 // Catatan: khusus untuk yang include PPN
                 // DPP dihitung dari harga setelah disc dikurangi PPN dibulatkan ke rupiah * qty
                 $this->input_details[$key]['amt_beforetax'] = round($priceBeforeTax * $qty, 0);
                 // PPN dihitung dari DPP * PPN dibulatkan ke rupiah
                 $this->input_details[$key]['amt_tax'] = round($this->input_details[$key]['amt_beforetax'] * $taxValue, 0);
-            } else if ($this->inputs['tax_code'] === 'E') {
+            } else if ($taxCode === 'E') {
                 $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
                 $this->input_details[$key]['amt_beforetax'] = round($priceAfterDisc * $qty, 0);
                 $this->input_details[$key]['amt_tax'] = round($priceAfterDisc * $qty * $taxValue, 0);
-            } else if ($this->inputs['tax_code'] === 'N') {
+            } else if ($taxCode === 'N') {
+                $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
+                $this->input_details[$key]['amt_beforetax'] = round($priceAfterDisc * $qty, 0);
+                $this->input_details[$key]['amt_tax'] = 0;
+            } else {
+                // Default case: treat as 'N' (Non PPN)
                 $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
                 $this->input_details[$key]['amt_beforetax'] = round($priceAfterDisc * $qty, 0);
                 $this->input_details[$key]['amt_tax'] = 0;
@@ -1125,7 +1185,8 @@ class Detail extends BaseComponent
             // dd($this->input_details, $this->input_details[$key]['disc_amt']);
             foreach ($this->input_details as $detail) {
                 // Total header dipengaruhi tax_code
-                if ($this->inputs['tax_code'] === 'E') {
+                $taxCodeForTotal = $this->inputs['tax_code'] ?? 'N';
+                if ($taxCodeForTotal === 'E') {
                     // Exclude PPN pada harga item; total = DPP + PPN
                     $this->total_amount += ($detail['amt_beforetax'] + $detail['amt_tax']);
                 } else {
@@ -1154,8 +1215,20 @@ class Detail extends BaseComponent
             if (!isset($this->input_details[$index])) {
                 throw new Exception(__('generic.error.delete_item', ['message' => 'Item tidak ditemukan.']));
             }
+
+            // Hapus item dari array
             unset($this->input_details[$index]);
+
+            // Re-index array untuk memastikan key berurutan
             $this->input_details = array_values($this->input_details);
+
+            // Recalculate amounts untuk semua items yang tersisa
+            foreach ($this->input_details as $key => $detail) {
+                if (!empty($detail['matl_id']) && !empty($detail['qty']) && !empty($detail['price'])) {
+                    $this->calcItemAmount($key);
+                }
+            }
+
             $this->dispatch('success', __('generic.string.delete_item'));
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));
@@ -1170,8 +1243,22 @@ class Detail extends BaseComponent
                 ->get();
 
             $this->input_details = $this->object_detail->toArray();
+
+            // Ambil reff_code dari detail pertama jika ada (semua detail biasanya punya reff_code yang sama)
+            $reffCode = null;
+            if (!empty($this->object_detail) && !empty($this->object_detail->first()->reff_code)) {
+                $reffCode = $this->object_detail->first()->reff_code;
+                $this->inputs['reff_code'] = $reffCode;
+            }
+
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key]['matl_id'] = $detail->matl_id;
+                // Pastikan reff_code ada di input_details
+                if (!empty($detail->reff_code)) {
+                    $this->input_details[$key]['reff_code'] = $detail->reff_code;
+                } elseif (!empty($reffCode)) {
+                    $this->input_details[$key]['reff_code'] = $reffCode;
+                }
                 $this->calcItemAmount($key);
             }
             $this->checkDeliveryStatus();
@@ -1205,7 +1292,7 @@ class Detail extends BaseComponent
         $objectId = $this->actionValue === 'Create' ? $this->object->id : $this->object->id;
 
         return redirect()->route(
-            $this->redirectAppCode . '.Transaction.SalesOrder.Detail',
+            $this->redirectAppCode . '.Transaction.SalesReturn.Detail',
             [
                 'action'   => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($objectId),
@@ -1424,6 +1511,187 @@ class Detail extends BaseComponent
 
             // Dispatch event untuk refresh Select2
             $this->dispatch('refreshSelect2', 'inputs_npwp_code');
+        }
+    }
+
+    private function loadPartnerOptions()
+    {
+        $partners = Partner::where('deleted_at', null)
+            ->where('grp', 'C')
+            ->orderBy('code')
+            ->get();
+
+        $this->partnerOptions = [];
+        foreach ($partners as $partner) {
+            $label = $partner->code;
+            if ($partner->name) {
+                $label .= ' - ' . $partner->name;
+            }
+            if ($partner->city) {
+                $label .= ' - ' . $partner->city;
+            }
+            $this->partnerOptions[] = [
+                'value' => $partner->id,
+                'label' => $label
+            ];
+        }
+
+        // Jika ada partner_id yang sudah dipilih tapi tidak ada di options, tambahkan
+        if (!empty($this->inputs['partner_id'])) {
+            $selectedPartnerId = $this->inputs['partner_id'];
+            $exists = collect($this->partnerOptions)->contains('value', $selectedPartnerId);
+
+            if (!$exists) {
+                $partner = Partner::find($selectedPartnerId);
+                if ($partner) {
+                    $label = $partner->code;
+                    if ($partner->name) {
+                        $label .= ' - ' . $partner->name;
+                    }
+                    if ($partner->city) {
+                        $label .= ' - ' . $partner->city;
+                    }
+                    // Tambahkan di awal array
+                    array_unshift($this->partnerOptions, [
+                        'value' => $partner->id,
+                        'label' => $label
+                    ]);
+                }
+            }
+        }
+    }
+
+    public function onSalesOrderChanged($value)
+    {
+        // Reset input_details jika sales order berubah
+        if (empty($value)) {
+            $this->input_details = [];
+            return;
+        }
+
+        try {
+            // Cari sales order berdasarkan tr_code
+            $salesOrder = OrderHdr::where('tr_code', $value)
+                ->where('tr_type', 'SO')
+                ->first();
+
+            if (!$salesOrder) {
+                $this->dispatch('error', 'Sales Order dengan kode ' . $value . ' tidak ditemukan.');
+                return;
+            }
+
+            // Update partner info otomatis dari sales order
+            if (!empty($salesOrder->partner_id)) {
+                // Set partner_id terlebih dahulu
+                $this->inputs['partner_id'] = $salesOrder->partner_id;
+
+                // Pastikan partner ada di options
+                $selectedPartnerId = $this->inputs['partner_id'];
+                $exists = collect($this->partnerOptions)->contains('value', $selectedPartnerId);
+
+                if (!$exists) {
+                    $partner = Partner::find($selectedPartnerId);
+                    if ($partner) {
+                        $label = $partner->code;
+                        if ($partner->name) {
+                            $label .= ' - ' . $partner->name;
+                        }
+                        if ($partner->city) {
+                            $label .= ' - ' . $partner->city;
+                        }
+                        // Tambahkan di awal array
+                        array_unshift($this->partnerOptions, [
+                            'value' => $partner->id,
+                            'label' => $label
+                        ]);
+                    }
+                }
+
+                // Panggil onPartnerChanged untuk load semua info partner
+                $this->onPartnerChanged();
+            }
+
+            // Set sales_type dari sales order jika belum diisi
+            if (empty($this->inputs['sales_type']) && !empty($salesOrder->sales_type)) {
+                $this->inputs['sales_type'] = $salesOrder->sales_type;
+                $this->salesTypeOnChanged(); // Ini akan set materialQuery
+            }
+
+            // Copy tax settings dari sales order untuk memastikan calcItemAmount bisa menghitung dengan benar
+            if (empty($this->inputs['tax_code']) && !empty($salesOrder->tax_code)) {
+                $this->inputs['tax_code'] = $salesOrder->tax_code;
+            }
+            if (empty($this->inputs['tax_pct']) && !empty($salesOrder->tax_pct)) {
+                $this->inputs['tax_pct'] = $salesOrder->tax_pct;
+            }
+
+            // Set reff_code di inputs SETELAH semua proses yang mungkin me-reset
+            $this->inputs['reff_code'] = $value;
+
+            // Load order details
+            $orderDetails = OrderDtl::where('trhdr_id', $salesOrder->id)
+                ->where('tr_type', 'SO')
+                ->orderBy('tr_seq')
+                ->get();
+
+            if ($orderDetails->isEmpty()) {
+                $this->dispatch('error', 'Tidak ada detail order yang ditemukan untuk sales order ini.');
+                return;
+            }
+
+            // Populate input_details dari order details
+            $this->input_details = [];
+            $baseModel = populateArrayFromModel(new OrderDtl());
+
+            foreach ($orderDetails as $detail) {
+                // Verifikasi material masih ada dan valid
+                $material = Material::find($detail->matl_id);
+                if (!$material) {
+                    // Skip material yang sudah tidak ada
+                    continue;
+                }
+
+                // Pastikan data material lengkap
+                $matlCode = $detail->matl_code ?? $material->code;
+                $matlDescr = $detail->matl_descr ?? $material->name;
+                $matlUom = $detail->matl_uom ?? $material->uom;
+
+                $this->input_details[] = array_merge($baseModel, [
+                    'matl_id' => $detail->matl_id,
+                    'matl_code' => $matlCode,
+                    'matl_uom' => $matlUom,
+                    'matl_descr' => $matlDescr,
+                    'qty' => $detail->qty,
+                    'price' => $detail->price,
+                    'disc_pct' => $detail->disc_pct ?? 0,
+                    'disc_amt' => $detail->disc_amt ?? 0,
+                    'reff_code' => $value, // Set reff_code dengan tr_code sales order
+                    'reffhdr_id' => $salesOrder->id,
+                    'reffdtl_id' => $detail->id,
+                ]);
+            }
+
+            if (empty($this->input_details)) {
+                $this->dispatch('warning', 'Tidak ada item yang valid untuk dimuat dari sales order ini.');
+                return;
+            }
+
+            // Recalculate amounts untuk semua items
+            foreach ($this->input_details as $key => $detail) {
+                $this->calcItemAmount($key);
+            }
+
+            // Pastikan reff_code tetap ter-set setelah semua proses
+            $this->inputs['reff_code'] = $value;
+
+            // Dispatch event untuk refresh Select2 dropdown reff_code
+            $this->dispatch('resetSelect2Dropdowns', [
+                'reff_code' => $this->inputs['reff_code']
+            ]);
+
+            $this->dispatch('success', 'Berhasil memuat ' . count($this->input_details) . ' item dari sales order ' . $value);
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Gagal memuat sales order: ' . $e->getMessage());
         }
     }
 

@@ -11,11 +11,13 @@ class OrderService
 {
     protected $inventoryService;
     protected $materialService;
+    protected $deliveryService;
 
-    public function __construct(InventoryService $inventoryService, MaterialService $materialService)
+    public function __construct(InventoryService $inventoryService, MaterialService $materialService, DeliveryService $deliveryService)
     {
         $this->inventoryService = $inventoryService;
         $this->materialService = $materialService;
+        $this->deliveryService = $deliveryService;
     }
 
     #region Save Order
@@ -179,4 +181,66 @@ class OrderService
             'value' => $order->tr_code,
         ])->toArray();
     }
+
+
+    public function saveOrderSalesReturn(array $headerData, array $detailData)
+    {
+        // 1. Simpan Sales Return order tanpa membuat ivt_logs
+        $header = $this->saveHeader($headerData);
+        $headerData['id'] = $header->id;
+
+        if (!empty($detailData)) {
+            $this->saveDetailsSalesReturn($headerData, $detailData);
+        }
+
+        // 2. Buat delivery data (DelivHdr, DelivPacking, DelivPicking) menggunakan DeliveryService
+        $delivHdr = $this->deliveryService->saveDeliverySalesReturn($headerData, $detailData);
+
+        return [
+            'header' => $header,
+            'delivery' => $delivHdr,
+            'details' => []
+        ];
+    }
+
+    /**
+     * Simpan order details tanpa membuat reservation/ivt_logs
+     */
+    private function saveDetailsSalesReturn(array $headerData, array $detailData)
+    {
+        if (!isset($headerData['id']) || empty($headerData['id'])) {
+            throw new Exception('Header ID tidak ditemukan. Pastikan header sudah tersimpan.');
+        }
+
+        // Hapus detail yang tidak ada dalam array detailData
+        $existingDetailIds = array_filter(array_column($detailData, 'id'));
+        $deletedDetails = OrderDtl::where('trhdr_id', $headerData['id'])
+            ->whereNotIn('id', $existingDetailIds)
+            ->get();
+        foreach ($deletedDetails as $deletedDetail) {
+            $deletedDetail->delete();
+        }
+
+        // Update atau create detail yang tersisa
+        foreach ($detailData as $detail) {
+            $detail['trhdr_id'] = $headerData['id'];
+            $detail['tr_type'] = $headerData['tr_type'];
+            $detail['tr_code'] = $headerData['tr_code'];
+
+            if (!$detail['id']) {
+                // Item baru
+                $newDetail = OrderDtl::create($detail);
+            } else {
+                // Update existing
+                $existingDetail = OrderDtl::find($detail['id']);
+                if ($existingDetail) {
+                    $existingDetail->fill($detail);
+                    if ($existingDetail->isDirty()) {
+                        $existingDetail->save();
+                    }
+                }
+            }
+        }
+    }
+    #endregion
 }
