@@ -154,8 +154,14 @@ class Index extends BaseComponent
                     ELSE p.city
                 END AS kota_pelanggan,
                 od.qty AS total_ban,
-                COALESCE(sr.reward, 0) AS point,
-                (od.qty * COALESCE(sr.reward, 0)) AS total_point,
+                CASE
+                    WHEN COALESCE(sr.qty, 0) > 0 THEN COALESCE(sr.reward, 0) / sr.qty
+                    ELSE COALESCE(sr.reward, 0)
+                END AS point,
+                CASE
+                    WHEN COALESCE(sr.qty, 0) > 0 THEN TRUNC(od.qty / sr.qty) * COALESCE(sr.reward, 0)
+                    ELSE od.qty * COALESCE(sr.reward, 0)
+                END AS total_point,
                 -- Field untuk sorting: 1 untuk CUSTOMER LAIN-LAIN, 0 untuk customer normal
                 CASE
                     WHEN sr.brand IS NOT NULL
@@ -178,6 +184,7 @@ class Index extends BaseComponent
             $salesRewardJoin sales_rewards sr ON sr.code = :sr_code AND sr.matl_code = od.matl_code
             JOIN materials m ON m.id = od.matl_id AND m.brand = :brand
             WHERE od.tr_type = 'SO'
+                AND od.qty = od.qty_reff
                 $whereDate
                 $whereSalesReward
             ORDER BY is_lain_lain ASC, nama_pelanggan, oh.tr_date ASC, oh.tr_code, od.matl_code

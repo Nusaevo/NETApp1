@@ -19,7 +19,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <x-ui-text-field label="Nomor Nota:" model="filterTrCode" type="text"
-                                        action="Edit" />
+                                        action="Edit" capslockMode="true"/>
                                 </div>
                             </div>
 
