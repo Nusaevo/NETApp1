@@ -17,6 +17,7 @@ class Index extends BaseComponent
     public $ddPartner = [];
     public $inputDetails = [];
     public $isComponent = true;
+    public $npwpCount = 0;
 
     public $rules = [
         'inputDetails.*.npwp' => 'required',
@@ -65,6 +66,7 @@ class Index extends BaseComponent
             $this->showNpwpList = false;
             $this->npwpList = [];
             $this->inputDetails = [];
+            $this->npwpCount = 0;
         }
     }
 
@@ -73,6 +75,9 @@ class Index extends BaseComponent
         if ($this->selectedPartnerId) {
             $partnerDetail = PartnerDetail::where('partner_id', $this->selectedPartnerId)->first();
             $this->inputDetails = $partnerDetail ? ($partnerDetail->wp_details ?? []) : [];
+            $this->npwpCount = count($this->inputDetails);
+        } else {
+            $this->npwpCount = 0;
         }
     }
 
@@ -85,6 +90,7 @@ class Index extends BaseComponent
                     'wp_name' => '',
                     'wp_location' => '',
                 ];
+                $this->npwpCount = count($this->inputDetails);
                 $this->dispatch('success', __('generic.string.add_item'));
             } catch (Exception $e) {
                 $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
@@ -103,7 +109,8 @@ class Index extends BaseComponent
 
             unset($this->inputDetails[$index]);
             $this->inputDetails = array_values($this->inputDetails);
-            $this->dispatch('success', __('generic.string.delete_item'));
+            $this->npwpCount = count($this->inputDetails);
+            $this->dispatch('success', __('generic.string.delete_item') . ' Jangan lupa untuk save!');
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));
         }

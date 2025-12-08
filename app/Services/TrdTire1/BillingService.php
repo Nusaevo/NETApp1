@@ -9,6 +9,7 @@ use App\Models\TrdTire1\Transaction\BillingDtl;
 use App\Models\TrdTire1\Transaction\BillingHdr;
 use App\Models\TrdTire1\Transaction\BillingDeliv;
 use App\Models\TrdTire1\Transaction\BillingOrder;
+use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
 
 class BillingService
 {
@@ -441,4 +442,120 @@ class BillingService
 
         return $bills;
     }
+
+    public function createBillingSalesReturn($delivHdr, $orderHdr)
+    {
+        // 1. Buat BillingHdr dengan tr_type='ARBR'
+        $billingHdrData = [
+            'id' => 0, // New billing
+            'tr_type' => 'ARBR',
+            'tr_code' => $orderHdr->tr_code, // Gunakan tr_code yang sama dengan order
+            'tr_date' => $delivHdr->tr_date ?? $orderHdr->tr_date ?? date('Y-m-d'),
+            'reff_code' => $orderHdr->reff_code ?? '',
+            'partner_id' => $orderHdr->partner_id,
+            'partner_code' => $orderHdr->partner_code,
+            'payment_term_id' => $orderHdr->payment_term_id ?? 0,
+            'payment_term' => $orderHdr->payment_term ?? '',
+            'payment_due_days' => $orderHdr->payment_due_days ?? 0,
+            'curr_id' => $orderHdr->curr_id ?? 0,
+            'curr_code' => $orderHdr->curr_code ?? 'IDR',
+            'curr_rate' => $orderHdr->curr_rate ?? 1,
+            'partnerbal_id' => 0, // Akan di-set setelah create partner balance
+            'amt' => -abs($orderHdr->amt ?? 0), // Negatif untuk return
+            'amt_beforetax' => -abs($orderHdr->amt_beforetax ?? 0),
+            'amt_tax' => -abs($orderHdr->amt_tax ?? 0),
+            'amt_adjustdtl' => -abs($orderHdr->amt_adjustdtl ?? 0),
+            'amt_adjusthdr' => 0,
+            'amt_shipcost' => $delivHdr->amt_shipcost ?? 0,
+            'amt_reff' => 0,
+            'print_date' => null,
+        ];
+
+        // Cek apakah sudah ada billing header dengan tr_code yang sama
+        $billingHdr = BillingHdr::where('tr_code', $orderHdr->tr_code)
+            ->where('tr_type', 'ARBR')
+            ->first();
+
+        if (!$billingHdr) {
+            $billingHdr = $this->saveHeader($billingHdrData);
+        } else {
+            $billingHdr->fill($billingHdrData);
+            if ($billingHdr->isDirty()) {
+                $billingHdr->save();
+            }
+        }
+
+        // 2. Buat BillingDeliv
+        $billingDelivData = [
+            'id' => 0,
+            'trhdr_id' => $billingHdr->id,
+            'deliv_id' => $delivHdr->id,
+            'deliv_type' => $delivHdr->tr_type,
+            'deliv_code' => $delivHdr->tr_code,
+            'amt_shipcost' => $delivHdr->amt_shipcost ?? 0,
+        ];
+
+        $billingDeliv = BillingDeliv::where('trhdr_id', $billingHdr->id)
+            ->where('deliv_id', $delivHdr->id)
+            ->first();
+
+        if (!$billingDeliv) {
+            $billingDeliv = BillingDeliv::create($billingDelivData);
+        } else {
+            $billingDeliv->fill($billingDelivData);
+            if ($billingDeliv->isDirty()) {
+                $billingDeliv->save();
+            }
+        }
+
+        // Update billhdr_id di DelivHdr
+        DelivHdr::updateBillHdrId($delivHdr->id, $billingHdr->id);
+
+        // 3. Buat BillingOrder dari OrderDtl
+        $orderDetails = OrderDtl::where('trhdr_id', $orderHdr->id)
+            ->where('tr_type', $orderHdr->tr_type)
+            ->orderBy('tr_seq')
+            ->get();
+
+        foreach ($orderDetails as $orderDtl) {
+            $billingOrderData = [
+                'trhdr_id' => $billingHdr->id,
+                'tr_type' => 'ARBR',
+                'tr_code' => $orderHdr->tr_code,
+                'tr_seq' => BillingOrder::getNextTrSeq($billingHdr->id),
+                'reffdtl_id' => $orderDtl->id,
+                'reffhdr_id' => $orderHdr->id,
+                'reffhdrtr_type' => $orderHdr->tr_type,
+                'reffhdrtr_code' => $orderHdr->tr_code,
+                'reffdtltr_seq' => $orderDtl->tr_seq,
+                'matl_descr' => $orderDtl->matl_descr,
+                'qty' => $orderDtl->qty,
+                'qty_uom' => $orderDtl->qty_uom ?? 'PCS',
+                'qty_base' => $orderDtl->qty_base ?? 1,
+                'amt' => -abs($orderDtl->amt ?? 0), // Negatif untuk return
+                'amt_beforetax' => -abs($orderDtl->amt_beforetax ?? 0),
+                'amt_tax' => -abs($orderDtl->amt_tax ?? 0),
+                'amt_adjustdtl' => -abs($orderDtl->amt_adjustdtl ?? 0),
+                'amt_reff' => 0,
+            ];
+
+            // Cek apakah sudah ada billing order
+            $billingOrder = BillingOrder::where('trhdr_id', $billingHdr->id)
+                ->where('reffdtl_id', $orderDtl->id)
+                ->where('tr_type', 'ARBR')
+                ->first();
+
+            if (!$billingOrder) {
+                $billingOrder = BillingOrder::create($billingOrderData);
+            } else {
+                $billingOrder->fill($billingOrderData);
+                if ($billingOrder->isDirty()) {
+                    $billingOrder->save();
+                }
+            }
+        }
+
+        return $billingHdr;
+    }
+    #endregion
 }

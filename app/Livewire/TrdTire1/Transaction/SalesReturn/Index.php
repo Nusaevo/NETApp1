@@ -11,13 +11,13 @@ class Index extends BaseComponent
     {
         parent::mount($action, $objectId, $actionValue, $objectIdValue, $additionalParam);
 
-        // Redirect langsung ke mode create
-        $currentRoute = Route::currentRouteName();
-        $detailRoute = $currentRoute . '.Detail';
+        // // Redirect langsung ke mode create
+        // $currentRoute = Route::currentRouteName();
+        // $detailRoute = $currentRoute . '.Detail';
 
-        return $this->redirect(route($detailRoute, [
-            'action' => encryptWithSessionKey('Create')
-        ]), navigate: true);
+        // return $this->redirect(route($detailRoute, [
+        //     'action' => encryptWithSessionKey('Create')
+        // ]), navigate: true);
     }
 
     protected function onPreRender()

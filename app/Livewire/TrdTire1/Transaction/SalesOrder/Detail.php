@@ -551,12 +551,6 @@ class Detail extends BaseComponent
                 throw new Exception('Gagal membuat Nota penjualan');
             }
             $this->object = $result['header']; // Ambil header object dari hasil array
-
-            // Set status_code langsung pada object jika baru dibuat
-            if ($this->object && $this->actionValue === 'Create') {
-                $this->object->status_code = Status::OPEN;
-                $this->object->save();
-            }
         } else {
             $result = $this->orderService->saveOrder($headerData, $detailData);
             if (!$result) {
@@ -1186,10 +1180,10 @@ class Detail extends BaseComponent
             }
             unset($this->input_details[$index]);
             $this->input_details = array_values($this->input_details);
-            
+
             // Recalculate totals after deletion
             $this->recalculateTotals();
-            
+
             $this->dispatch('success', __('generic.string.delete_item'));
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));

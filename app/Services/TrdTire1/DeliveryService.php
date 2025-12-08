@@ -347,4 +347,160 @@ class DeliveryService
         }
         return true;
     }
+
+
+    public function saveDeliverySalesReturn(array $headerData, array $detailData = [])
+    {
+        // 1. Buat DelivHdr dengan tr_type='SRD'
+        $delivHdrData = [
+            'tr_type' => 'SRD',
+            'tr_code' => $headerData['tr_code'], // Gunakan tr_code yang sama dengan order
+            'tr_date' => $headerData['tr_date'] ?? date('Y-m-d'),
+            'reff_code' => $headerData['reff_code'] ?? '',
+            'reff_date' => $headerData['tr_date'] ?? date('Y-m-d'),
+            'partner_id' => $headerData['partner_id'] ?? null,
+            'partner_code' => $headerData['partner_code'] ?? '',
+            'deliv_by' => '',
+            'amt_shipcost' => null,
+            'note' => '',
+            'billhdr_id' => null,
+        ];
+
+        // Cek apakah sudah ada delivery header dengan tr_code yang sama
+        $delivHdr = DelivHdr::where('tr_code', $headerData['tr_code'])
+            ->where('tr_type', 'SRD')
+            ->first();
+
+        if (!$delivHdr) {
+            $delivHdr = DelivHdr::create($delivHdrData);
+        } else {
+            $delivHdr->fill($delivHdrData);
+            if ($delivHdr->isDirty()) {
+                $delivHdr->save();
+            }
+        }
+
+        // 2. Buat DelivPacking dan DelivPicking untuk setiap detail
+        // Ambil semua OrderDtl yang sudah tersimpan untuk header ini
+        $orderDetails = OrderDtl::where('trhdr_id', $headerData['id'])
+            ->where('tr_type', $headerData['tr_type'])
+            ->orderBy('tr_seq')
+            ->get();
+
+        if ($orderDetails->isEmpty()) {
+            return $delivHdr;
+        }
+
+        foreach ($orderDetails as $orderDtl) {
+            // Buat DelivPacking
+            $packingData = [
+                'trhdr_id' => $delivHdr->id,
+                'tr_type' => 'SRD',
+                'tr_code' => $headerData['tr_code'],
+                'tr_seq' => DelivPacking::getNextTrSeq($delivHdr->id),
+                'reffdtl_id' => $orderDtl->id,
+                'reffhdr_id' => $headerData['id'],
+                'reffhdrtr_type' => 'SR',
+                'reffhdrtr_code' => $headerData['tr_code'],
+                'reffdtltr_seq' => $orderDtl->tr_seq,
+                'matl_id' => $orderDtl->matl_id,
+                'matl_code' => $orderDtl->matl_code,
+                'matl_uom' => $orderDtl->matl_uom,
+                'matl_descr' => $orderDtl->matl_descr,
+                'qty' => $orderDtl->qty,
+            ];
+
+            // Cek apakah sudah ada packing
+            $packing = DelivPacking::where('trhdr_id', $delivHdr->id)
+                ->where('reffdtl_id', $orderDtl->id)
+                ->where('tr_type', 'SRD')
+                ->first();
+
+            if (!$packing) {
+                $packing = DelivPacking::create($packingData);
+            } else {
+                $packing->fill($packingData);
+                if ($packing->isDirty()) {
+                    $packing->save();
+                }
+            }
+
+            // 3. Buat DelivPicking
+            // Untuk Sales Return, ambil warehouse dan batch dari detail atau dari inventory
+            // Cari detail yang sesuai dari detailData berdasarkan matl_id atau tr_seq
+            $matchingDetail = collect($detailData)->first(function ($d) use ($orderDtl) {
+                return ($d['matl_id'] ?? null) == $orderDtl->matl_id ||
+                       ($d['tr_seq'] ?? null) == $orderDtl->tr_seq;
+            });
+
+            $whId = $matchingDetail['wh_id'] ?? null;
+            $whCode = $matchingDetail['wh_code'] ?? '';
+            $batchCode = $matchingDetail['batch_code'] ?? '';
+
+            // Jika tidak ada wh_id, cari dari inventory balance atau set default
+            if (!$whId) {
+                // Cari dari IvtBal jika ada
+                $ivtBal = IvtBal::where('matl_id', $orderDtl->matl_id)
+                    ->where('qty_oh', '>', 0)
+                    ->orderBy('batch_code')
+                    ->first();
+
+                if ($ivtBal) {
+                    $whId = $ivtBal->wh_id;
+                    $whCode = $ivtBal->wh_code;
+                    $batchCode = $ivtBal->batch_code;
+                } else {
+                    // Set default jika tidak ada inventory
+                    $whId = 0;
+                    $whCode = '';
+                    $batchCode = date('ymd'); // Default batch code dengan format tanggal
+                }
+            }
+
+            $pickingData = [
+                'trpacking_id' => $packing->id,
+                'trhdr_id' => $delivHdr->id,
+                'tr_type' => 'SRD',
+                'tr_code' => $headerData['tr_code'],
+                'trpacking_seq' => $packing->tr_seq,
+                'tr_seq' => DelivPicking::getNextTrSeq($packing->id),
+                'tr_seq2' => DelivPicking::getNextTrSeq($packing->id),
+                'matl_id' => $orderDtl->matl_id,
+                'matl_code' => $orderDtl->matl_code,
+                'matl_uom' => $orderDtl->matl_uom,
+                'wh_id' => $whId ?? 0,
+                'wh_code' => $whCode,
+                'batch_code' => $batchCode,
+                'qty' => $orderDtl->qty,
+                'ivt_id' => null, // Akan di-set setelah create ivt_logs
+            ];
+
+            // Cek apakah sudah ada picking
+            $picking = DelivPicking::where('trpacking_id', $packing->id)
+                ->first();
+
+            if (!$picking) {
+                $picking = DelivPicking::create($pickingData);
+            } else {
+                $picking->fill($pickingData);
+                if ($picking->isDirty()) {
+                    $picking->save();
+                }
+            }
+
+            // 4. Buat ivt_logs dari DelivPicking menggunakan InventoryService
+            $this->inventoryService->createIvtLogFromDeliveryPicking($delivHdr, $picking, $orderDtl);
+        }
+
+        // 5. Buat billing data (BillingHdr, BillingDeliv, BillingOrder) dan partner logs/balances
+        $orderHdr = OrderHdr::find($headerData['id']);
+        if ($orderHdr) {
+            // Gunakan app() untuk avoid circular dependency
+            $billingService = app(BillingService::class);
+            $billingService->createBillingSalesReturn($delivHdr, $orderHdr);
+        }
+
+        return $delivHdr;
+    }
+    #endregion
 }

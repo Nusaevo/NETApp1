@@ -27,7 +27,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return OrderHdr::with(['OrderDtl', 'Partner'])
             ->select('order_hdrs.*')
-            ->where('order_hdrs.tr_type', 'SO')
+            ->where('order_hdrs.tr_type', ['SR', 'PR'])
             ->orderBy('order_hdrs.tr_date', 'desc')
             ->orderBy('order_hdrs.tr_code', 'desc');
             // ->orderBy('order_hdrs.updated_at', 'desc');
@@ -35,7 +35,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make($this->trans("date"), "tr_date")
+            Column::make($this->trans("Tanggal"), "tr_date")
                 ->format(function ($value) {
                     return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '';
                 })
@@ -47,7 +47,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make('currency', "curr_rate")
                 ->hideIf(true)
                 ->sortable(),
-            Column::make($this->trans("tr_code"), "tr_code")
+            Column::make($this->trans("No. Return"), "tr_code")
                 ->format(function ($value, $row) {
                     if ($row->partner_id) {
                         return '<a href="' . route($this->redirectAppCode . '.Transaction.SalesOrder.Detail', [
@@ -155,37 +155,37 @@ class IndexDataTable extends BaseDataTableComponent
                     $query->where(DB::raw('UPPER(matl_code)'), 'like', '%' . strtoupper($value) . '%');
                 });
             }, true),
-            SelectFilter::make('Tipe Penjualan', 'sales_type')
-                ->options([
-                    '' => 'All',
-                    'O' => 'Mobil',
-                    'I' => 'Motor',
-                ])
-                ->filter(function ($builder, $value) {
-                    if ($value !== '') {
-                        $builder->where('order_hdrs.sales_type', $value);
-                    }
-                }),
-            SelectFilter::make('Status', 'status_code')
-                ->options([
-                    '' => 'All', // Tambahkan opsi "All" dengan nilai kosong
-                    Status::OPEN => 'Belum Cetak',
-                    Status::PRINT => 'Tercetak',
-                    'belum_kirim' => 'Belum Kirim', // Gabungan Status::PRINT dan Status::OPEN
-                    Status::SHIP => 'Terkirim',
-                    Status::CANCEL => 'Batal Nota',
-                    Status::BILL => 'Lunas',
-                ])
-                ->filter(function ($builder, $value) {
-                    if ($value !== '') { // Jika nilai tidak kosong, filter berdasarkan status_code
-                        if ($value === 'belum_kirim') {
-                            // Filter untuk status PRINT atau OPEN (belum kirim)
-                            $builder->whereIn('order_hdrs.status_code', [Status::PRINT, Status::OPEN]);
-                        } else {
-                            $builder->where('order_hdrs.status_code', $value);
-                        }
-                    }
-                }),
+            // SelectFilter::make('Tipe Penjualan', 'sales_type')
+            //     ->options([
+            //         '' => 'All',
+            //         'O' => 'Mobil',
+            //         'I' => 'Motor',
+            //     ])
+            //     ->filter(function ($builder, $value) {
+            //         if ($value !== '') {
+            //             $builder->where('order_hdrs.sales_type', $value);
+            //         }
+            //     }),
+            // SelectFilter::make('Status', 'status_code')
+            //     ->options([
+            //         '' => 'All', // Tambahkan opsi "All" dengan nilai kosong
+            //         Status::OPEN => 'Belum Cetak',
+            //         Status::PRINT => 'Tercetak',
+            //         'belum_kirim' => 'Belum Kirim', // Gabungan Status::PRINT dan Status::OPEN
+            //         Status::SHIP => 'Terkirim',
+            //         Status::CANCEL => 'Batal Nota',
+            //         Status::BILL => 'Lunas',
+            //     ])
+            //     ->filter(function ($builder, $value) {
+            //         if ($value !== '') { // Jika nilai tidak kosong, filter berdasarkan status_code
+            //             if ($value === 'belum_kirim') {
+            //                 // Filter untuk status PRINT atau OPEN (belum kirim)
+            //                 $builder->whereIn('order_hdrs.status_code', [Status::PRINT, Status::OPEN]);
+            //             } else {
+            //                 $builder->where('order_hdrs.status_code', $value);
+            //             }
+            //         }
+            //     }),
             // DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
             //     $builder->where('order_hdrs.tr_date', '>=', $value);
             // }),
