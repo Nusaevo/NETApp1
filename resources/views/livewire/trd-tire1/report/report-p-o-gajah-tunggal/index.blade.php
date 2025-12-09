@@ -161,15 +161,37 @@
             <h3 style="text-decoration:underline; text-align:left;">
                 {!! $menuName !!}
             </h3>
-            <div style="text-align:left; margin-bottom:10px; font-size: 16px;">
-                <strong>Kode Program : {{ $selectedRewardCode }}</strong>
+            <div style="text-align:left; margin-bottom:20px;">
+                <strong>PROGRAM {{ $selectedRewardCode }}</strong> Periode: {{ $startPrintDate && $endPrintDate ? (\Carbon\Carbon::parse($startPrintDate)->format('d-M-Y') . ' s/d ' . \Carbon\Carbon::parse($endPrintDate)->format('d-M-Y')) : '-' }}
             </div>
-            <div style="text-align:left; margin-bottom:20px; font-size: 14px;">
-                Periode: {{ $startPrintDate && $endPrintDate ? (\Carbon\Carbon::parse($startPrintDate)->format('d-M-Y') . ' s/d ' . \Carbon\Carbon::parse($endPrintDate)->format('d-M-Y')) : '-' }}
-            </div>
+            @php
+                $isIrcBrand = !empty($results) && isset($results[0]['is_irc']) ? $results[0]['is_irc'] : false;
+            @endphp
             <div style="overflow-x: auto;">
                 <table style="width:100%; border-collapse:collapse; font-size: 14px; min-width: 1000px;">
                     <thead>
+                        @if($isIrcBrand)
+                        {{-- Format IRC: Ban Luar, Ban Dalam, Total Ban, Point BL, Point BD --}}
+                        <tr>
+                            <th colspan="4" style="text-align:left; padding:8px 12px; border-bottom:1px solid #000; border-right:1px dashed #000; border-left:1px solid #000; border-top: 1px solid #000; background-color: #f8f9fa;">Nama / Alamat Pelanggan</th>
+                            <th colspan="3" style="text-align:center; padding:8px 12px; border-right:1px dashed #000; border-top: 1px solid #000; background-color: #f8f9fa;"></th>
+                            <th colspan="2" style="text-align:center; padding:8px 12px; border-right:1px dashed #000; border-top: 1px solid #000; background-color: #f8f9fa;"></th>
+                            <th colspan="1" style="text-align:center; padding:8px 12px; border-right:1px solid #000; border-top: 1px solid #000; background-color: #f8f9fa;"></th>
+                        </tr>
+                        <tr class="header2">
+                            <th style="text-align:left; padding:8px 12px; border-bottom:1px solid #000; border-left:1px solid #000; background-color: #f8f9fa;">Tgl SJ</th>
+                            <th style="text-align:left; padding:8px 12px; border-bottom:1px solid #000; background-color: #f8f9fa;">No. Nota</th>
+                            <th style="text-align:left; padding:8px 12px; border-bottom:1px solid #000; background-color: #f8f9fa;">Kode Brg.</th>
+                            <th style="text-align:left; padding:8px 12px; border-bottom:1px solid #000; background-color: #f8f9fa;">Nama Barang</th>
+                            <th style="text-align:center; padding:8px 12px; border-bottom:1px solid #000; border-left:1px dashed #000; border-right:1px dashed #000; background-color: #f8f9fa;">Ban Luar</th>
+                            <th style="text-align:center; padding:8px 12px; border-bottom:1px solid #000; border-right:1px dashed #000; background-color: #f8f9fa;">Ban Dalam</th>
+                            <th style="text-align:center; padding:8px 12px; border-bottom:1px solid #000; border-right:1px dashed #000; background-color: #f8f9fa;">Total Ban</th>
+                            <th style="text-align:center; padding:8px 12px; border-bottom:1px solid #000; border-right:1px dashed #000; background-color: #f8f9fa;">Point BL</th>
+                            <th style="text-align:center; padding:8px 12px; border-bottom:1px solid #000; border-right:1px dashed #000; background-color: #f8f9fa;">Point BD</th>
+                            <th style="text-align:center; padding:8px 12px; border-bottom:1px solid #000; border-right:1px solid #000; background-color: #f8f9fa;">Total Point</th>
+                        </tr>
+                        @else
+                        {{-- Format Non-IRC: Total Ban, Point, Total Point --}}
                         <tr>
                             <th colspan="4" style="text-align:left; padding:8px 12px; border-bottom:1px solid #000; border-right:1px dashed #000; border-left:1px solid #000; border-top: 1px solid #000; background-color: #f8f9fa;">Nama / Alamat Pelanggan</th>
                             <th colspan="1" style="text-align:center; padding:8px 12px; border-right:1px dashed #000; border-top: 1px solid #000; background-color: #f8f9fa;"></th>
@@ -185,6 +207,7 @@
                             <th style="text-align:center; padding:8px 12px; border-bottom:1px solid #000; border-right:1px dashed #000; background-color: #f8f9fa;">Point</th>
                             <th style="text-align:center; padding:8px 12px; border-bottom:1px solid #000; border-right:1px solid #000; background-color: #f8f9fa;">Total Point</th>
                         </tr>
+                        @endif
                     </thead>
                     <tbody>
                         @foreach ($results as $group)
@@ -195,9 +218,20 @@
                                     <td style="padding:8px 12px;">{{ $prevNota !== $row['no_nota'] ? $row['no_nota'] : '' }}</td>
                                     <td style="padding:8px 12px; text-align:left;">{{ $row['kode_brg'] }}</td>
                                     <td style="padding:8px 12px;">{{ $row['nama_barang'] }}</td>
+                                    @if($group['is_irc'] ?? false)
+                                    {{-- Format IRC --}}
+                                    <td style="padding:8px 12px; text-align:center; border-left:1px dashed #000; border-right:1px dashed #000;">@if($row['ban_luar'] ?? 0){{ number_format($row['ban_luar'], 0) }}@endif</td>
+                                    <td style="padding:8px 12px; text-align:center; border-right:1px dashed #000;">@if($row['ban_dalam'] ?? 0){{ number_format($row['ban_dalam'], 0) }}@endif</td>
+                                    <td style="padding:8px 12px; text-align:center; border-right:1px dashed #000;">@if($row['total_ban'] ?? 0){{ number_format($row['total_ban'], 0) }}@endif</td>
+                                    <td style="padding:8px 12px; text-align:center; border-right:1px dashed #000;">@if($row['point_bl'] ?? 0){{ number_format($row['point_bl'], 0) }}@endif</td>
+                                    <td style="padding:8px 12px; text-align:center; border-right:1px dashed #000;">@if($row['point_bd'] ?? 0){{ number_format($row['point_bd'], 0) }}@endif</td>
+                                    <td style="padding:8px 12px; border-right:1px solid #000; text-align:center;">@if($row['total_point'] ?? 0){{ number_format($row['total_point'], 0) }}@endif</td>
+                                    @else
+                                    {{-- Format Non-IRC --}}
                                     <td style="padding:8px 12px; text-align:center; border-left:1px dashed #000; border-right:1px dashed #000;">{{ fmod($row['total_ban'], 1) == 0 ? number_format($row['total_ban'], 0) : number_format($row['total_ban'], 2) }}</td>
-                                    <td style="padding:8px 12px; text-align:center; border-right:1px dashed #000;">{{ fmod($row['point'], 1) == 0 ? number_format($row['point'], 0) : number_format($row['point'], 2) }}</td>
+                                    <td style="padding:8px 12px; text-align:center; border-right:1px dashed #000;">{{ fmod($row['point'] ?? 0, 1) == 0 ? number_format($row['point'] ?? 0, 0) : number_format($row['point'] ?? 0, 2) }}</td>
                                     <td style="padding:8px 12px; border-right:1px solid #000; text-align:center;">{{ fmod($row['total_point'], 1) == 0 ? number_format($row['total_point'], 0) : number_format($row['total_point'], 2) }}</td>
+                                    @endif
                                 </tr>
                                 @php($prevNota = $row['no_nota'])
                             @endforeach
@@ -207,9 +241,20 @@
                                     <span style="float:right;">{{ $group['customer'] }}</span>
                                 </td>
                                 <td style="{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}"></td>
+                                @if($group['is_irc'] ?? false)
+                                {{-- Format IRC Total --}}
+                                <td style="padding:10px 12px; text-align:center; border-right:1px dashed #000; border-left:1px dashed #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">@if($group['ban_luar'] ?? 0){{ number_format($group['ban_luar'], 0) }}@endif</td>
+                                <td style="padding:10px 12px; text-align:center; border-right:1px dashed #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">@if($group['ban_dalam'] ?? 0){{ number_format($group['ban_dalam'], 0) }}@endif</td>
+                                <td style="padding:10px 12px; text-align:center; border-right:1px dashed #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">@if($group['total_ban'] ?? 0){{ number_format($group['total_ban'], 0) }}@endif</td>
+                                <td style="padding:10px 12px; text-align:center; border-right:1px dashed #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">@if($group['point_bl'] ?? 0){{ number_format($group['point_bl'], 0) }}@endif</td>
+                                <td style="padding:10px 12px; text-align:center; border-right:1px dashed #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">@if($group['point_bd'] ?? 0){{ number_format($group['point_bd'], 0) }}@endif</td>
+                                <td style="padding:10px 12px; text-align:center; border-right:1px solid #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">@if($group['total_point'] ?? 0){{ number_format($group['total_point'], 0) }}@endif</td>
+                                @else
+                                {{-- Format Non-IRC Total --}}
                                 <td style="padding:10px 12px; text-align:center; border-right:1px dashed #000; border-left:1px dashed #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">{{ fmod($group['total_ban'], 1) == 0 ? number_format($group['total_ban'], 0) : number_format($group['total_ban'], 2) }}</td>
                                 <td style=" border-right:1px dashed #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}"></td>
                                 <td style="padding:10px 12px; text-align:center; border-right:1px solid #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">{{ fmod($group['total_point'], 1) == 0 ? number_format($group['total_point'], 0) : number_format($group['total_point'], 2) }}</td>
+                                @endif
                             </tr>
                         @endforeach
                     </tbody>
@@ -225,14 +270,33 @@
                 <h3 style="text-decoration:underline; text-align:left;">
                     {!! $menuName !!}
                 </h3>
-                <div style="text-align:left; margin-bottom:0;">
-                    <strong>Kode Program : {{ $selectedRewardCode }}</strong>
-                </div>
                 <div style="text-align:left; margin-bottom:20px;">
-                    Periode: {{ $startPrintDate && $endPrintDate ? (\Carbon\Carbon::parse($startPrintDate)->format('d-M-Y') . ' s/d ' . \Carbon\Carbon::parse($endPrintDate)->format('d-M-Y')) : '-' }}
+                    <strong>PROGRAM {{ $selectedRewardCode }}</strong> Periode: {{ $startPrintDate && $endPrintDate ? (\Carbon\Carbon::parse($startPrintDate)->format('d-M-Y') . ' s/d ' . \Carbon\Carbon::parse($endPrintDate)->format('d-M-Y')) : '-' }}
                 </div>
                 <table style="width:100%; border-collapse:collapse;">
                     <thead>
+                        @if($isIrcBrand)
+                        {{-- Format IRC: Ban Luar, Ban Dalam, Total Ban, Point BL, Point BD --}}
+                        <tr>
+                            <th colspan="4" style="text-align:left; padding:4px 8px; border-bottom:1px solid #000; border-right:1px dashed #000; border-left:1px solid #000; border-top: 1px solid #000;">Nama / Alamat Pelanggan</th>
+                            <th colspan="3" style="text-align:center; padding:4px 8px; border-right:1px dashed #000; border-top: 1px solid #000;"></th>
+                            <th colspan="2" style="text-align:center; padding:4px 8px; border-right:1px dashed #000; border-top: 1px solid #000;"></th>
+                            <th colspan="1" style="text-align:center; padding:4px 8px; border-right:1px solid #000; border-top: 1px solid #000;"></th>
+                        </tr>
+                        <tr class="header2">
+                            <th style="text-align:left; padding:4px 8px; border-bottom:1px solid #000; border-left:1px solid #000;">Tgl SJ</th>
+                            <th style="text-align:left; padding:4px 8px; border-bottom:1px solid #000;">No. Nota</th>
+                            <th style="text-align:left; padding:4px 8px; border-bottom:1px solid #000;">Kode Brg.</th>
+                            <th style="text-align:left; padding:4px 8px; border-bottom:1px solid #000;">Nama Barang</th>
+                            <th style="text-align:center; padding:4px 8px; border-bottom:1px solid #000; border-left:1px dashed #000; border-right:1px dashed #000;">Ban Luar</th>
+                            <th style="text-align:center; padding:4px 8px; border-bottom:1px solid #000; border-right:1px dashed #000;">Ban Dalam</th>
+                            <th style="text-align:center; padding:4px 8px; border-bottom:1px solid #000; border-right:1px dashed #000;">Total Ban</th>
+                            <th style="text-align:center; padding:4px 8px; border-bottom:1px solid #000; border-right:1px dashed #000;">Point BL</th>
+                            <th style="text-align:center; padding:4px 8px; border-bottom:1px solid #000; border-right:1px dashed #000;">Point BD</th>
+                            <th style="text-align:center; padding:4px 8px; border-bottom:1px solid #000; border-right:1px solid #000;">Total Point</th>
+                        </tr>
+                        @else
+                        {{-- Format Non-IRC: Total Ban, Point, Total Point --}}
                         <tr>
                             <th colspan="4" style="text-align:left; padding:4px 8px; border-bottom:1px solid #000; border-right:1px dashed #000; border-left:1px solid #000; border-top: 1px solid #000;">Nama / Alamat Pelanggan</th>
                             <th colspan="1" style="text-align:center; padding:4px 8px; border-right:1px dashed #000; border-top: 1px solid #000;"></th>
@@ -248,6 +312,7 @@
                             <th style="text-align:center; padding:4px 8px; border-bottom:1px solid #000; border-right:1px dashed #000;">Point</th>
                             <th style="text-align:center; padding:4px 8px; border-bottom:1px solid #000; border-right:1px solid #000;">Total Point</th>
                         </tr>
+                        @endif
                     </thead>
                     <tbody>
                         @foreach ($results as $group)
@@ -258,9 +323,20 @@
                                     <td style="padding:4px 8px;">{{ $prevNota !== $row['no_nota'] ? $row['no_nota'] : '' }}</td>
                                     <td style="padding:4px 8px; text-align:left;">{{ $row['kode_brg'] }}</td>
                                     <td style="padding:4px 8px;">{{ $row['nama_barang'] }}</td>
+                                    @if($group['is_irc'] ?? false)
+                                    {{-- Format IRC --}}
+                                    <td style="padding:4px 8px; text-align:center; border-left:1px dashed #000; border-right:1px dashed #000;">@if($row['ban_luar'] ?? 0){{ number_format($row['ban_luar'], 0) }}@endif</td>
+                                    <td style="padding:4px 8px; text-align:center; border-right:1px dashed #000;">@if($row['ban_dalam'] ?? 0){{ number_format($row['ban_dalam'], 0) }}@endif</td>
+                                    <td style="padding:4px 8px; text-align:center; border-right:1px dashed #000;">@if($row['total_ban'] ?? 0){{ number_format($row['total_ban'], 0) }}@endif</td>
+                                    <td style="padding:4px 8px; text-align:center; border-right:1px dashed #000;">@if($row['point_bl'] ?? 0){{ number_format($row['point_bl'], 0) }}@endif</td>
+                                    <td style="padding:4px 8px; text-align:center; border-right:1px dashed #000;">@if($row['point_bd'] ?? 0){{ number_format($row['point_bd'], 0) }}@endif</td>
+                                    <td style="padding:4px 8px; border-right:1px solid #000; text-align:center;">@if($row['total_point'] ?? 0){{ number_format($row['total_point'], 0) }}@endif</td>
+                                    @else
+                                    {{-- Format Non-IRC --}}
                                     <td style="padding:4px 8px; text-align:center; border-left:1px dashed #000; border-right:1px dashed #000;">{{ fmod($row['total_ban'], 1) == 0 ? number_format($row['total_ban'], 0) : number_format($row['total_ban'], 2) }}</td>
-                                    <td style="padding:4px 8px; text-align:center; border-right:1px dashed #000;">{{ fmod($row['point'], 1) == 0 ? number_format($row['point'], 0) : number_format($row['point'], 2) }}</td>
+                                    <td style="padding:4px 8px; text-align:center; border-right:1px dashed #000;">{{ fmod($row['point'] ?? 0, 1) == 0 ? number_format($row['point'] ?? 0, 0) : number_format($row['point'] ?? 0, 2) }}</td>
                                     <td style="padding:4px 8px; border-right:1px solid #000; text-align:center;">{{ fmod($row['total_point'], 1) == 0 ? number_format($row['total_point'], 0) : number_format($row['total_point'], 2) }}</td>
+                                    @endif
                                 </tr>
                                 @php($prevNota = $row['no_nota'])
                             @endforeach
@@ -270,9 +346,20 @@
                                     <span style="float:right;">{{ $group['customer'] }}</span>
                                 </td>
                                 <td style="{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}"></td>
+                                @if($group['is_irc'] ?? false)
+                                {{-- Format IRC Total --}}
+                                <td style="padding:6px 8px;  font-weight:bold; text-align:center; border-right:1px dashed #000; border-left:1px dashed #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">@if($group['ban_luar'] ?? 0){{ number_format($group['ban_luar'], 0) }}@endif</td>
+                                <td style="padding:6px 8px;  font-weight:bold; text-align:center; border-right:1px dashed #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">@if($group['ban_dalam'] ?? 0){{ number_format($group['ban_dalam'], 0) }}@endif</td>
+                                <td style="padding:6px 8px;  font-weight:bold; text-align:center; border-right:1px dashed #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">@if($group['total_ban'] ?? 0){{ number_format($group['total_ban'], 0) }}@endif</td>
+                                <td style="padding:6px 8px;  font-weight:bold; text-align:center; border-right:1px dashed #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">@if($group['point_bl'] ?? 0){{ number_format($group['point_bl'], 0) }}@endif</td>
+                                <td style="padding:6px 8px;  font-weight:bold; text-align:center; border-right:1px dashed #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">@if($group['point_bd'] ?? 0){{ number_format($group['point_bd'], 0) }}@endif</td>
+                                <td style="padding:6px 8px;  font-weight:bold; text-align:center; border-right:1px solid #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">@if($group['total_point'] ?? 0){{ number_format($group['total_point'], 0) }}@endif</td>
+                                @else
+                                {{-- Format Non-IRC Total --}}
                                 <td style="padding:6px 8px;  font-weight:bold; text-align:center; border-right:1px dashed #000; border-left:1px dashed #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">{{ fmod($group['total_ban'], 1) == 0 ? number_format($group['total_ban'], 0) : number_format($group['total_ban'], 2) }}</td>
                                 <td style=" border-right:1px dashed #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}"></td>
                                 <td style="padding:6px 8px;  font-weight:bold; text-align:center; border-right:1px solid #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">{{ fmod($group['total_point'], 1) == 0 ? number_format($group['total_point'], 0) : number_format($group['total_point'], 2) }}</td>
+                                @endif
                             </tr>
                         @endforeach
                     </tbody>

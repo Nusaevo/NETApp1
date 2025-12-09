@@ -106,13 +106,81 @@ class Index extends BaseComponent
             $bindings['end_date'] = $this->endCode;
         }
 
+        // Cek apakah brand IRC
+        $isIrcBrand = stripos($this->category ?? '', 'IRC') !== false;
+
         // Tentukan jenis JOIN berdasarkan checkbox point_flag
         $salesRewardJoin = $this->point_flag ? "LEFT OUTER JOIN" : "JOIN";
 
         // Tambahkan kondisi WHERE untuk memfilter data ketika tidak menggunakan LEFT OUTER JOIN
         $whereSalesReward = $this->point_flag ? "" : " AND sr.reward IS NOT NULL";
 
-        $query = "
+        if ($isIrcBrand) {
+            // Query khusus untuk IRC - pisahkan Ban Luar dan Ban Dalam berdasarkan category di materials
+            // Category bisa berisi: BAN LUAR MOTOR, BAN LUAR MOBIL, BAN DALAM MOTOR, BAN DALAM MOBIL
+            $query = "
+                SELECT
+                    oh.tr_date AS tgl_nota,
+                    oh.tr_code AS no_nota,
+                    od.matl_code AS kode_brg,
+                    od.matl_descr AS nama_barang,
+                    CASE
+                        WHEN sr.brand IS NOT NULL
+                             AND sr.brand = 'IRC'
+                             AND (p.partner_chars->>'IRC' = 'false' OR p.partner_chars->>'IRC' IS NULL)
+                        THEN 'CUSTOMER LAIN-LAIN'
+                        ELSE p.name
+                    END AS nama_pelanggan,
+                    CASE
+                        WHEN sr.brand IS NOT NULL
+                             AND sr.brand = 'IRC'
+                             AND (p.partner_chars->>'IRC' = 'false' OR p.partner_chars->>'IRC' IS NULL)
+                        THEN ''
+                        ELSE p.city
+                    END AS kota_pelanggan,
+                    CASE WHEN UPPER(m.category) LIKE '%BAN LUAR%' THEN od.qty::int ELSE 0 END AS ban_luar,
+                    CASE WHEN UPPER(m.category) LIKE '%BAN DALAM%' THEN od.qty::int ELSE 0 END AS ban_dalam,
+                    od.qty::int AS total_ban,
+                    CASE WHEN UPPER(m.category) LIKE '%BAN LUAR%' THEN
+                        CASE
+                            WHEN COALESCE(sr.qty, 0) > 0 THEN TRUNC(od.qty / sr.qty) * COALESCE(sr.reward, 0)
+                            ELSE od.qty * COALESCE(sr.reward, 0)
+                        END
+                        ELSE 0
+                    END AS point_bl,
+                    CASE WHEN UPPER(m.category) LIKE '%BAN DALAM%' THEN
+                        CASE
+                            WHEN COALESCE(sr.qty, 0) > 0 THEN TRUNC(od.qty / sr.qty) * COALESCE(sr.reward, 0)
+                            ELSE od.qty * COALESCE(sr.reward, 0)
+                        END
+                        ELSE 0
+                    END AS point_bd,
+                    CASE
+                        WHEN COALESCE(sr.qty, 0) > 0 THEN TRUNC(od.qty / sr.qty) * COALESCE(sr.reward, 0)
+                        ELSE od.qty * COALESCE(sr.reward, 0)
+                    END AS total_point,
+                    CASE
+                        WHEN sr.brand IS NOT NULL
+                             AND sr.brand = 'IRC'
+                             AND (p.partner_chars->>'IRC' = 'false' OR p.partner_chars->>'IRC' IS NULL)
+                        THEN 1
+                        ELSE 0
+                    END AS is_lain_lain,
+                    od.id AS order_dtl_id
+                FROM order_dtls od
+                JOIN order_hdrs oh ON oh.id = od.trhdr_id AND oh.tr_type = 'SO' AND oh.status_code != 'X'
+                JOIN partners p ON p.id = oh.partner_id
+                $salesRewardJoin sales_rewards sr ON sr.code = :sr_code AND sr.matl_code = od.matl_code
+                JOIN materials m ON m.id = od.matl_id AND m.brand = :brand
+                WHERE od.tr_type = 'SO'
+                    AND od.qty = od.qty_reff
+                    $whereDate
+                    $whereSalesReward
+                ORDER BY is_lain_lain ASC, nama_pelanggan, oh.tr_date ASC, oh.tr_code, od.id, od.matl_code
+            ";
+        } else {
+            // Query untuk non-IRC (format lama)
+            $query = "
             SELECT
                 oh.tr_date AS tgl_nota,
                 oh.tr_code AS no_nota,
@@ -187,11 +255,49 @@ class Index extends BaseComponent
                 AND od.qty = od.qty_reff
                 $whereDate
                 $whereSalesReward
-            ORDER BY is_lain_lain ASC, nama_pelanggan, oh.tr_date ASC, oh.tr_code, od.matl_code
-        ";
+                ORDER BY is_lain_lain ASC, nama_pelanggan, oh.tr_date ASC, oh.tr_code, od.matl_code
+            ";
+        }
         // dd($query);
 
         $rows = DB::connection(Session::get('app_code'))->select($query, $bindings);
+
+        if ($isIrcBrand) {
+            // Untuk IRC, perlu menggabungkan baris yang memiliki order_dtl_id yang sama
+            // Karena satu order detail bisa memiliki beberapa material (ban luar dan ban dalam)
+            $groupedByOrderDtl = [];
+            foreach ($rows as $row) {
+                // Gunakan order_dtl_id sebagai key untuk grouping
+                $key = $row->order_dtl_id ?? ($row->no_nota . '_' . $row->kode_brg);
+
+                if (!isset($groupedByOrderDtl[$key])) {
+                    $groupedByOrderDtl[$key] = (object)[
+                        'tgl_nota' => $row->tgl_nota,
+                        'no_nota' => $row->no_nota,
+                        'kode_brg' => $row->kode_brg,
+                        'nama_barang' => $row->nama_barang,
+                        'nama_pelanggan' => $row->nama_pelanggan,
+                        'kota_pelanggan' => $row->kota_pelanggan,
+                        'ban_luar' => (int)($row->ban_luar ?? 0),
+                        'ban_dalam' => (int)($row->ban_dalam ?? 0),
+                        'total_ban' => (int)($row->total_ban ?? 0),
+                        'point_bl' => (float)($row->point_bl ?? 0),
+                        'point_bd' => (float)($row->point_bd ?? 0),
+                        'total_point' => (float)($row->total_point ?? 0),
+                        'is_lain_lain' => $row->is_lain_lain ?? 0,
+                    ];
+                } else {
+                    // Tambahkan nilai jika sudah ada (untuk menggabungkan ban luar dan ban dalam dalam satu order detail)
+                    $groupedByOrderDtl[$key]->ban_luar += (int)($row->ban_luar ?? 0);
+                    $groupedByOrderDtl[$key]->ban_dalam += (int)($row->ban_dalam ?? 0);
+                    $groupedByOrderDtl[$key]->total_ban += (int)($row->total_ban ?? 0);
+                    $groupedByOrderDtl[$key]->point_bl += (float)($row->point_bl ?? 0);
+                    $groupedByOrderDtl[$key]->point_bd += (float)($row->point_bd ?? 0);
+                    $groupedByOrderDtl[$key]->total_point += (float)($row->total_point ?? 0);
+                }
+            }
+            $rows = array_values($groupedByOrderDtl);
+        }
 
         // Grouping per customer
         $grouped = [];
@@ -210,10 +316,24 @@ class Index extends BaseComponent
                     'total_ban' => 0,
                     'total_point' => 0,
                 ];
+                if ($isIrcBrand) {
+                    $grouped[$customerKey]['ban_luar'] = 0;
+                    $grouped[$customerKey]['ban_dalam'] = 0;
+                    $grouped[$customerKey]['point_bl'] = 0;
+                    $grouped[$customerKey]['point_bd'] = 0;
+                } else {
+                    $grouped[$customerKey]['point'] = 0;
+                }
             }
             $grouped[$customerKey]['details'][] = $row;
-            $grouped[$customerKey]['total_ban'] += $row->total_ban;
-            $grouped[$customerKey]['total_point'] += $row->total_point;
+            $grouped[$customerKey]['total_ban'] += $row->total_ban ?? 0;
+            $grouped[$customerKey]['total_point'] += $row->total_point ?? 0;
+            if ($isIrcBrand) {
+                $grouped[$customerKey]['ban_luar'] += $row->ban_luar ?? 0;
+                $grouped[$customerKey]['ban_dalam'] += $row->ban_dalam ?? 0;
+                $grouped[$customerKey]['point_bl'] += $row->point_bl ?? 0;
+                $grouped[$customerKey]['point_bd'] += $row->point_bd ?? 0;
+            }
         }
 
         // Sort hasil: CUSTOMER LAIN-LAIN muncul di akhir
@@ -231,6 +351,11 @@ class Index extends BaseComponent
             // Jika keduanya sama (keduanya LAIN-LAIN atau keduanya normal), urutkan berdasarkan nama
             return strcmp($a['customer'], $b['customer']);
         });
+
+        // Simpan flag untuk digunakan di view
+        foreach ($grouped as &$group) {
+            $group['is_irc'] = $isIrcBrand;
+        }
 
         $this->results = array_values($grouped);
 

@@ -84,11 +84,117 @@ class Index extends BaseComponent
 
         $this->resetErrorBag();
 
-        // 1. Get dynamic columns for crosstab
         $code = addslashes($this->category);
         $startDate = addslashes($this->startCode);
         $endDate = addslashes($this->endCode ?: $this->startCode);
 
+        // Cek apakah brand IRC
+        $isIrcBrand = stripos($this->category ?? '', 'IRC') !== false;
+
+        if ($isIrcBrand) {
+            // Ambil semua grup yang ada untuk IRC
+            $groups = DB::connection(Session::get('app_code'))
+                ->table('sales_rewards')
+                ->where('code', $code)
+                ->select('grp', DB::raw('MAX(qty) as qty'), DB::raw('MAX(reward) as reward'))
+                ->groupBy('grp')
+                ->orderBy('grp')
+                ->get();
+
+            if ($groups->isEmpty()) {
+                $this->dispatch('warning', 'Tidak ada grup pada sales reward ini.');
+                $this->results = [];
+                return;
+            }
+
+            // Build query dinamis berdasarkan grup yang ada
+            $selectParts = [];
+            $selectParts[] = "
+                CASE WHEN (p.partner_chars->>'IRC')::bool
+                    THEN p.name ||
+                         CASE WHEN NULLIF(TRIM(p.address), '') IS NOT NULL
+                              THEN ' - ' || p.address || ' - ' || p.city
+                              ELSE ' - ' || p.city
+                         END
+                    ELSE '_CUSTOMER IRC'
+                END AS customer
+            ";
+
+            foreach ($groups as $group) {
+                $grpName = addslashes($group->grp);
+                // Gunakan quote untuk alias kolom agar bisa diakses dengan benar
+                $aliasQty = '"' . $grpName . '_qty"';
+                $aliasPoint = '"' . $grpName . '_point"';
+                $selectParts[] = "COALESCE(SUM(CASE WHEN r.grp = '{$grpName}' THEN d.qty ELSE 0 END), 0)::int AS {$aliasQty}";
+                $selectParts[] = "COALESCE(SUM(CASE WHEN r.grp = '{$grpName}' THEN (TRUNC(d.qty / r.qty) * r.reward) ELSE 0 END), 0)::int AS {$aliasPoint}";
+            }
+
+            $selectClause = implode(', ', $selectParts);
+
+            $ircQuery = "
+                SELECT
+                    {$selectClause}
+                FROM order_hdrs h
+                JOIN order_dtls d
+                  ON d.tr_code = h.tr_code
+                 AND d.tr_type = h.tr_type
+                 AND d.qty = d.qty_reff
+                JOIN materials m ON m.code = d.matl_code
+                JOIN partners p ON p.code = h.partner_code
+                JOIN sales_rewards r
+                  ON r.matl_code = d.matl_code
+                 AND r.code = '{$code}'
+                WHERE h.tr_type = 'SO'
+                  AND h.status_code <> 'X'
+                  AND h.tr_date BETWEEN '{$startDate}' AND '{$endDate}'
+                GROUP BY 1
+                ORDER BY 1
+            ";
+
+            $rows = DB::connection(Session::get('app_code'))->select($ircQuery);
+
+            // Process results: tambahkan sisa untuk setiap grup dan total point
+            foreach ($rows as $row) {
+                // Convert to array untuk akses property yang lebih reliable
+                $rowArray = (array)$row;
+                $totalPoint = 0;
+
+                foreach ($groups as $group) {
+                    $grpName = $group->grp;
+                    $qtyProp = "{$grpName}_qty";
+                    $pointProp = "{$grpName}_point";
+                    $sisaProp = "{$grpName}_sisa";
+
+                    // Akses menggunakan array untuk memastikan property bisa diakses
+                    $qty = $rowArray[$qtyProp] ?? 0;
+                    $point = $rowArray[$pointProp] ?? 0;
+
+                    // Hitung ban_point dan sisa
+                    $srQty = (float)$group->qty;
+                    $srReward = (float)$group->reward;
+                    $banPoint = $srQty > 0 && $srReward > 0
+                        ? (int)($point / $srReward * $srQty)
+                        : 0;
+                    $sisa = $qty - $banPoint;
+
+                    // Set property langsung ke object
+                    $row->$sisaProp = $sisa;
+                    $totalPoint += $point;
+                }
+
+                $row->total_point = $totalPoint;
+
+                // Simpan groups sebagai array untuk digunakan di view
+                $row->groups = $groups->map(function($g) {
+                    return (object)['grp' => $g->grp, 'qty' => $g->qty, 'reward' => $g->reward];
+                })->values()->all();
+            }
+
+            $this->results = $rows;
+            return;
+        }
+
+        // 1. Get dynamic columns for crosstab (untuk non-IRC)
         // Change column type to text for crosstab
         $colQuery = "SELECT string_agg(DISTINCT format('\"%s\" text', grp), ', ') AS cols FROM sales_rewards WHERE code = '{$code}'";
         $colResult = DB::connection(Session::get('app_code'))->selectOne($colQuery);
@@ -193,6 +299,10 @@ class Index extends BaseComponent
             $rowArray = (array)$row;
             foreach ($rowArray as $colName => $val) {
                 if ($colName !== 'customer' && !empty($val)) {
+                    // Pastikan $val adalah string sebelum explode
+                    if (!is_string($val)) {
+                        continue;
+                    }
                     $parts = explode('|', $val);
                     if (isset($parts[0]) && isset($parts[1])) {
                         $total_ban = (int)$parts[0]; // qty
@@ -252,12 +362,8 @@ class Index extends BaseComponent
         }
 
         try {
-            // Tentukan kolom dinamis dari hasil crosstab
-            $columns = [];
-            if (count($this->results)) {
-                $columns = array_keys((array)$this->results[0]);
-            }
-            $groupColumns = array_values(array_filter($columns, fn($c) => $c !== 'customer'));
+            // Cek apakah brand IRC
+            $isIrcBrand = stripos($this->category ?? '', 'IRC') !== false;
 
             // Helper function untuk memisahkan customer
             $splitCustomer = function($customer) {
@@ -271,50 +377,140 @@ class Index extends BaseComponent
                 return ['name' => $name, 'address' => $address, 'city' => $city];
             };
 
-            // Header: Customer, Alamat, Kota, untuk setiap grup 3 kolom (Qty, Point, Sisa), lalu Total Qty, Total Point, dan Total Sisa
-            $headers = ['Customer', 'Alamat', 'Kota'];
-            foreach ($groupColumns as $grpCol) {
-                $headers[] = $grpCol . ' Qty';
-                $headers[] = $grpCol . ' Point';
-                $headers[] = $grpCol . ' Sisa';
-            }
-            $headers[] = 'Total Qty';
-            $headers[] = 'Total Point';
-            $headers[] = 'Total Sisa';
+            if ($isIrcBrand) {
+                // Format IRC: Fixed columns dinamis berdasarkan grup
+                // Ambil groups dari row pertama
+                $ircGroups = !empty($this->results) && isset($this->results[0]->groups)
+                    ? $this->results[0]->groups
+                    : [];
 
-            // Data rows
-            $excelData = [];
-            foreach ($this->results as $row) {
-                $dataRow = [];
-                $customer = $row->customer ?? '';
-                $customerParts = $splitCustomer($customer);
-                // Tambahkan 3 kolom customer: name, address, city
-                $dataRow[] = $customerParts['name'];
-                $dataRow[] = $customerParts['address'];
-                $dataRow[] = $customerParts['city'];
-
-                $rowTotalQty = 0;
-                $rowTotalPoint = 0;
-                $rowTotalSisa = 0;
-                foreach ($groupColumns as $grpCol) {
-                    $val = $row->$grpCol ?? '';
-                    $parts = explode('|', $val);
-                    $qty = isset($parts[0]) ? (int)$parts[0] : 0;   // qty/ban
-                    $point = isset($parts[1]) ? (int)$parts[1] : 0; // point
-                    $sisa = isset($parts[2]) ? (int)$parts[2] : 0;  // sisa
-                    $rowTotalQty += $qty;
-                    $rowTotalPoint += $point;
-                    $rowTotalSisa += $sisa;
-                    // pisahkan ke 3 kolom: Qty, Point, Sisa
-                    $dataRow[] = $qty;
-                    $dataRow[] = $point;
-                    $dataRow[] = $sisa;
+                // Cek apakah ada sisa yang tidak kosong untuk setiap grup
+                $hasSisaPerGroup = [];
+                foreach ($ircGroups as $group) {
+                    $grpName = $group->grp;
+                    $hasSisaPerGroup[$grpName] = false;
+                    foreach ($this->results as $row) {
+                        $rowArray = (array)$row;
+                        $sisaProp = "{$grpName}_sisa";
+                        $sisa = $rowArray[$sisaProp] ?? $row->$sisaProp ?? 0;
+                        if ($sisa > 0) {
+                            $hasSisaPerGroup[$grpName] = true;
+                            break;
+                        }
+                    }
                 }
-                // total dipisah: Total Qty, Total Point, Total Sisa
-                $dataRow[] = $rowTotalQty ?: 0;
-                $dataRow[] = $rowTotalPoint ?: 0;
-                $dataRow[] = $rowTotalSisa ?: 0;
-                $excelData[] = $dataRow;
+
+                $headers = ['Customer', 'Alamat', 'Kota'];
+                // Semua kolom Qty dulu
+                foreach ($ircGroups as $group) {
+                    $headers[] = $group->grp;
+                }
+                // Semua kolom Point
+                foreach ($ircGroups as $group) {
+                    $headers[] = 'Point ' . $group->grp;
+                }
+                // Semua kolom Sisa (jika ada)
+                foreach ($ircGroups as $group) {
+                    if ($hasSisaPerGroup[$group->grp] ?? false) {
+                        $headers[] = 'Sisa ' . $group->grp;
+                    }
+                }
+                $headers[] = 'TOTAL POINT';
+
+                // Data rows
+                $excelData = [];
+                foreach ($this->results as $row) {
+                    $customer = $row->customer ?? '';
+                    $customerParts = $splitCustomer($customer);
+
+                    $dataRow = [
+                        $customerParts['name'],
+                        $customerParts['address'],
+                        $customerParts['city'],
+                    ];
+
+                    $rowArray = (array)$row;
+
+                    // Semua kolom Qty dulu
+                    foreach ($ircGroups as $group) {
+                        $grpName = $group->grp;
+                        $qtyProp = "{$grpName}_qty";
+                        $dataRow[] = $rowArray[$qtyProp] ?? $row->$qtyProp ?? 0;
+                    }
+
+                    // Semua kolom Point
+                    foreach ($ircGroups as $group) {
+                        $grpName = $group->grp;
+                        $pointProp = "{$grpName}_point";
+                        $dataRow[] = $rowArray[$pointProp] ?? $row->$pointProp ?? 0;
+                    }
+
+                    // Semua kolom Sisa (jika ada)
+                    foreach ($ircGroups as $group) {
+                        if ($hasSisaPerGroup[$group->grp] ?? false) {
+                            $grpName = $group->grp;
+                            $sisaProp = "{$grpName}_sisa";
+                            $dataRow[] = $rowArray[$sisaProp] ?? $row->$sisaProp ?? 0;
+                        }
+                    }
+
+                    $dataRow[] = $row->total_point ?? 0;
+                    $excelData[] = $dataRow;
+                }
+            } else {
+                // Format Non-IRC: Crosstab
+                // Tentukan kolom dinamis dari hasil crosstab
+                $columns = [];
+                if (count($this->results)) {
+                    $columns = array_keys((array)$this->results[0]);
+                }
+                $groupColumns = array_values(array_filter($columns, fn($c) => $c !== 'customer'));
+
+                // Header: Customer, Alamat, Kota, untuk setiap grup 3 kolom (Qty, Point, Sisa), lalu Total Qty, Total Point, dan Total Sisa
+                $headers = ['Customer', 'Alamat', 'Kota'];
+                foreach ($groupColumns as $grpCol) {
+                    $headers[] = $grpCol . ' Qty';
+                    $headers[] = $grpCol . ' Point';
+                    $headers[] = $grpCol . ' Sisa';
+                }
+                $headers[] = 'Total Qty';
+                $headers[] = 'Total Point';
+                $headers[] = 'Total Sisa';
+
+                // Data rows
+                $excelData = [];
+                foreach ($this->results as $row) {
+                    $dataRow = [];
+                    $customer = $row->customer ?? '';
+                    $customerParts = $splitCustomer($customer);
+                    // Tambahkan 3 kolom customer: name, address, city
+                    $dataRow[] = $customerParts['name'];
+                    $dataRow[] = $customerParts['address'];
+                    $dataRow[] = $customerParts['city'];
+
+                    $rowTotalQty = 0;
+                    $rowTotalPoint = 0;
+                    $rowTotalSisa = 0;
+                    foreach ($groupColumns as $grpCol) {
+                        $val = $row->$grpCol ?? '';
+                        $parts = explode('|', $val);
+                        $qty = isset($parts[0]) ? (int)$parts[0] : 0;   // qty/ban
+                        $point = isset($parts[1]) ? (int)$parts[1] : 0; // point
+                        $sisa = isset($parts[2]) ? (int)$parts[2] : 0;  // sisa
+                        $rowTotalQty += $qty;
+                        $rowTotalPoint += $point;
+                        $rowTotalSisa += $sisa;
+                        // pisahkan ke 3 kolom: Qty, Point, Sisa
+                        $dataRow[] = $qty;
+                        $dataRow[] = $point;
+                        $dataRow[] = $sisa;
+                    }
+                    // total dipisah: Total Qty, Total Point, Total Sisa
+                    $dataRow[] = $rowTotalQty ?: 0;
+                    $dataRow[] = $rowTotalPoint ?: 0;
+                    $dataRow[] = $rowTotalSisa ?: 0;
+                    $excelData[] = $dataRow;
+                }
             }
 
             // Title & subtitle

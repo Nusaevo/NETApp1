@@ -523,9 +523,9 @@ class IndexDataTable extends BaseDataTableComponent
                         // Cek hasil billing
                         if (!empty($billingResult['billing_hdr'])) {
                             // Billing berhasil dibuat
-                            // Update status_code OrderHdr menjadi SHIP
-                            $order->status_code = Status::SHIP;
-                            $order->save();
+                            // Update status_code OrderHdr menjadi SHIP tanpa mengubah updated_at dan version_number
+                            OrderHdr::where('id', $order->id)
+                                ->update(['status_code' => Status::SHIP]);
 
                             // testing rollback
                             // throw new Exception('Testing rollback set delivery date');
@@ -738,9 +738,9 @@ class IndexDataTable extends BaseDataTableComponent
                     // Get OrderHdr ID from tr_code relationship since order_id field doesn't exist
                     $orderHdr = OrderHdr::where('tr_code', $delivHdr->tr_code)->where('tr_type', 'SO')->first();
                     if ($orderHdr) {
-                        // Update status OrderHdr kembali ke PRINT
-                        $orderHdr->status_code = Status::PRINT;
-                        $orderHdr->save();
+                        // Update status OrderHdr kembali ke PRINT tanpa mengubah updated_at dan version_number
+                        OrderHdr::where('id', $orderHdr->id)
+                            ->update(['status_code' => Status::PRINT]);
                         $successOrderIds[] = $orderHdr->id;
                     }
 
