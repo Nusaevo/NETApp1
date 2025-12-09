@@ -126,32 +126,109 @@ class Index extends BaseComponent
         $category = addslashes($this->selectedCategory);
         $brandFilter = $brand ? "AND m.brand = '{$brand}'" : '';
         $categoryFilter = $category ? "AND m.category = '{$category}'" : '';
-        $query = "
-            SELECT
-                dh.reff_date AS tgl_sj,
-                dh.tr_code AS no_nota,
-                dpi.matl_code AS kode_brg,
-                dp.matl_descr AS nama_barang,
-                p.name AS nama_pelanggan,
-                p.city AS kota_pelanggan,
-                dp.qty AS total_ban,
-                COALESCE(sr.reward, 0) AS point,
-                (dp.qty * COALESCE(sr.reward, 0)) AS total_point
-            FROM deliv_packings dp
-            JOIN deliv_hdrs dh ON dh.id = dp.trhdr_id AND dh.tr_type = 'PD'
-            JOIN partners p ON p.id = dh.partner_id
-            JOIN deliv_pickings dpi ON dpi.trpacking_id = dp.id
-            JOIN materials m ON m.id = dpi.matl_id
-            JOIN sales_rewards sr ON sr.code = '{$rewardCode}'
-                AND sr.matl_code = dpi.matl_code
-                AND sr.brand = m.brand
-            WHERE dp.tr_type = 'PD'
-                AND dh.reff_date BETWEEN '{$startDate}' AND '{$endDate}'
-                {$brandFilter}
-                {$categoryFilter}
-            ORDER BY dh.reff_date, p.name, dh.tr_code, dp.matl_descr
-        ";
+
+        // Cek apakah brand IRC
+        $isIrcBrand = stripos($rewardCode ?? '', 'IRC') !== false;
+
+        if ($isIrcBrand) {
+            // Query khusus untuk IRC - pisahkan Ban Luar dan Ban Dalam berdasarkan category di materials
+            // Category bisa berisi: BAN LUAR MOTOR, BAN LUAR MOBIL, BAN DALAM MOTOR, BAN DALAM MOBIL
+            // Setiap material ditampilkan sebagai row terpisah, kemudian di-group per dp.id untuk menggabungkan ban luar dan ban dalam
+            $query = "
+                SELECT
+                    dh.reff_date AS tgl_sj,
+                    dh.tr_code AS no_nota,
+                    dpi.matl_code AS kode_brg,
+                    dp.matl_descr AS nama_barang,
+                    p.name AS nama_pelanggan,
+                    p.city AS kota_pelanggan,
+                    CASE WHEN UPPER(m.category) LIKE '%BAN LUAR%' THEN dpi.qty::int ELSE 0 END AS ban_luar,
+                    CASE WHEN UPPER(m.category) LIKE '%BAN DALAM%' THEN dpi.qty::int ELSE 0 END AS ban_dalam,
+                    dpi.qty::int AS total_ban,
+                    CASE WHEN UPPER(m.category) LIKE '%BAN LUAR%' THEN (dpi.qty * COALESCE(sr.reward, 0))::int ELSE 0 END AS point_bl,
+                    CASE WHEN UPPER(m.category) LIKE '%BAN DALAM%' THEN (dpi.qty * COALESCE(sr.reward, 0))::int ELSE 0 END AS point_bd,
+                    (dpi.qty * COALESCE(sr.reward, 0))::int AS total_point,
+                    dp.id AS deliv_packing_id,
+                    m.category AS material_category
+                FROM deliv_packings dp
+                JOIN deliv_hdrs dh ON dh.id = dp.trhdr_id AND dh.tr_type = 'PD'
+                JOIN partners p ON p.id = dh.partner_id
+                JOIN deliv_pickings dpi ON dpi.trpacking_id = dp.id
+                JOIN materials m ON m.id = dpi.matl_id
+                JOIN sales_rewards sr ON sr.code = '{$rewardCode}'
+                    AND sr.matl_code = dpi.matl_code
+                    AND sr.brand = m.brand
+                WHERE dp.tr_type = 'PD'
+                    AND dh.reff_date BETWEEN '{$startDate}' AND '{$endDate}'
+                    {$brandFilter}
+                    {$categoryFilter}
+                ORDER BY dh.reff_date, p.name, dh.tr_code, dp.id, dpi.matl_code
+            ";
+        } else {
+            // Query untuk non-IRC (format lama)
+            $query = "
+                SELECT
+                    dh.reff_date AS tgl_sj,
+                    dh.tr_code AS no_nota,
+                    dpi.matl_code AS kode_brg,
+                    dp.matl_descr AS nama_barang,
+                    p.name AS nama_pelanggan,
+                    p.city AS kota_pelanggan,
+                    dp.qty AS total_ban,
+                    COALESCE(sr.reward, 0) AS point,
+                    (dp.qty * COALESCE(sr.reward, 0)) AS total_point
+                FROM deliv_packings dp
+                JOIN deliv_hdrs dh ON dh.id = dp.trhdr_id AND dh.tr_type = 'PD'
+                JOIN partners p ON p.id = dh.partner_id
+                JOIN deliv_pickings dpi ON dpi.trpacking_id = dp.id
+                JOIN materials m ON m.id = dpi.matl_id
+                JOIN sales_rewards sr ON sr.code = '{$rewardCode}'
+                    AND sr.matl_code = dpi.matl_code
+                    AND sr.brand = m.brand
+                WHERE dp.tr_type = 'PD'
+                    AND dh.reff_date BETWEEN '{$startDate}' AND '{$endDate}'
+                    {$brandFilter}
+                    {$categoryFilter}
+                ORDER BY dh.reff_date, p.name, dh.tr_code, dp.matl_descr
+            ";
+        }
         $rows = DB::connection(Session::get('app_code'))->select($query);
+
+        if ($isIrcBrand) {
+            // Untuk IRC, perlu menggabungkan baris yang memiliki deliv_packing_id yang sama
+            // Karena satu packing bisa memiliki beberapa material (ban luar dan ban dalam)
+            $groupedByPacking = [];
+            foreach ($rows as $row) {
+                // Gunakan deliv_packing_id sebagai key untuk grouping
+                $key = $row->deliv_packing_id ?? ($row->no_nota . '_' . $row->kode_brg);
+
+                if (!isset($groupedByPacking[$key])) {
+                    $groupedByPacking[$key] = (object)[
+                        'tgl_sj' => $row->tgl_sj,
+                        'no_nota' => $row->no_nota,
+                        'kode_brg' => $row->kode_brg,
+                        'nama_barang' => $row->nama_barang,
+                        'nama_pelanggan' => $row->nama_pelanggan,
+                        'kota_pelanggan' => $row->kota_pelanggan,
+                        'ban_luar' => (int)($row->ban_luar ?? 0),
+                        'ban_dalam' => (int)($row->ban_dalam ?? 0),
+                        'total_ban' => (int)($row->total_ban ?? 0),
+                        'point_bl' => (int)($row->point_bl ?? 0),
+                        'point_bd' => (int)($row->point_bd ?? 0),
+                        'total_point' => (int)($row->total_point ?? 0),
+                    ];
+                } else {
+                    // Tambahkan nilai jika sudah ada (untuk menggabungkan ban luar dan ban dalam dalam satu packing)
+                    $groupedByPacking[$key]->ban_luar += (int)($row->ban_luar ?? 0);
+                    $groupedByPacking[$key]->ban_dalam += (int)($row->ban_dalam ?? 0);
+                    $groupedByPacking[$key]->total_ban += (int)($row->total_ban ?? 0);
+                    $groupedByPacking[$key]->point_bl += (int)($row->point_bl ?? 0);
+                    $groupedByPacking[$key]->point_bd += (int)($row->point_bd ?? 0);
+                    $groupedByPacking[$key]->total_point += (int)($row->total_point ?? 0);
+                }
+            }
+            $rows = array_values($groupedByPacking);
+        }
 
         // Debug: Cek data step by step
         $deliveryCount = DB::connection(Session::get('app_code'))
@@ -247,19 +324,53 @@ class Index extends BaseComponent
                     'total_ban' => 0,
                     'total_point' => 0,
                 ];
+                if ($isIrcBrand) {
+                    $grouped[$customerKey]['ban_luar'] = 0;
+                    $grouped[$customerKey]['ban_dalam'] = 0;
+                    $grouped[$customerKey]['point_bl'] = 0;
+                    $grouped[$customerKey]['point_bd'] = 0;
+                } else {
+                    $grouped[$customerKey]['point'] = 0;
+                }
             }
-            $grouped[$customerKey]['details'][] = [
-                'tgl_sj' => $row->tgl_sj,
-                'no_nota' => $row->no_nota,
-                'kode_brg' => $row->kode_brg,
-                'nama_barang' => $row->nama_barang,
-                'total_ban' => $row->total_ban,
-                'point' => $row->point,
-                'total_point' => $row->total_point,
-            ];
-            $grouped[$customerKey]['total_ban'] += $row->total_ban;
-            $grouped[$customerKey]['total_point'] += $row->total_point;
+
+            if ($isIrcBrand) {
+                $grouped[$customerKey]['details'][] = [
+                    'tgl_sj' => $row->tgl_sj,
+                    'no_nota' => $row->no_nota,
+                    'kode_brg' => $row->kode_brg,
+                    'nama_barang' => $row->nama_barang,
+                    'ban_luar' => $row->ban_luar ?? 0,
+                    'ban_dalam' => $row->ban_dalam ?? 0,
+                    'total_ban' => $row->total_ban ?? 0,
+                    'point_bl' => $row->point_bl ?? 0,
+                    'point_bd' => $row->point_bd ?? 0,
+                    'total_point' => $row->total_point ?? 0,
+                ];
+                $grouped[$customerKey]['ban_luar'] += $row->ban_luar ?? 0;
+                $grouped[$customerKey]['ban_dalam'] += $row->ban_dalam ?? 0;
+                $grouped[$customerKey]['point_bl'] += $row->point_bl ?? 0;
+                $grouped[$customerKey]['point_bd'] += $row->point_bd ?? 0;
+            } else {
+                $grouped[$customerKey]['details'][] = [
+                    'tgl_sj' => $row->tgl_sj,
+                    'no_nota' => $row->no_nota,
+                    'kode_brg' => $row->kode_brg,
+                    'nama_barang' => $row->nama_barang,
+                    'total_ban' => $row->total_ban,
+                    'point' => $row->point ?? 0,
+                    'total_point' => $row->total_point,
+                ];
+            }
+            $grouped[$customerKey]['total_ban'] += $row->total_ban ?? 0;
+            $grouped[$customerKey]['total_point'] += $row->total_point ?? 0;
         }
+
+        // Simpan flag untuk digunakan di view
+        foreach ($grouped as &$group) {
+            $group['is_irc'] = $isIrcBrand;
+        }
+
         $this->results = array_values($grouped);
     }
 
