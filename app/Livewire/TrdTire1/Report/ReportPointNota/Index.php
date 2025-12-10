@@ -445,9 +445,33 @@ class Index extends BaseComponent
 
         $this->results = array_values($grouped);
 
-        // Calculate grand totals
         $this->grandTotalBan = array_sum(array_column($this->results, 'total_ban'));
-        $this->grandTotalPoint = array_sum(array_column($this->results, 'total_point'));
+
+        if ($isIrcBrand) {
+            // Untuk IRC, hitung grand total point menggunakan rumus yang sama dengan per customer
+            $grandTotalBanLuar = array_sum(array_column($this->results, 'ban_luar'));
+            $grandTotalBanDalam = array_sum(array_column($this->results, 'ban_dalam'));
+            $srQty = $this->sr_qty;
+            $srReward = $this->sr_reward;
+
+            $grandTotalPointBL = ($srQty > 0 && $grandTotalBanLuar > 0)
+                ? (int)(floor($grandTotalBanLuar / $srQty) * $srReward)
+                : 0;
+
+            $grandTotalPointBD = ($srQty > 0 && $grandTotalBanDalam > 0)
+                ? (int)(floor($grandTotalBanDalam / $srQty) * $srReward)
+                : 0;
+
+            $this->grandTotalPoint = $grandTotalPointBL + $grandTotalPointBD;
+        } else {
+            // Untuk non-IRC, hitung grand total point menggunakan rumus yang sama dengan per customer
+            $srQty = $this->sr_qty;
+            $srReward = $this->sr_reward;
+
+            $this->grandTotalPoint = ($srQty > 0 && $this->grandTotalBan > 0)
+                ? (int)(floor($this->grandTotalBan / $srQty) * $srReward)
+                : 0;
+        }
 
         // sr_qty dan sr_reward sudah disimpan sebelumnya saat menghitung sisa untuk IRC
     }
