@@ -422,10 +422,8 @@ class Index extends BaseComponent
                     ? (int)(floor($group['ban_dalam'] / $srQty) * $srReward)
                     : 0;
 
-                // Total Point = TRUNC(total_ban / qtySr) × reward
-                $group['total_point'] = ($srQty > 0 && ($group['total_ban'] ?? 0) > 0)
-                    ? (int)(floor($group['total_ban'] / $srQty) * $srReward)
-                    : 0;
+                // Total Point = point_bl + point_bd (untuk IRC, total point adalah jumlah dari point ban luar dan ban dalam)
+                $group['total_point'] = $group['point_bl'] + $group['point_bd'];
 
                 // Hitung sisa_bd menggunakan rumus yang sama
                 // Rumus: ban_dalam - (point_bd / reward × qtySr)
