@@ -52,12 +52,12 @@
                         <div class="logo-container">
                             <img src="{{ asset('customs/logos/TrdRetail1.png') }}" alt="Logo"
                                 style="
-                            width: 76mm;        /* lebar logo hampir full */
+                            width: 50mm;        /* lebar logo 30 mm */
                             height: auto;       /* ketinggian mengikuti rasio */
-                            max-height: 25mm;   /* batas tinggi */
+                            max-height: 50mm;   /* batas tinggi 15 mm */
                             object-fit: contain;
                             display: block;
-                            margin: 0 auto 1mm;
+                            margin: 0 auto 4px;
                             ">
                         </div>
 
@@ -65,12 +65,11 @@
                         <table>
                             <tr>
                                 <td>
-                                    <p class="store-info"
-                                        style="text-align: center;
-                                    font-size: 4mm !important;
-                                    line-height: 1.25;
-                                    font-weight: bold;
-                                    margin: 0;">
+                                    <p
+                                        style="    text-align: center;
+                                    font-size: 16px !important;
+                                    line-height: 1.2;
+                                    font-weight: bold;">
                                         <b>Knit And Cro</b><br>
                                         08888052888<br>
                                         Ruko Pluit Village No 59<br>
@@ -156,16 +155,7 @@
         }
     </script>
     <style>
-    @page {
-      size: 80mm auto;
-      margin: 0;
-    }
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+    @page { size: 80mm auto; margin: 2mm; }
 
 body {
   margin: 0;
@@ -176,17 +166,16 @@ body {
 }
 
 #print {
-  width: 100%;
-  max-width: 80mm;
+  width: 80mm;
   margin: 0 auto;
-  padding: 0;
+  padding-top: 0;
 }
 
 .invoice-box {
   width: 100%;
   box-sizing: border-box;
-  padding: 2mm 3mm;
-  font-size: 3.8mm;
+  padding: 1mm 2mm 0 1mm;
+  font-size: 3mm;
   line-height: 1.3;
 }
 
@@ -197,21 +186,18 @@ body {
 
 .invoice-box td,
 .invoice-box th {
-  padding: 0.5mm 2mm;
+  padding: 0.5mm 0.75mm;
   vertical-align: top;
-  font-size: 3.8mm;
 }
 
 .logo-container {
   text-align: center;
   margin-bottom: 1mm;
-  width: 100%;
 }
 
 .logo-container img {
-  width: 100%;
-  max-width: 76mm;
-  max-height: 25mm;
+  max-width: 60mm;
+  max-height: 20mm;
   object-fit: contain;
 }
 
@@ -220,81 +206,23 @@ body {
   padding-top: 1mm;
 }
 
-.store-info {
-  text-align: center;
-  font-size: 4mm;
-  line-height: 1.25;
-  font-weight: bold;
-  margin: 0;
-}
-
 @media print {
-  @page {
-    size: 80mm auto !important;
-    margin: 0 !important;
-  }
-
-  * {
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  body {
-    margin: -15mm 0 0 0 !important;
-    padding: 0 !important;
-    width: 100mm !important;
-    overflow: hidden !important;
-  }
-
-  #print {
-    width: 100mm !important;
-    margin: -15mm 0 0 -4mm !important;
-    padding: 0 !important;
-    position: relative !important;
-    left: 0 !important;
-    top: -15mm !important;
-  }
-
-  .invoice-box {
-    width: 100mm !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  .invoice-box table {
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  .invoice-box td,
-  .invoice-box th {
-    padding: 0.5mm 3mm !important;
-    font-size: 3.8mm !important;
-  }
-
-  .logo-container {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-  }
-
-  .logo-container img {
-    width: 100mm !important;
-    max-width: 100mm !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  .top-border {
-    padding-top: 0.5mm !important;
-  }
-
-  .store-info {
-    margin: 0 !important;
-    padding: 0 !important;
+  body, #print, .invoice-box {
+    width: 80mm !important;
+    margin: 0;
+    padding: 0;
+    top: -50mm !important;
+    left: -70mm !important;
   }
 }
+/* store header below the logo */
+ .store-info {
+    text-align: center;
+    padding-bottom: 4px;
+    font-size: 12px !important;  /* adjust as needed */
+    line-height: 1.2;
+    font-weight: bold;
+  }
 
     </style>
 </div>

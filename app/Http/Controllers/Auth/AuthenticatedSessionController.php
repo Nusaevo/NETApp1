@@ -86,7 +86,8 @@ class AuthenticatedSessionController extends Controller
         if ($otpAccess) {
             // Check if current device is already trusted
             if ($this->otpService->isDeviceTrusted()) {
-                // Device is trusted, skip OTP and proceed with authentication
+                // Device is trusted, refresh cookie expiration and proceed with authentication
+                $this->otpService->refreshDeviceTrust();
                 $request->authenticate();
                 return redirect('/')->with('message', 'Login berhasil. Device sudah terverifikasi.');
             }

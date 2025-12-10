@@ -19,6 +19,7 @@ class BaseModel extends Model
     protected $fillable = [];
 
 
+
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
