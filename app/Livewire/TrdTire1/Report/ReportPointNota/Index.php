@@ -25,6 +25,8 @@ class Index extends BaseComponent
 
     public $results = [];
     public $grandTotalBan = 0;
+    public $grandTotalBanLuar = 0;
+    public $grandTotalBanDalam = 0;
     public $grandTotalPoint = 0;
     public $grandTotalPointBL = 0;
     public $grandTotalPointBD = 0;
@@ -469,7 +471,7 @@ class Index extends BaseComponent
                     FROM order_dtls od
                     JOIN order_hdrs oh ON oh.id = od.trhdr_id AND oh.tr_type = 'SO' AND oh.status_code != 'X'
                     JOIN partners p ON p.id = oh.partner_id
-                    JOIN sales_rewards sr ON sr.code = :sr_code AND sr.matl_code = od.matl_code
+                    $salesRewardJoin sales_rewards sr ON sr.code = :sr_code AND sr.matl_code = od.matl_code
                     JOIN materials m ON m.id = od.matl_id AND m.brand = :brand
                     WHERE od.tr_type = 'SO'
                         AND od.qty = od.qty_reff
@@ -519,8 +521,8 @@ class Index extends BaseComponent
 
             if ($grandTotalResult) {
                 $this->grandTotalBan = (int)($grandTotalResult->grand_total_ban ?? 0);
-                $grandTotalBanLuar = (int)($grandTotalResult->grand_total_ban_luar ?? 0);
-                $grandTotalBanDalam = (int)($grandTotalResult->grand_total_ban_dalam ?? 0);
+                $this->grandTotalBanLuar = (int)($grandTotalResult->grand_total_ban_luar ?? 0);
+                $this->grandTotalBanDalam = (int)($grandTotalResult->grand_total_ban_dalam ?? 0);
                 $srQty = (float)($grandTotalResult->sr_qty ?? 0);
                 $srReward = (float)($grandTotalResult->sr_reward ?? 0);
 
@@ -534,7 +536,7 @@ class Index extends BaseComponent
                 $grandTotalBanBD = ($srReward > 0 && $this->grandTotalPointBD > 0)
                     ? (int)(($this->grandTotalPointBD / $srReward) * $srQty)
                     : 0;
-                $this->grandTotalSisaBD = $grandTotalBanDalam - $grandTotalBanBD;
+                $this->grandTotalSisaBD = $this->grandTotalBanDalam - $grandTotalBanBD;
             }
         } else {
             // Query untuk grand total non-IRC
@@ -546,7 +548,7 @@ class Index extends BaseComponent
                 FROM order_dtls od
                 JOIN order_hdrs oh ON oh.id = od.trhdr_id AND oh.tr_type = 'SO' AND oh.status_code != 'X'
                 JOIN partners p ON p.id = oh.partner_id
-                JOIN sales_rewards sr ON sr.code = :sr_code AND sr.matl_code = od.matl_code
+                $salesRewardJoin sales_rewards sr ON sr.code = :sr_code AND sr.matl_code = od.matl_code
                 JOIN materials m ON m.id = od.matl_id AND m.brand = :brand
                 WHERE od.tr_type = 'SO'
                     AND od.qty = od.qty_reff
@@ -583,6 +585,8 @@ class Index extends BaseComponent
         $this->point_flag = false;
         $this->results = [];
         $this->grandTotalBan = 0;
+        $this->grandTotalBanLuar = 0;
+        $this->grandTotalBanDalam = 0;
         $this->grandTotalPoint = 0;
         $this->grandTotalPointBL = 0;
         $this->grandTotalPointBD = 0;
@@ -601,6 +605,8 @@ class Index extends BaseComponent
     {
         $this->results = [];
         $this->grandTotalBan = 0;
+        $this->grandTotalBanLuar = 0;
+        $this->grandTotalBanDalam = 0;
         $this->grandTotalPoint = 0;
         $this->grandTotalPointBL = 0;
         $this->grandTotalPointBD = 0;

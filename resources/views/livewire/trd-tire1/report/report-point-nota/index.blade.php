@@ -336,10 +336,6 @@
                                             </td>
                                             @if($isIrcBrand)
                                             <td style="text-align: center; font-weight: bold;">
-                                                @php
-                                                    $grandTotalBanLuar = array_sum(array_column($results, 'ban_luar'));
-                                                    $grandTotalBanDalam = array_sum(array_column($results, 'ban_dalam'));
-                                                @endphp
                                                 @if($grandTotalBanLuar){{ number_format($grandTotalBanLuar, 0) }}@endif
                                             </td>
                                             <td style="text-align: center; font-weight: bold;">
