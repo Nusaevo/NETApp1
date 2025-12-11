@@ -78,9 +78,9 @@ class Detail extends BaseComponent
         'changeStatus' => 'changeStatus',
         'delete' => 'delete',
         // 'updateAmount' => 'updateAmount',
-        'salesTypeOnChanged' => 'salesTypeOnChanged', // tambahkan listener baru
-        'onTrCodeChanged' => 'onTrCodeChanged', // listener untuk perubahan tr_code
-        'resetToCreateMode' => 'resetToCreateMode', // listener untuk reset ke mode create
+        'salesTypeOnChanged' => 'salesTypeOnChanged',
+        'onTrCodeChanged' => 'onTrCodeChanged',
+        'resetToCreateMode' => 'resetToCreateMode',
         'DropdownSelected' => 'DropdownSelected'
     ];
 
@@ -177,6 +177,14 @@ class Detail extends BaseComponent
         // throw new Exception('Gagal menyimpan detail pesanan. Periksa data yang diberikan.');
         if (!$this->orderService) {
             $this->orderService = app(OrderService::class);
+        }
+
+        if (empty($this->inputs['partner_id']) || $this->inputs['partner_id'] === null || $this->inputs['partner_id'] === '') {
+            throw new Exception('Supplier harus dipilih');
+        }
+
+        if (empty($this->inputs['tax_code']) || $this->inputs['tax_code'] === null || $this->inputs['tax_code'] === '') {
+            throw new Exception('PPN harus dipilih');
         }
 
         // Validasi tr_code sesuai dengan yang di-generate

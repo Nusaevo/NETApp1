@@ -407,7 +407,6 @@ class Detail extends BaseComponent
         $this->canPrintSuratJalanButton = ($suratCount === 0);
         $this->canSaveButtonEnabled = ($notaCount === 0 && $suratCount === 0);
 
-        // Debug log
         // Log::info('Button States Debug:', [
         //     'notaCount' => $notaCount,
         //     'suratCount' => $suratCount,
@@ -461,6 +460,10 @@ class Detail extends BaseComponent
     {
         if (!$this->orderService) {
             $this->orderService = app(OrderService::class);
+        }
+
+        if (empty($this->inputs['partner_id']) || $this->inputs['partner_id'] === null || $this->inputs['partner_id'] === '') {
+            throw new Exception('Customer harus dipilih');
         }
 
         $this->validate();
@@ -530,7 +533,7 @@ class Detail extends BaseComponent
             }
         }
 
-        // Jika belum ada delivery, proses normal
+        // jika belum ada delivery, proses normal
         if ($this->actionValue === 'Edit' && $this->object->isOrderCompleted()) {
             $this->dispatch('warning', 'Nota ini tidak bisa di-edit karena status sudah Completed');
             return;
