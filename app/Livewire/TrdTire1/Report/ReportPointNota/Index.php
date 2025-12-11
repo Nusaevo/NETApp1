@@ -497,6 +497,26 @@ class Index extends BaseComponent
                         MAX(sr_qty) AS sr_qty,
                         MAX(sr_reward) AS sr_reward
                     FROM grouped_by_order_dtl
+                ),
+                grand_total_with_points AS (
+                    SELECT
+                        grand_total_ban_luar,
+                        grand_total_ban_dalam,
+                        grand_total_ban,
+                        sr_qty,
+                        sr_reward,
+                        -- Hitung ulang point dari aggregate (seperti di customer aggregate)
+                        CASE
+                            WHEN sr_qty > 0 AND grand_total_ban_luar > 0
+                            THEN FLOOR(grand_total_ban_luar::numeric / sr_qty::numeric)::int * sr_reward
+                            ELSE 0
+                        END AS grand_total_point_bl,
+                        CASE
+                            WHEN sr_qty > 0 AND grand_total_ban_dalam > 0
+                            THEN FLOOR(grand_total_ban_dalam::numeric / sr_qty::numeric)::int * sr_reward
+                            ELSE 0
+                        END AS grand_total_point_bd
+                    FROM grand_total
                 )
                 SELECT
                     grand_total_ban_luar,
@@ -504,17 +524,15 @@ class Index extends BaseComponent
                     grand_total_ban,
                     sr_qty,
                     sr_reward,
+                    grand_total_point_bl,
+                    grand_total_point_bd,
+                    -- Hitung sisa BD: sisa_bd = ban_dalam - ((point_bd / reward) × qty)
                     CASE
-                        WHEN sr_qty > 0 AND grand_total_ban_luar > 0
-                        THEN FLOOR(grand_total_ban_luar / sr_qty)::int * sr_reward
-                        ELSE 0
-                    END AS grand_total_point_bl,
-                    CASE
-                        WHEN sr_qty > 0 AND grand_total_ban_dalam > 0
-                        THEN FLOOR(grand_total_ban_dalam / sr_qty)::int * sr_reward
-                        ELSE 0
-                    END AS grand_total_point_bd
-                FROM grand_total
+                        WHEN sr_reward > 0 AND grand_total_point_bd > 0
+                        THEN grand_total_ban_dalam - ((grand_total_point_bd::numeric / sr_reward::numeric) * sr_qty::numeric)::int
+                        ELSE grand_total_ban_dalam
+                    END AS grand_total_sisa_bd
+                FROM grand_total_with_points
             ";
 
             $grandTotalResult = DB::connection(Session::get('app_code'))->selectOne($grandTotalQuery, $bindings);
@@ -530,13 +548,8 @@ class Index extends BaseComponent
                 $this->grandTotalPointBD = (int)($grandTotalResult->grand_total_point_bd ?? 0);
                 $this->grandTotalPoint = $this->grandTotalPointBL + $this->grandTotalPointBD;
 
-                // Hitung grand total sisa BD menggunakan rumus yang sama dengan ReportPointCust
-                // total ban BD = (point BD / reward) × qtySr
-                // sisa BD = ban_dalam - total ban BD
-                $grandTotalBanBD = ($srReward > 0 && $this->grandTotalPointBD > 0)
-                    ? (int)(($this->grandTotalPointBD / $srReward) * $srQty)
-                    : 0;
-                $this->grandTotalSisaBD = $this->grandTotalBanDalam - $grandTotalBanBD;
+                // Ambil grand total sisa BD langsung dari query (sudah dihitung di SQL)
+                $this->grandTotalSisaBD = (int)($grandTotalResult->grand_total_sisa_bd ?? 0);
             }
         } else {
             // Query untuk grand total non-IRC
