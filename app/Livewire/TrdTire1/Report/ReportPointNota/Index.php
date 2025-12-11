@@ -346,6 +346,17 @@ class Index extends BaseComponent
 
                 $row->sisa_bd = $row->ban_dalam - $totalBanBD;
 
+                // Simpan sr_qty dan sr_reward untuk BAN LUAR dan BAN DALAM sebelum dihapus
+                // (diperlukan untuk menghitung MAX di customer aggregate)
+                if (($row->ban_luar ?? 0) > 0) {
+                    $row->bl_sr_qty = $srQty;
+                    $row->bl_sr_reward = $srReward;
+                }
+                if (($row->ban_dalam ?? 0) > 0) {
+                    $row->bd_sr_qty = $srQty;
+                    $row->bd_sr_reward = $srReward;
+                }
+
                 // Hapus sr_qty dan sr_reward untuk menghemat memory
                 unset($row->sr_qty, $row->sr_reward);
             }
@@ -381,6 +392,11 @@ class Index extends BaseComponent
                     $grouped[$customerKey]['point_bl'] = 0;
                     $grouped[$customerKey]['point_bd'] = 0;
                     $grouped[$customerKey]['sisa_bd'] = 0;
+                    // Simpan semua sr_qty dan sr_reward untuk menghitung MAX
+                    $grouped[$customerKey]['bl_sr_qty_list'] = [];
+                    $grouped[$customerKey]['bl_sr_reward_list'] = [];
+                    $grouped[$customerKey]['bd_sr_qty_list'] = [];
+                    $grouped[$customerKey]['bd_sr_reward_list'] = [];
                 } else {
                     $grouped[$customerKey]['point'] = 0;
                 }
@@ -391,6 +407,15 @@ class Index extends BaseComponent
             if ($isIrcBrand) {
                 $grouped[$customerKey]['ban_luar'] += $row->ban_luar ?? 0;
                 $grouped[$customerKey]['ban_dalam'] += $row->ban_dalam ?? 0;
+                // Kumpulkan sr_qty dan sr_reward untuk BAN LUAR dan BAN DALAM
+                if (($row->ban_luar ?? 0) > 0 && isset($row->bl_sr_qty) && isset($row->bl_sr_reward)) {
+                    $grouped[$customerKey]['bl_sr_qty_list'][] = (float)$row->bl_sr_qty;
+                    $grouped[$customerKey]['bl_sr_reward_list'][] = (float)$row->bl_sr_reward;
+                }
+                if (($row->ban_dalam ?? 0) > 0 && isset($row->bd_sr_qty) && isset($row->bd_sr_reward)) {
+                    $grouped[$customerKey]['bd_sr_qty_list'][] = (float)$row->bd_sr_qty;
+                    $grouped[$customerKey]['bd_sr_reward_list'][] = (float)$row->bd_sr_reward;
+                }
                 // point_bl dan point_bd akan dihitung ulang dari aggregate setelah semua data di-aggregate
             } else {
                 // total_point akan dihitung ulang dari aggregate setelah semua data di-aggregate
@@ -423,26 +448,33 @@ class Index extends BaseComponent
 
             if ($isIrcBrand) {
                 // Untuk IRC, hitung ulang point dari aggregate (seperti di ReportPointCust)
-                $srQty = $this->sr_qty;
-                $srReward = $this->sr_reward;
+                // Ambil MAX(sr_qty) dan MAX(sr_reward) untuk BAN LUAR dan BAN DALAM secara terpisah
+                $blSrQty = !empty($group['bl_sr_qty_list']) ? max($group['bl_sr_qty_list']) : 0;
+                $blSrReward = !empty($group['bl_sr_reward_list']) ? max($group['bl_sr_reward_list']) : 0;
+                $bdSrQty = !empty($group['bd_sr_qty_list']) ? max($group['bd_sr_qty_list']) : 0;
+                $bdSrReward = !empty($group['bd_sr_reward_list']) ? max($group['bd_sr_reward_list']) : 0;
 
-                // Point BL = TRUNC(ban_luar / sr_qty) × sr_reward
-                $group['point_bl'] = ($srQty > 0 && ($group['ban_luar'] ?? 0) > 0)
-                    ? (int)(floor($group['ban_luar'] / $srQty) * $srReward)
+                // Point BL = TRUNC(ban_luar / MAX(sr_qty)) × MAX(sr_reward) untuk BAN LUAR
+                $group['point_bl'] = ($blSrQty > 0 && ($group['ban_luar'] ?? 0) > 0)
+                    ? (int)(floor($group['ban_luar'] / $blSrQty) * $blSrReward)
                     : 0;
 
-                // Point BD = TRUNC(ban_dalam / sr_qty) × sr_reward
-                $group['point_bd'] = ($srQty > 0 && ($group['ban_dalam'] ?? 0) > 0)
-                    ? (int)(floor($group['ban_dalam'] / $srQty) * $srReward)
+                // Point BD = TRUNC(ban_dalam / MAX(sr_qty)) × MAX(sr_reward) untuk BAN DALAM
+                $group['point_bd'] = ($bdSrQty > 0 && ($group['ban_dalam'] ?? 0) > 0)
+                    ? (int)(floor($group['ban_dalam'] / $bdSrQty) * $bdSrReward)
                     : 0;
 
                 // Total Point = point_bl + point_bd
                 $group['total_point'] = $group['point_bl'] + $group['point_bd'];
-                $totalBanBD = ($srReward > 0 && $group['point_bd'] > 0)
-                    ? (int)(($group['point_bd'] / $srReward) * $srQty)
+                $totalBanBD = ($bdSrReward > 0 && $group['point_bd'] > 0)
+                    ? (int)(($group['point_bd'] / $bdSrReward) * $bdSrQty)
                     : 0;
 
                 $group['sisa_bd'] = ($group['ban_dalam'] ?? 0) - $totalBanBD;
+
+                // Hapus list yang tidak diperlukan lagi
+                unset($group['bl_sr_qty_list'], $group['bl_sr_reward_list'],
+                      $group['bd_sr_qty_list'], $group['bd_sr_reward_list']);
             } else {
                 // Untuk non-IRC, hitung ulang total_point dari aggregate
                 $srQty = $this->sr_qty;
@@ -517,18 +549,14 @@ class Index extends BaseComponent
                     FROM grouped_by_order_dtl
                 ),
                 bl_rule AS (
-                    SELECT sr_qty, sr_reward
-                    FROM grouped_by_order_dtl
+                    SELECT MAX(sr_qty) AS sr_qty, MAX(sr_reward) AS sr_reward
+                    FROM base_data
                     WHERE ban_luar > 0
-                    ORDER BY order_dtl_id
-                    LIMIT 1
                 ),
                 bd_rule AS (
-                    SELECT sr_qty, sr_reward
-                    FROM grouped_by_order_dtl
+                    SELECT MAX(sr_qty) AS sr_qty, MAX(sr_reward) AS sr_reward
+                    FROM base_data
                     WHERE ban_dalam > 0
-                    ORDER BY order_dtl_id
-                    LIMIT 1
                 )
                 SELECT
                     g.total_ban_luar,
