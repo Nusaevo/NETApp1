@@ -458,100 +458,86 @@ class Index extends BaseComponent
 
         // Calculate grand totals menggunakan query terpisah (seperti di ReportPointCust)
         if ($isIrcBrand) {
-            // Query untuk grand total IRC
+
             $grandTotalQuery = "
                 WITH base_data AS (
                     SELECT
                         CASE WHEN UPPER(m.category) LIKE '%BAN LUAR%' THEN od.qty::int ELSE 0 END AS ban_luar,
                         CASE WHEN UPPER(m.category) LIKE '%BAN DALAM%' THEN od.qty::int ELSE 0 END AS ban_dalam,
-                        od.qty::int AS total_ban,
                         sr.qty AS sr_qty,
-                        sr.reward AS sr_reward,
-                        od.id AS order_dtl_id
+                        sr.reward AS sr_reward
                     FROM order_dtls od
                     JOIN order_hdrs oh ON oh.id = od.trhdr_id AND oh.tr_type = 'SO' AND oh.status_code != 'X'
-                    JOIN partners p ON p.id = oh.partner_id
-                    $salesRewardJoin sales_rewards sr ON sr.code = :sr_code AND sr.matl_code = od.matl_code
                     JOIN materials m ON m.id = od.matl_id AND m.brand = :brand
-                    WHERE od.tr_type = 'SO'
-                        AND od.qty = od.qty_reff
-                        $whereDate
-                        $whereSalesReward
+                    JOIN sales_rewards sr ON sr.code = :sr_code AND sr.matl_code = od.matl_code
+                    WHERE od.qty = od.qty_reff
+                    $whereDate
+                    $whereSalesReward
                 ),
-                grouped_by_order_dtl AS (
-                    SELECT
-                        order_dtl_id,
-                        SUM(ban_luar) AS ban_luar,
-                        SUM(ban_dalam) AS ban_dalam,
-                        SUM(total_ban) AS total_ban,
-                        MAX(sr_qty) AS sr_qty,
-                        MAX(sr_reward) AS sr_reward
+
+                bl_rule AS (
+                    SELECT DISTINCT sr_qty, sr_reward
                     FROM base_data
-                    GROUP BY order_dtl_id
+                    WHERE ban_luar > 0
                 ),
-                grand_total AS (
-                    SELECT
-                        SUM(ban_luar) AS grand_total_ban_luar,
-                        SUM(ban_dalam) AS grand_total_ban_dalam,
-                        SUM(total_ban) AS grand_total_ban,
-                        MAX(sr_qty) AS sr_qty,
-                        MAX(sr_reward) AS sr_reward
-                    FROM grouped_by_order_dtl
+
+                bd_rule AS (
+                    SELECT DISTINCT sr_qty, sr_reward
+                    FROM base_data
+                    WHERE ban_dalam > 0
                 ),
-                grand_total_with_points AS (
+
+                totals AS (
                     SELECT
-                        grand_total_ban_luar,
-                        grand_total_ban_dalam,
-                        grand_total_ban,
-                        sr_qty,
-                        sr_reward,
-                        -- Hitung ulang point dari aggregate (seperti di customer aggregate)
-                        CASE
-                            WHEN sr_qty > 0 AND grand_total_ban_luar > 0
-                            THEN FLOOR(grand_total_ban_luar::numeric / sr_qty::numeric)::int * sr_reward
-                            ELSE 0
-                        END AS grand_total_point_bl,
-                        CASE
-                            WHEN sr_qty > 0 AND grand_total_ban_dalam > 0
-                            THEN FLOOR(grand_total_ban_dalam::numeric / sr_qty::numeric)::int * sr_reward
-                            ELSE 0
-                        END AS grand_total_point_bd
-                    FROM grand_total
+                        SUM(ban_luar) AS total_ban_luar,
+                        SUM(ban_dalam) AS total_ban_dalam
+                    FROM base_data
                 )
+
                 SELECT
-                    grand_total_ban_luar,
-                    grand_total_ban_dalam,
-                    grand_total_ban,
-                    sr_qty,
-                    sr_reward,
-                    grand_total_point_bl,
-                    grand_total_point_bd,
-                    -- Hitung sisa BD: sisa_bd = ban_dalam - ((point_bd / reward) × qty)
-                    CASE
-                        WHEN sr_reward > 0 AND grand_total_point_bd > 0
-                        THEN grand_total_ban_dalam - ((grand_total_point_bd::numeric / sr_reward::numeric) * sr_qty::numeric)::int
-                        ELSE grand_total_ban_dalam
-                    END AS grand_total_sisa_bd
-                FROM grand_total_with_points
+                    t.total_ban_luar,
+                    t.total_ban_dalam,
+
+                    -- point BL
+                    CASE WHEN bl.sr_qty > 0 THEN FLOOR(t.total_ban_luar / bl.sr_qty) * bl.sr_reward ELSE 0 END AS point_bl,
+
+                    -- point BD
+                    CASE WHEN bd.sr_qty > 0 THEN FLOOR(t.total_ban_dalam / bd.sr_qty) * bd.sr_reward ELSE 0 END AS point_bd,
+
+                    -- total point
+                    (CASE WHEN bl.sr_qty > 0 THEN FLOOR(t.total_ban_luar / bl.sr_qty) * bl.sr_reward ELSE 0 END) +
+                    (CASE WHEN bd.sr_qty > 0 THEN FLOOR(t.total_ban_dalam / bd.sr_qty) * bd.sr_reward ELSE 0 END)
+                    AS total_point,
+
+                    -- sisa BD
+                    CASE WHEN bd.sr_qty > 0 THEN
+                        t.total_ban_dalam - (FLOOR(t.total_ban_dalam / bd.sr_qty) * bd.sr_qty)
+                    ELSE t.total_ban_dalam END AS sisa_bd
+
+                FROM totals t
+                LEFT JOIN bl_rule bl ON TRUE
+                LEFT JOIN bd_rule bd ON TRUE;
             ";
 
             $grandTotalResult = DB::connection(Session::get('app_code'))->selectOne($grandTotalQuery, $bindings);
 
             if ($grandTotalResult) {
-                $this->grandTotalBan = (int)($grandTotalResult->grand_total_ban ?? 0);
-                $this->grandTotalBanLuar = (int)($grandTotalResult->grand_total_ban_luar ?? 0);
-                $this->grandTotalBanDalam = (int)($grandTotalResult->grand_total_ban_dalam ?? 0);
-                $srQty = (float)($grandTotalResult->sr_qty ?? 0);
-                $srReward = (float)($grandTotalResult->sr_reward ?? 0);
 
-                $this->grandTotalPointBL = (int)($grandTotalResult->grand_total_point_bl ?? 0);
-                $this->grandTotalPointBD = (int)($grandTotalResult->grand_total_point_bd ?? 0);
-                $this->grandTotalPoint = $this->grandTotalPointBL + $this->grandTotalPointBD;
+                $this->grandTotalBanLuar = (int)$grandTotalResult->total_ban_luar;
+                $this->grandTotalBanDalam = (int)$grandTotalResult->total_ban_dalam;
 
-                // Ambil grand total sisa BD langsung dari query (sudah dihitung di SQL)
-                $this->grandTotalSisaBD = (int)($grandTotalResult->grand_total_sisa_bd ?? 0);
+                $this->grandTotalPointBL = (int)$grandTotalResult->point_bl;
+                $this->grandTotalPointBD = (int)$grandTotalResult->point_bd;
+
+                $this->grandTotalPoint = (int)$grandTotalResult->total_point;
+
+                $this->grandTotalSisaBD = (int)$grandTotalResult->sisa_bd;
+
+                $this->grandTotalBan =
+                       $this->grandTotalBanLuar
+                     + $this->grandTotalBanDalam;
             }
-        } else {
+            }  else {
             // Query untuk grand total non-IRC
             $grandTotalQuery = "
                 SELECT
