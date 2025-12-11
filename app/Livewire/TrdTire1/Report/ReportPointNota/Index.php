@@ -26,6 +26,9 @@ class Index extends BaseComponent
     public $results = [];
     public $grandTotalBan = 0;
     public $grandTotalPoint = 0;
+    public $grandTotalPointBL = 0;
+    public $grandTotalPointBD = 0;
+    public $grandTotalSisaBD = 0;
     public $sr_qty = 0;
     public $sr_reward = 0;
 
@@ -60,6 +63,9 @@ class Index extends BaseComponent
 
     public function onSrCodeChanged()
     {
+        // Reset hasil saat ganti program untuk menghindari memory leak
+        $this->resetResult();
+
         $salesReward = SalesReward::where('code', $this->category)->first();
         if ($salesReward) {
             $this->startCode = $salesReward->beg_date ? date('Y-m-d', strtotime($salesReward->beg_date)) : '';
@@ -79,6 +85,9 @@ class Index extends BaseComponent
 
     public function search()
     {
+        // Reset hasil sebelumnya untuk menghindari memory leak
+        $this->resetResult();
+
         // Increase memory limit untuk handle large dataset
         ini_set('memory_limit', '256M');
 
@@ -376,16 +385,13 @@ class Index extends BaseComponent
             }
             $grouped[$customerKey]['details'][] = $row;
             $grouped[$customerKey]['total_ban'] += $row->total_ban ?? 0;
-            // Jumlahkan point dari detail rows (bukan menghitung ulang dari aggregate)
-            // karena sr_qty dan sr_reward bisa berbeda per material
+            // Jumlahkan qty untuk dihitung ulang point dari aggregate (seperti di ReportPointCust)
             if ($isIrcBrand) {
                 $grouped[$customerKey]['ban_luar'] += $row->ban_luar ?? 0;
                 $grouped[$customerKey]['ban_dalam'] += $row->ban_dalam ?? 0;
-                $grouped[$customerKey]['point_bl'] += $row->point_bl ?? 0;
-                $grouped[$customerKey]['point_bd'] += $row->point_bd ?? 0;
-                $grouped[$customerKey]['total_point'] += $row->total_point ?? 0;
+                // point_bl dan point_bd akan dihitung ulang dari aggregate setelah semua data di-aggregate
             } else {
-                $grouped[$customerKey]['total_point'] += $row->total_point ?? 0;
+                // total_point akan dihitung ulang dari aggregate setelah semua data di-aggregate
             }
 
             // Unset row setelah diproses untuk menghemat memory
@@ -411,30 +417,96 @@ class Index extends BaseComponent
             return strcmp($a['customer'], $b['customer']);
         });
 
-        // Simpan flag dan hitung sisa_bd untuk IRC (point sudah dijumlahkan dari detail rows)
+        // Simpan flag dan hitung ulang point dan sisa untuk IRC (seperti di ReportPointCust)
         foreach ($grouped as &$group) {
             $group['is_irc'] = $isIrcBrand;
 
             if ($isIrcBrand) {
-                // Untuk IRC, hitung sisa_bd menggunakan point_bd yang sudah dijumlahkan
-                // Tapi karena sr_qty dan sr_reward bisa berbeda per material,
-                // kita perlu menghitung sisa_bd dari detail rows, bukan dari aggregate
-                $totalSisaBD = 0;
-                foreach ($group['details'] as $detail) {
-                    $totalSisaBD += $detail->sisa_bd ?? 0;
-                }
-                $group['sisa_bd'] = $totalSisaBD;
+                // Untuk IRC, hitung ulang point dari aggregate (seperti di ReportPointCust)
+                $srQty = $this->sr_qty;
+                $srReward = $this->sr_reward;
+
+                // Point BL = TRUNC(ban_luar / sr_qty) × sr_reward
+                $group['point_bl'] = ($srQty > 0 && ($group['ban_luar'] ?? 0) > 0)
+                    ? (int)(floor($group['ban_luar'] / $srQty) * $srReward)
+                    : 0;
+
+                // Point BD = TRUNC(ban_dalam / sr_qty) × sr_reward
+                $group['point_bd'] = ($srQty > 0 && ($group['ban_dalam'] ?? 0) > 0)
+                    ? (int)(floor($group['ban_dalam'] / $srQty) * $srReward)
+                    : 0;
+
+                // Total Point = point_bl + point_bd
+                $group['total_point'] = $group['point_bl'] + $group['point_bd'];
+
+                // Hitung sisa_bd menggunakan rumus yang sama dengan ReportPointCust:
+                // total ban BD = (point BD / reward) × qtySr
+                // sisa BD = ban_dalam - total ban BD
+                $totalBanBD = ($srReward > 0 && $group['point_bd'] > 0)
+                    ? (int)(($group['point_bd'] / $srReward) * $srQty)
+                    : 0;
+
+                $group['sisa_bd'] = ($group['ban_dalam'] ?? 0) - $totalBanBD;
+            } else {
+                // Untuk non-IRC, hitung ulang total_point dari aggregate
+                $srQty = $this->sr_qty;
+                $srReward = $this->sr_reward;
+
+                $group['total_point'] = ($srQty > 0 && ($group['total_ban'] ?? 0) > 0)
+                    ? (int)(floor($group['total_ban'] / $srQty) * $srReward)
+                    : 0;
             }
         }
 
         $this->results = array_values($grouped);
 
-        // Calculate grand totals - jumlahkan dari point per customer (bukan hitung ulang dari aggregate)
-        // karena sr_qty dan sr_reward bisa berbeda per material
+        // Calculate grand totals
         $this->grandTotalBan = array_sum(array_column($this->results, 'total_ban'));
-        $this->grandTotalPoint = array_sum(array_column($this->results, 'total_point'));
+
+        if ($isIrcBrand) {
+            // Untuk IRC, hitung grand total menggunakan rumus yang sama dengan per customer
+            // yaitu dihitung ulang dari grand total qty (seperti di ReportPointCust)
+            $grandTotalBanLuar = array_sum(array_column($this->results, 'ban_luar'));
+            $grandTotalBanDalam = array_sum(array_column($this->results, 'ban_dalam'));
+            $srQty = $this->sr_qty;
+            $srReward = $this->sr_reward;
+
+            // 1. Hitung grand total point BL = TRUNC(grandTotalBanLuar / sr_qty) × sr_reward
+            $this->grandTotalPointBL = ($srQty > 0 && $grandTotalBanLuar > 0)
+                ? (int)(floor($grandTotalBanLuar / $srQty) * $srReward)
+                : 0;
+
+            // 2. Hitung grand total point BD = TRUNC(grandTotalBanDalam / sr_qty) × sr_reward
+            $this->grandTotalPointBD = ($srQty > 0 && $grandTotalBanDalam > 0)
+                ? (int)(floor($grandTotalBanDalam / $srQty) * $srReward)
+                : 0;
+
+            // 3. Grand Total Point = point BL + point BD
+            $this->grandTotalPoint = $this->grandTotalPointBL + $this->grandTotalPointBD;
+
+            // 4. Hitung grand total ban BD = (grandTotalPointBD / sr_reward) × sr_qty
+            $grandTotalBanBD = ($srReward > 0 && $this->grandTotalPointBD > 0)
+                ? (int)(($this->grandTotalPointBD / $srReward) * $srQty)
+                : 0;
+
+            // 5. Hitung grand total sisa BD = grandTotalBanDalam - grandTotalBanBD
+            $this->grandTotalSisaBD = $grandTotalBanDalam - $grandTotalBanBD;
+        } else {
+            // Untuk non-IRC, hitung grand total point menggunakan rumus yang sama dengan per customer
+            $srQty = $this->sr_qty;
+            $srReward = $this->sr_reward;
+
+            $this->grandTotalPoint = ($srQty > 0 && $this->grandTotalBan > 0)
+                ? (int)(floor($this->grandTotalBan / $srQty) * $srReward)
+                : 0;
+        }
 
         // sr_qty dan sr_reward sudah disimpan sebelumnya saat menghitung sisa untuk IRC
+
+        // Force garbage collection untuk membersihkan memory
+        if (function_exists('gc_collect_cycles')) {
+            gc_collect_cycles();
+        }
     }
 
     public function resetFilters()
@@ -446,6 +518,9 @@ class Index extends BaseComponent
         $this->results = [];
         $this->grandTotalBan = 0;
         $this->grandTotalPoint = 0;
+        $this->grandTotalPointBL = 0;
+        $this->grandTotalPointBD = 0;
+        $this->grandTotalSisaBD = 0;
         $this->sr_qty = 0;
         $this->sr_reward = 0;
     }
@@ -461,6 +536,14 @@ class Index extends BaseComponent
         $this->results = [];
         $this->grandTotalBan = 0;
         $this->grandTotalPoint = 0;
+        $this->grandTotalPointBL = 0;
+        $this->grandTotalPointBD = 0;
+        $this->grandTotalSisaBD = 0;
+
+        // Force garbage collection untuk membersihkan memory
+        if (function_exists('gc_collect_cycles')) {
+            gc_collect_cycles();
+        }
     }
 
     public function downloadExcel()

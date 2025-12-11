@@ -349,10 +349,6 @@
                                                 {{ fmod($grandTotalBan, 1) == 0 ? number_format($grandTotalBan, 0) : number_format($grandTotalBan, 2) }}
                                             </td>
                                             <td style="text-align: center; font-weight: bold;">
-                                                @php
-                                                    $grandTotalPointBL = array_sum(array_column($results, 'point_bl'));
-                                                    $grandTotalPointBD = array_sum(array_column($results, 'point_bd'));
-                                                @endphp
                                                 @if($grandTotalPointBL){{ number_format($grandTotalPointBL, 0) }}@endif
                                             </td>
                                             <td style="text-align: center; font-weight: bold;">
@@ -362,19 +358,6 @@
                                                 {{ fmod($grandTotalPoint, 1) == 0 ? number_format($grandTotalPoint, 0) : number_format($grandTotalPoint, 2) }}
                                             </td>
                                             <td style="text-align: center; font-weight: bold;">
-                                                @php
-                                                    // Hitung grand total sisa BD menggunakan rumus yang sama, bukan sum
-                                                    $grandTotalBanDalam = array_sum(array_column($results, 'ban_dalam'));
-                                                    $grandTotalPointBD = array_sum(array_column($results, 'point_bd'));
-                                                    $srQty = $sr_qty ?? 0;
-                                                    $srReward = $sr_reward ?? 0;
-
-                                                    // Rumus: grandTotalBanDalam - (grandTotalPointBD / reward × qtySr)
-                                                    $totalBanBD = ($srReward > 0 && $grandTotalPointBD > 0)
-                                                        ? (int)($grandTotalPointBD / $srReward * $srQty)
-                                                        : 0;
-                                                    $grandTotalSisaBD = $grandTotalBanDalam - $totalBanBD;
-                                                @endphp
                                                 @if($grandTotalSisaBD){{ number_format($grandTotalSisaBD, 0) }}@endif
                                             </td>
                                             @else
