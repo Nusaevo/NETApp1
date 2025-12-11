@@ -24,6 +24,8 @@ class Index extends BaseComponent
     protected $masterService;
 
     public $results = [];
+    public $sr_qty = 0;
+    public $sr_reward = 0;
 
     protected $listeners = [
         'onSrCodeChanged' => 'onSrCodeChanged',
@@ -107,6 +109,9 @@ class Index extends BaseComponent
 
     public function search()
     {
+        // Increase memory limit untuk handle large dataset
+        ini_set('memory_limit', '256M');
+
         if (isNullOrEmptyNumber($this->selectedRewardCode)) {
             $this->dispatch('warning', __('generic.error.field_required', ['field' => "Kode Program"]));
             $this->addError('selectedRewardCode', "Mohon lengkapi");
@@ -145,9 +150,26 @@ class Index extends BaseComponent
                     CASE WHEN UPPER(m.category) LIKE '%BAN LUAR%' THEN dpi.qty::int ELSE 0 END AS ban_luar,
                     CASE WHEN UPPER(m.category) LIKE '%BAN DALAM%' THEN dpi.qty::int ELSE 0 END AS ban_dalam,
                     dpi.qty::int AS total_ban,
-                    CASE WHEN UPPER(m.category) LIKE '%BAN LUAR%' THEN (dpi.qty * COALESCE(sr.reward, 0))::int ELSE 0 END AS point_bl,
-                    CASE WHEN UPPER(m.category) LIKE '%BAN DALAM%' THEN (dpi.qty * COALESCE(sr.reward, 0))::int ELSE 0 END AS point_bd,
-                    (dpi.qty * COALESCE(sr.reward, 0))::int AS total_point,
+                    CASE WHEN UPPER(m.category) LIKE '%BAN LUAR%' THEN
+                        CASE
+                            WHEN COALESCE(sr.qty, 0) > 0 THEN TRUNC(dpi.qty / sr.qty) * COALESCE(sr.reward, 0)
+                            ELSE dpi.qty * COALESCE(sr.reward, 0)
+                        END
+                        ELSE 0
+                    END AS point_bl,
+                    CASE WHEN UPPER(m.category) LIKE '%BAN DALAM%' THEN
+                        CASE
+                            WHEN COALESCE(sr.qty, 0) > 0 THEN TRUNC(dpi.qty / sr.qty) * COALESCE(sr.reward, 0)
+                            ELSE dpi.qty * COALESCE(sr.reward, 0)
+                        END
+                        ELSE 0
+                    END AS point_bd,
+                    CASE
+                        WHEN COALESCE(sr.qty, 0) > 0 THEN TRUNC(dpi.qty / sr.qty) * COALESCE(sr.reward, 0)
+                        ELSE dpi.qty * COALESCE(sr.reward, 0)
+                    END AS total_point,
+                    sr.qty AS sr_qty,
+                    sr.reward AS sr_reward,
                     dp.id AS deliv_packing_id,
                     m.category AS material_category
                 FROM deliv_packings dp
@@ -163,6 +185,7 @@ class Index extends BaseComponent
                     {$brandFilter}
                     {$categoryFilter}
                 ORDER BY dh.reff_date, p.name, dh.tr_code, dp.id, dpi.matl_code
+                LIMIT 10000
             ";
         } else {
             // Query untuk non-IRC (format lama)
@@ -175,8 +198,16 @@ class Index extends BaseComponent
                     p.name AS nama_pelanggan,
                     p.city AS kota_pelanggan,
                     dp.qty AS total_ban,
-                    COALESCE(sr.reward, 0) AS point,
-                    (dp.qty * COALESCE(sr.reward, 0)) AS total_point
+                    CASE
+                        WHEN COALESCE(sr.qty, 0) > 0 THEN COALESCE(sr.reward, 0) / sr.qty
+                        ELSE COALESCE(sr.reward, 0)
+                    END AS point,
+                    CASE
+                        WHEN COALESCE(sr.qty, 0) > 0 THEN TRUNC(dp.qty / sr.qty) * COALESCE(sr.reward, 0)
+                        ELSE dp.qty * COALESCE(sr.reward, 0)
+                    END AS total_point,
+                    sr.qty AS sr_qty,
+                    sr.reward AS sr_reward
                 FROM deliv_packings dp
                 JOIN deliv_hdrs dh ON dh.id = dp.trhdr_id AND dh.tr_type = 'PD'
                 JOIN partners p ON p.id = dh.partner_id
@@ -190,9 +221,17 @@ class Index extends BaseComponent
                     {$brandFilter}
                     {$categoryFilter}
                 ORDER BY dh.reff_date, p.name, dh.tr_code, dp.matl_descr
+                LIMIT 10000
             ";
         }
         $rows = DB::connection(Session::get('app_code'))->select($query);
+
+        // Simpan sr_qty dan sr_reward untuk grand total (ambil dari row pertama)
+        if (!empty($rows)) {
+            $firstRow = $rows[0];
+            $this->sr_qty = (float)($firstRow->sr_qty ?? 0);
+            $this->sr_reward = (float)($firstRow->sr_reward ?? 0);
+        }
 
         if ($isIrcBrand) {
             // Untuk IRC, perlu menggabungkan baris yang memiliki deliv_packing_id yang sama
@@ -213,21 +252,49 @@ class Index extends BaseComponent
                         'ban_luar' => (int)($row->ban_luar ?? 0),
                         'ban_dalam' => (int)($row->ban_dalam ?? 0),
                         'total_ban' => (int)($row->total_ban ?? 0),
-                        'point_bl' => (int)($row->point_bl ?? 0),
-                        'point_bd' => (int)($row->point_bd ?? 0),
-                        'total_point' => (int)($row->total_point ?? 0),
+                        'point_bl' => (float)($row->point_bl ?? 0),
+                        'point_bd' => (float)($row->point_bd ?? 0),
+                        'total_point' => (float)($row->total_point ?? 0),
+                        'sr_qty' => (float)($row->sr_qty ?? 0),
+                        'sr_reward' => (float)($row->sr_reward ?? 0),
                     ];
                 } else {
                     // Tambahkan nilai jika sudah ada (untuk menggabungkan ban luar dan ban dalam dalam satu packing)
                     $groupedByPacking[$key]->ban_luar += (int)($row->ban_luar ?? 0);
                     $groupedByPacking[$key]->ban_dalam += (int)($row->ban_dalam ?? 0);
                     $groupedByPacking[$key]->total_ban += (int)($row->total_ban ?? 0);
-                    $groupedByPacking[$key]->point_bl += (int)($row->point_bl ?? 0);
-                    $groupedByPacking[$key]->point_bd += (int)($row->point_bd ?? 0);
-                    $groupedByPacking[$key]->total_point += (int)($row->total_point ?? 0);
+                    $groupedByPacking[$key]->point_bl += (float)($row->point_bl ?? 0);
+                    $groupedByPacking[$key]->point_bd += (float)($row->point_bd ?? 0);
+                    $groupedByPacking[$key]->total_point += (float)($row->total_point ?? 0);
                 }
+                // Hapus row dari memory setelah diproses
+                unset($row);
             }
-            $rows = array_values($groupedByPacking);
+
+            // Clear original rows array
+            unset($rows);
+
+            // Hitung sisa sekali setelah semua merge selesai (hanya sisa BD)
+            foreach ($groupedByPacking as $key => $row) {
+                $srQty = $row->sr_qty;
+                $srReward = $row->sr_reward;
+
+                $totalBanBD = ($srReward > 0 && $row->point_bd > 0)
+                    ? (int)($row->point_bd / $srReward * $srQty)
+                    : 0;
+
+                $row->sisa_bd = $row->ban_dalam - $totalBanBD;
+
+                // Hapus sr_qty dan sr_reward untuk menghemat memory
+                unset($row->sr_qty, $row->sr_reward);
+            }
+
+            // Convert to array tanpa membuat copy baru
+            $rows = [];
+            foreach ($groupedByPacking as $row) {
+                $rows[] = $row;
+            }
+            unset($groupedByPacking);
         }
 
         // Debug: Cek data step by step
@@ -315,7 +382,7 @@ class Index extends BaseComponent
 
         // Grouping per customer
         $grouped = [];
-        foreach ($rows as $row) {
+        foreach ($rows as $index => $row) {
             $customerKey = $row->nama_pelanggan . ' - ' . $row->kota_pelanggan;
             if (!isset($grouped[$customerKey])) {
                 $grouped[$customerKey] = [
@@ -329,6 +396,7 @@ class Index extends BaseComponent
                     $grouped[$customerKey]['ban_dalam'] = 0;
                     $grouped[$customerKey]['point_bl'] = 0;
                     $grouped[$customerKey]['point_bd'] = 0;
+                    $grouped[$customerKey]['sisa_bd'] = 0;
                 } else {
                     $grouped[$customerKey]['point'] = 0;
                 }
@@ -346,11 +414,11 @@ class Index extends BaseComponent
                     'point_bl' => $row->point_bl ?? 0,
                     'point_bd' => $row->point_bd ?? 0,
                     'total_point' => $row->total_point ?? 0,
+                    'sisa_bd' => $row->sisa_bd ?? 0,
                 ];
                 $grouped[$customerKey]['ban_luar'] += $row->ban_luar ?? 0;
                 $grouped[$customerKey]['ban_dalam'] += $row->ban_dalam ?? 0;
-                $grouped[$customerKey]['point_bl'] += $row->point_bl ?? 0;
-                $grouped[$customerKey]['point_bd'] += $row->point_bd ?? 0;
+                // point_bl, point_bd, dan sisa_bd akan dihitung ulang menggunakan rumus setelah semua data di-aggregate
             } else {
                 $grouped[$customerKey]['details'][] = [
                     'tgl_sj' => $row->tgl_sj,
@@ -363,12 +431,55 @@ class Index extends BaseComponent
                 ];
             }
             $grouped[$customerKey]['total_ban'] += $row->total_ban ?? 0;
-            $grouped[$customerKey]['total_point'] += $row->total_point ?? 0;
+            // total_point akan dihitung ulang menggunakan rumus setelah semua data di-aggregate
+
+            // Unset row setelah diproses untuk menghemat memory
+            unset($rows[$index]);
         }
 
-        // Simpan flag untuk digunakan di view
+        // Clear rows array
+        unset($rows);
+
+        // Simpan flag dan hitung ulang point dan sisa menggunakan rumus yang sama untuk setiap group
         foreach ($grouped as &$group) {
             $group['is_irc'] = $isIrcBrand;
+
+            if ($isIrcBrand) {
+                $srQty = $this->sr_qty;
+                $srReward = $this->sr_reward;
+
+                // Hitung ulang point menggunakan rumus yang sama dengan total qty yang sudah di-aggregate
+                // Point BL = floor(ban_luar / qtySr) × reward
+                $group['point_bl'] = ($srQty > 0 && ($group['ban_luar'] ?? 0) > 0)
+                    ? (int)(floor($group['ban_luar'] / $srQty) * $srReward)
+                    : 0;
+
+                // Point BD = floor(ban_dalam / qtySr) × reward
+                $group['point_bd'] = ($srQty > 0 && ($group['ban_dalam'] ?? 0) > 0)
+                    ? (int)(floor($group['ban_dalam'] / $srQty) * $srReward)
+                    : 0;
+
+                // Total Point = floor(total_ban / qtySr) × reward
+                $group['total_point'] = ($srQty > 0 && ($group['total_ban'] ?? 0) > 0)
+                    ? (int)(floor($group['total_ban'] / $srQty) * $srReward)
+                    : 0;
+
+                // Hitung sisa_bd menggunakan rumus yang sama
+                // Rumus: ban_dalam - (point_bd / reward × qtySr)
+                $totalBanBD = ($srReward > 0 && $group['point_bd'] > 0)
+                    ? (int)(($group['point_bd'] / $srReward) * $srQty)
+                    : 0;
+
+                $group['sisa_bd'] = ($group['ban_dalam'] ?? 0) - $totalBanBD;
+            } else {
+                // Untuk non-IRC, hitung ulang total_point juga
+                $srQty = $this->sr_qty;
+                $srReward = $this->sr_reward;
+
+                $group['total_point'] = ($srQty > 0 && ($group['total_ban'] ?? 0) > 0)
+                    ? (int)(floor($group['total_ban'] / $srQty) * $srReward)
+                    : 0;
+            }
         }
 
         $this->results = array_values($grouped);
@@ -476,6 +587,8 @@ class Index extends BaseComponent
         $this->selectedBrand = '';
         $this->selectedCategory = '';
         $this->results = [];
+        $this->sr_qty = 0;
+        $this->sr_reward = 0;
     }
 
     public function render()

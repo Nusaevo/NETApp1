@@ -295,6 +295,17 @@ class OtpService extends BaseService
     }
 
     /**
+     * Refresh device trust cookie (extend expiration on each login)
+     */
+    public function refreshDeviceTrust()
+    {
+        // Only refresh if device is already trusted
+        if ($this->isDeviceTrusted()) {
+            $this->setDeviceAsTrusted(); // Reset cookie with new expiration date
+        }
+    }
+
+    /**
      * Verify OTP
      */
     public function verifyOtp(ConfigUser $user, $inputOtp)

@@ -524,7 +524,8 @@ class IndexDataTable extends BaseDataTableComponent
                         if (!empty($billingResult['billing_hdr'])) {
                             // Billing berhasil dibuat
                             // Update status_code OrderHdr menjadi SHIP tanpa mengubah updated_at dan version_number
-                            OrderHdr::where('id', $order->id)
+                            DB::connection($connectionName)->table('order_hdrs')
+                                ->where('id', $order->id)
                                 ->update(['status_code' => Status::SHIP]);
 
                             // testing rollback
@@ -739,7 +740,8 @@ class IndexDataTable extends BaseDataTableComponent
                     $orderHdr = OrderHdr::where('tr_code', $delivHdr->tr_code)->where('tr_type', 'SO')->first();
                     if ($orderHdr) {
                         // Update status OrderHdr kembali ke PRINT tanpa mengubah updated_at dan version_number
-                        OrderHdr::where('id', $orderHdr->id)
+                        DB::connection($connectionName)->table('order_hdrs')
+                            ->where('id', $orderHdr->id)
                             ->update(['status_code' => Status::PRINT]);
                         $successOrderIds[] = $orderHdr->id;
                     }
@@ -879,8 +881,9 @@ class IndexDataTable extends BaseDataTableComponent
                     }
 
                     // Update status to CANCEL
-                    $orderHdr->status_code = Status::CANCEL;
-                    $orderHdr->save();
+                    DB::connection($connectionName)->table('order_hdrs')
+                        ->where('id', $orderHdr->id)
+                        ->update(['status_code' => Status::CANCEL]);
 
                     // testing rollback
                     // throw new Exception('Testing rollback cancel order');
@@ -963,8 +966,9 @@ class IndexDataTable extends BaseDataTableComponent
                     }
 
                     // Update status to PRINT
-                    $orderHdr->status_code = Status::PRINT;
-                    $orderHdr->save();
+                    DB::connection($connectionName)->table('order_hdrs')
+                        ->where('id', $orderHdr->id)
+                        ->update(['status_code' => Status::PRINT]);
 
                     // testing rollback
                     // throw new Exception('Testing rollback uncancel order');

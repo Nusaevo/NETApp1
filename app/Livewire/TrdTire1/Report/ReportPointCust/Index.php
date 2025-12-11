@@ -126,7 +126,14 @@ class Index extends BaseComponent
                 $aliasQty = '"' . $grpName . '_qty"';
                 $aliasPoint = '"' . $grpName . '_point"';
                 $selectParts[] = "COALESCE(SUM(CASE WHEN r.grp = '{$grpName}' THEN d.qty ELSE 0 END), 0)::int AS {$aliasQty}";
-                $selectParts[] = "COALESCE(SUM(CASE WHEN r.grp = '{$grpName}' THEN (TRUNC(d.qty / r.qty) * r.reward) ELSE 0 END), 0)::int AS {$aliasPoint}";
+                $selectParts[] = "COALESCE(
+                    CASE
+                        WHEN COALESCE(MAX(CASE WHEN r.grp = '{$grpName}' THEN r.qty ELSE NULL END), 0) > 0
+                        THEN TRUNC(SUM(CASE WHEN r.grp = '{$grpName}' THEN d.qty ELSE 0 END)::numeric / MAX(CASE WHEN r.grp = '{$grpName}' THEN r.qty ELSE NULL END)) * COALESCE(MAX(CASE WHEN r.grp = '{$grpName}' THEN r.reward ELSE NULL END), 0)
+                        ELSE SUM(CASE WHEN r.grp = '{$grpName}' THEN d.qty ELSE 0 END) * COALESCE(MAX(CASE WHEN r.grp = '{$grpName}' THEN r.reward ELSE NULL END), 0)
+                    END,
+                    0
+                )::int AS {$aliasPoint}";
             }
 
             $selectClause = implode(', ', $selectParts);
@@ -169,13 +176,15 @@ class Index extends BaseComponent
                     $qty = $rowArray[$qtyProp] ?? 0;
                     $point = $rowArray[$pointProp] ?? 0;
 
-                    // Hitung ban_point dan sisa
+                    // Hitung total ban dan sisa sesuai rumus yang benar:
+                    // total ban = point : reward x qtySr
+                    // sisa = qtyNota - total ban
                     $srQty = (float)$group->qty;
                     $srReward = (float)$group->reward;
-                    $banPoint = $srQty > 0 && $srReward > 0
+                    $totalBan = ($srReward > 0 && $point > 0)
                         ? (int)($point / $srReward * $srQty)
                         : 0;
-                    $sisa = $qty - $banPoint;
+                    $sisa = $qty - $totalBan;
 
                     // Set property langsung ke object
                     $row->$sisaProp = $sisa;
@@ -251,7 +260,11 @@ class Index extends BaseComponent
                         ELSE ''
                     END AS customer,
                     r.grp,
-                    SUM(d.qty)::int || '|' || (TRUNC(SUM(d.qty) / MAX(r.qty)) * MAX(r.reward))::int AS point
+                    SUM(d.qty)::int || '|' ||
+                    CASE
+                        WHEN COALESCE(MAX(r.qty), 0) > 0 THEN (TRUNC(SUM(d.qty) / MAX(r.qty)) * COALESCE(MAX(r.reward), 0))::int
+                        ELSE (SUM(d.qty) * COALESCE(MAX(r.reward), 0))::int
+                    END AS point
                 FROM order_hdrs h
                 JOIN order_dtls d
                   ON d.tr_code = h.tr_code
@@ -312,11 +325,13 @@ class Index extends BaseComponent
                         $srQty = isset($srMapping[$colName]['qty']) ? $srMapping[$colName]['qty'] : 1;
                         $srReward = isset($srMapping[$colName]['reward']) ? $srMapping[$colName]['reward'] : 1;
 
-                        // Hitung ban_point dan sisa
-                        $ban_point = $srQty > 0 && $srReward > 0
+                        // Hitung total ban dan sisa sesuai rumus yang benar:
+                        // total ban = point : reward x qtySr
+                        // sisa = qtyNota - total ban
+                        $totalBan = ($srReward > 0 && $point > 0)
                             ? (int)($point / $srReward * $srQty)
                             : 0;
-                        $sisa = $total_ban - $ban_point;
+                        $sisa = $total_ban - $totalBan;
 
                         // Update format: qty|point|sisa
                         $row->$colName = $total_ban . '|' . $point . '|' . $sisa;

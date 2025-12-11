@@ -99,7 +99,7 @@
                                     <thead>
                                         {{-- baris grup header --}}
                                         @if($isIrcBrand)
-                                        {{-- Format IRC: Ban Luar, Ban Dalam, Total Ban, Point BL, Point BD, Total Point --}}
+                                        {{-- Format IRC: Ban Luar, Ban Dalam, Total Ban, Point BL, Point BD, Total Point, Sisa BD --}}
                                         <tr>
                                             <th colspan="4"
                                                 style="text-align:left; padding:4px 8px; border-bottom:1px solid #000; border-right:1px dashed #000; border-left:1px solid #000; border-top: 1px solid #000;">
@@ -109,6 +109,9 @@
                                                 style="text-align:center; padding:4px 8px; border-right:1px dashed #000; border-top: 1px solid #000;">
                                             </th>
                                             <th colspan="2"
+                                                style="text-align:center; padding:4px 8px; border-right:1px dashed #000; border-top: 1px solid #000;">
+                                            </th>
+                                            <th colspan="1"
                                                 style="text-align:center; padding:4px 8px; border-right:1px dashed #000; border-top: 1px solid #000;">
                                             </th>
                                             <th colspan="1"
@@ -154,8 +157,12 @@
                                                 Point BD
                                             </th>
                                             <th
-                                                style="text-align:center; padding:4px 8px; border-bottom:1px solid #000; border-right:1px solid #000; width: 13%;">
+                                                style="text-align:center; padding:4px 8px; border-bottom:1px solid #000; border-right:1px dashed #000; width: 10%;">
                                                 Total Point
+                                            </th>
+                                            <th
+                                                style="text-align:center; padding:4px 8px; border-bottom:1px solid #000; border-right:1px solid #000; width: 10%;">
+                                                Sisa
                                             </th>
                                         </tr>
                                         @else
@@ -247,8 +254,12 @@
                                                         @if($row->point_bd ?? 0){{ number_format($row->point_bd, 0) }}@endif
                                                     </td>
                                                     <td
-                                                        style="padding:4px 8px; border-right:1px solid #000; text-align:center;">
+                                                        style="padding:4px 8px; text-align:center; border-right:1px dashed #000;">
                                                         @if($row->total_point ?? 0){{ number_format($row->total_point, 0) }}@endif
+                                                    </td>
+                                                    <td
+                                                        style="padding:4px 8px; border-right:1px solid #000; text-align:center;">
+                                                        @if($row->sisa_bd ?? 0){{ number_format($row->sisa_bd, 0) }}@endif
                                                     </td>
                                                     @else
                                                     {{-- Format Non-IRC --}}
@@ -296,8 +307,12 @@
                                                     @if($group['point_bd'] ?? 0){{ number_format($group['point_bd'], 0) }}@endif
                                                 </td>
                                                 <td
-                                                    style="padding:6px 8px;  font-weight:bold; text-align:center; border-right:1px solid #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">
+                                                    style="padding:6px 8px;  font-weight:bold; text-align:center; border-right:1px dashed #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">
                                                     @if($group['total_point'] ?? 0){{ number_format($group['total_point'], 0) }}@endif
+                                                </td>
+                                                <td
+                                                    style="padding:6px 8px;  font-weight:bold; text-align:center; border-right:1px solid #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">
+                                                    @if($group['sisa_bd'] ?? 0){{ number_format($group['sisa_bd'], 0) }}@endif
                                                 </td>
                                                 @else
                                                 {{-- Format Non-IRC Total --}}
@@ -334,10 +349,6 @@
                                                 {{ fmod($grandTotalBan, 1) == 0 ? number_format($grandTotalBan, 0) : number_format($grandTotalBan, 2) }}
                                             </td>
                                             <td style="text-align: center; font-weight: bold;">
-                                                @php
-                                                    $grandTotalPointBL = array_sum(array_column($results, 'point_bl'));
-                                                    $grandTotalPointBD = array_sum(array_column($results, 'point_bd'));
-                                                @endphp
                                                 @if($grandTotalPointBL){{ number_format($grandTotalPointBL, 0) }}@endif
                                             </td>
                                             <td style="text-align: center; font-weight: bold;">
@@ -345,6 +356,9 @@
                                             </td>
                                             <td style="text-align: center; font-weight: bold;">
                                                 {{ fmod($grandTotalPoint, 1) == 0 ? number_format($grandTotalPoint, 0) : number_format($grandTotalPoint, 2) }}
+                                            </td>
+                                            <td style="text-align: center; font-weight: bold;">
+                                                @if($grandTotalSisaBD){{ number_format($grandTotalSisaBD, 0) }}@endif
                                             </td>
                                             @else
                                             <td style="text-align: center; font-weight: bold;">
