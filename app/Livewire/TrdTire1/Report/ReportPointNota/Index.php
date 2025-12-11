@@ -408,16 +408,14 @@ class Index extends BaseComponent
 
             // Jika salah satu adalah CUSTOMER LAIN-LAIN, letakkan di akhir
             if ($aIsLainLain && !$bIsLainLain) {
-                return 1; // $a di akhir
+                return 1;
             }
             if (!$aIsLainLain && $bIsLainLain) {
-                return -1; // $b di akhir
+                return -1;
             }
-            // Jika keduanya sama (keduanya LAIN-LAIN atau keduanya normal), urutkan berdasarkan nama
             return strcmp($a['customer'], $b['customer']);
         });
 
-        // Simpan flag dan hitung ulang point dan sisa untuk IRC (seperti di ReportPointCust)
         foreach ($grouped as &$group) {
             $group['is_irc'] = $isIrcBrand;
 
@@ -438,10 +436,6 @@ class Index extends BaseComponent
 
                 // Total Point = point_bl + point_bd
                 $group['total_point'] = $group['point_bl'] + $group['point_bd'];
-
-                // Hitung sisa_bd menggunakan rumus yang sama dengan ReportPointCust:
-                // total ban BD = (point BD / reward) × qtySr
-                // sisa BD = ban_dalam - total ban BD
                 $totalBanBD = ($srReward > 0 && $group['point_bd'] > 0)
                     ? (int)(($group['point_bd'] / $srReward) * $srQty)
                     : 0;
@@ -460,45 +454,117 @@ class Index extends BaseComponent
 
         $this->results = array_values($grouped);
 
-        // Calculate grand totals
-        $this->grandTotalBan = array_sum(array_column($this->results, 'total_ban'));
-
+        // Calculate grand totals menggunakan query terpisah (seperti di ReportPointCust)
         if ($isIrcBrand) {
-            // Untuk IRC, hitung grand total menggunakan rumus yang sama dengan per customer
-            // yaitu dihitung ulang dari grand total qty (seperti di ReportPointCust)
-            $grandTotalBanLuar = array_sum(array_column($this->results, 'ban_luar'));
-            $grandTotalBanDalam = array_sum(array_column($this->results, 'ban_dalam'));
-            $srQty = $this->sr_qty;
-            $srReward = $this->sr_reward;
+            // Query untuk grand total IRC
+            $grandTotalQuery = "
+                WITH base_data AS (
+                    SELECT
+                        CASE WHEN UPPER(m.category) LIKE '%BAN LUAR%' THEN od.qty::int ELSE 0 END AS ban_luar,
+                        CASE WHEN UPPER(m.category) LIKE '%BAN DALAM%' THEN od.qty::int ELSE 0 END AS ban_dalam,
+                        od.qty::int AS total_ban,
+                        sr.qty AS sr_qty,
+                        sr.reward AS sr_reward,
+                        od.id AS order_dtl_id
+                    FROM order_dtls od
+                    JOIN order_hdrs oh ON oh.id = od.trhdr_id AND oh.tr_type = 'SO' AND oh.status_code != 'X'
+                    JOIN partners p ON p.id = oh.partner_id
+                    JOIN sales_rewards sr ON sr.code = :sr_code AND sr.matl_code = od.matl_code
+                    JOIN materials m ON m.id = od.matl_id AND m.brand = :brand
+                    WHERE od.tr_type = 'SO'
+                        AND od.qty = od.qty_reff
+                        $whereDate
+                        $whereSalesReward
+                ),
+                grouped_by_order_dtl AS (
+                    SELECT
+                        order_dtl_id,
+                        SUM(ban_luar) AS ban_luar,
+                        SUM(ban_dalam) AS ban_dalam,
+                        SUM(total_ban) AS total_ban,
+                        MAX(sr_qty) AS sr_qty,
+                        MAX(sr_reward) AS sr_reward
+                    FROM base_data
+                    GROUP BY order_dtl_id
+                ),
+                grand_total AS (
+                    SELECT
+                        SUM(ban_luar) AS grand_total_ban_luar,
+                        SUM(ban_dalam) AS grand_total_ban_dalam,
+                        SUM(total_ban) AS grand_total_ban,
+                        MAX(sr_qty) AS sr_qty,
+                        MAX(sr_reward) AS sr_reward
+                    FROM grouped_by_order_dtl
+                )
+                SELECT
+                    grand_total_ban_luar,
+                    grand_total_ban_dalam,
+                    grand_total_ban,
+                    sr_qty,
+                    sr_reward,
+                    CASE
+                        WHEN sr_qty > 0 AND grand_total_ban_luar > 0
+                        THEN FLOOR(grand_total_ban_luar / sr_qty)::int * sr_reward
+                        ELSE 0
+                    END AS grand_total_point_bl,
+                    CASE
+                        WHEN sr_qty > 0 AND grand_total_ban_dalam > 0
+                        THEN FLOOR(grand_total_ban_dalam / sr_qty)::int * sr_reward
+                        ELSE 0
+                    END AS grand_total_point_bd
+                FROM grand_total
+            ";
 
-            // 1. Hitung grand total point BL = TRUNC(grandTotalBanLuar / sr_qty) × sr_reward
-            $this->grandTotalPointBL = ($srQty > 0 && $grandTotalBanLuar > 0)
-                ? (int)(floor($grandTotalBanLuar / $srQty) * $srReward)
-                : 0;
+            $grandTotalResult = DB::connection(Session::get('app_code'))->selectOne($grandTotalQuery, $bindings);
 
-            // 2. Hitung grand total point BD = TRUNC(grandTotalBanDalam / sr_qty) × sr_reward
-            $this->grandTotalPointBD = ($srQty > 0 && $grandTotalBanDalam > 0)
-                ? (int)(floor($grandTotalBanDalam / $srQty) * $srReward)
-                : 0;
+            if ($grandTotalResult) {
+                $this->grandTotalBan = (int)($grandTotalResult->grand_total_ban ?? 0);
+                $grandTotalBanLuar = (int)($grandTotalResult->grand_total_ban_luar ?? 0);
+                $grandTotalBanDalam = (int)($grandTotalResult->grand_total_ban_dalam ?? 0);
+                $srQty = (float)($grandTotalResult->sr_qty ?? 0);
+                $srReward = (float)($grandTotalResult->sr_reward ?? 0);
 
-            // 3. Grand Total Point = point BL + point BD
-            $this->grandTotalPoint = $this->grandTotalPointBL + $this->grandTotalPointBD;
+                $this->grandTotalPointBL = (int)($grandTotalResult->grand_total_point_bl ?? 0);
+                $this->grandTotalPointBD = (int)($grandTotalResult->grand_total_point_bd ?? 0);
+                $this->grandTotalPoint = $this->grandTotalPointBL + $this->grandTotalPointBD;
 
-            // 4. Hitung grand total ban BD = (grandTotalPointBD / sr_reward) × sr_qty
-            $grandTotalBanBD = ($srReward > 0 && $this->grandTotalPointBD > 0)
-                ? (int)(($this->grandTotalPointBD / $srReward) * $srQty)
-                : 0;
-
-            // 5. Hitung grand total sisa BD = grandTotalBanDalam - grandTotalBanBD
-            $this->grandTotalSisaBD = $grandTotalBanDalam - $grandTotalBanBD;
+                // Hitung grand total sisa BD menggunakan rumus yang sama dengan ReportPointCust
+                // total ban BD = (point BD / reward) × qtySr
+                // sisa BD = ban_dalam - total ban BD
+                $grandTotalBanBD = ($srReward > 0 && $this->grandTotalPointBD > 0)
+                    ? (int)(($this->grandTotalPointBD / $srReward) * $srQty)
+                    : 0;
+                $this->grandTotalSisaBD = $grandTotalBanDalam - $grandTotalBanBD;
+            }
         } else {
-            // Untuk non-IRC, hitung grand total point menggunakan rumus yang sama dengan per customer
-            $srQty = $this->sr_qty;
-            $srReward = $this->sr_reward;
+            // Query untuk grand total non-IRC
+            $grandTotalQuery = "
+                SELECT
+                    SUM(od.qty) AS grand_total_ban,
+                    MAX(sr.qty) AS sr_qty,
+                    MAX(sr.reward) AS sr_reward
+                FROM order_dtls od
+                JOIN order_hdrs oh ON oh.id = od.trhdr_id AND oh.tr_type = 'SO' AND oh.status_code != 'X'
+                JOIN partners p ON p.id = oh.partner_id
+                JOIN sales_rewards sr ON sr.code = :sr_code AND sr.matl_code = od.matl_code
+                JOIN materials m ON m.id = od.matl_id AND m.brand = :brand
+                WHERE od.tr_type = 'SO'
+                    AND od.qty = od.qty_reff
+                    $whereDate
+                    $whereSalesReward
+            ";
 
-            $this->grandTotalPoint = ($srQty > 0 && $this->grandTotalBan > 0)
-                ? (int)(floor($this->grandTotalBan / $srQty) * $srReward)
-                : 0;
+            $grandTotalResult = DB::connection(Session::get('app_code'))->selectOne($grandTotalQuery, $bindings);
+
+            if ($grandTotalResult) {
+                $this->grandTotalBan = (int)($grandTotalResult->grand_total_ban ?? 0);
+                $srQty = (float)($grandTotalResult->sr_qty ?? 0);
+                $srReward = (float)($grandTotalResult->sr_reward ?? 0);
+
+                $this->grandTotalPoint = ($srQty > 0 && $this->grandTotalBan > 0)
+                    ? (int)(floor($this->grandTotalBan / $srQty) * $srReward)
+                    : 0;
+            }
         }
 
         // sr_qty dan sr_reward sudah disimpan sebelumnya saat menghitung sisa untuk IRC
