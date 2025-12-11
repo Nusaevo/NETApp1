@@ -464,57 +464,106 @@ class Index extends BaseComponent
                     SELECT
                         CASE WHEN UPPER(m.category) LIKE '%BAN LUAR%' THEN od.qty::int ELSE 0 END AS ban_luar,
                         CASE WHEN UPPER(m.category) LIKE '%BAN DALAM%' THEN od.qty::int ELSE 0 END AS ban_dalam,
+                        od.qty::int AS total_ban,
+                        -- Hitung point per material (seperti di query utama)
+                        CASE WHEN UPPER(m.category) LIKE '%BAN LUAR%' THEN
+                            CASE
+                                WHEN COALESCE(sr.qty, 0) > 0 THEN TRUNC(od.qty / sr.qty) * COALESCE(sr.reward, 0)
+                                ELSE od.qty * COALESCE(sr.reward, 0)
+                            END
+                            ELSE 0
+                        END AS point_bl,
+                        CASE WHEN UPPER(m.category) LIKE '%BAN DALAM%' THEN
+                            CASE
+                                WHEN COALESCE(sr.qty, 0) > 0 THEN TRUNC(od.qty / sr.qty) * COALESCE(sr.reward, 0)
+                                ELSE od.qty * COALESCE(sr.reward, 0)
+                            END
+                            ELSE 0
+                        END AS point_bd,
                         sr.qty AS sr_qty,
-                        sr.reward AS sr_reward
+                        sr.reward AS sr_reward,
+                        od.id AS order_dtl_id
                     FROM order_dtls od
                     JOIN order_hdrs oh ON oh.id = od.trhdr_id AND oh.tr_type = 'SO' AND oh.status_code != 'X'
                     JOIN materials m ON m.id = od.matl_id AND m.brand = :brand
-                    JOIN sales_rewards sr ON sr.code = :sr_code AND sr.matl_code = od.matl_code
-                    WHERE od.qty = od.qty_reff
-                    $whereDate
-                    $whereSalesReward
+                    $salesRewardJoin sales_rewards sr ON sr.code = :sr_code AND sr.matl_code = od.matl_code
+                    WHERE od.tr_type = 'SO'
+                        AND od.qty = od.qty_reff
+                        $whereDate
+                        $whereSalesReward
                 ),
-
-                bl_rule AS (
-                    SELECT DISTINCT sr_qty, sr_reward
+                grouped_by_order_dtl AS (
+                    SELECT
+                        order_dtl_id,
+                        SUM(ban_luar) AS ban_luar,
+                        SUM(ban_dalam) AS ban_dalam,
+                        SUM(total_ban) AS total_ban,
+                        SUM(point_bl) AS point_bl,
+                        SUM(point_bd) AS point_bd,
+                        MAX(sr_qty) AS sr_qty,
+                        MAX(sr_reward) AS sr_reward
                     FROM base_data
-                    WHERE ban_luar > 0
+                    GROUP BY order_dtl_id
                 ),
-
-                bd_rule AS (
-                    SELECT DISTINCT sr_qty, sr_reward
-                    FROM base_data
-                    WHERE ban_dalam > 0
-                ),
-
-                totals AS (
+                grand_total AS (
                     SELECT
                         SUM(ban_luar) AS total_ban_luar,
-                        SUM(ban_dalam) AS total_ban_dalam
-                    FROM base_data
+                        SUM(ban_dalam) AS total_ban_dalam,
+                        SUM(total_ban) AS total_ban,
+                        SUM(point_bl) AS total_point_bl,
+                        SUM(point_bd) AS total_point_bd,
+                        MAX(sr_qty) AS sr_qty,
+                        MAX(sr_reward) AS sr_reward
+                    FROM grouped_by_order_dtl
+                ),
+                bl_rule AS (
+                    SELECT sr_qty, sr_reward
+                    FROM grouped_by_order_dtl
+                    WHERE ban_luar > 0
+                    ORDER BY order_dtl_id
+                    LIMIT 1
+                ),
+                bd_rule AS (
+                    SELECT sr_qty, sr_reward
+                    FROM grouped_by_order_dtl
+                    WHERE ban_dalam > 0
+                    ORDER BY order_dtl_id
+                    LIMIT 1
                 )
-
                 SELECT
-                    t.total_ban_luar,
-                    t.total_ban_dalam,
-
-                    -- point BL
-                    CASE WHEN bl.sr_qty > 0 THEN FLOOR(t.total_ban_luar / bl.sr_qty) * bl.sr_reward ELSE 0 END AS point_bl,
-
-                    -- point BD
-                    CASE WHEN bd.sr_qty > 0 THEN FLOOR(t.total_ban_dalam / bd.sr_qty) * bd.sr_reward ELSE 0 END AS point_bd,
-
-                    -- total point
-                    (CASE WHEN bl.sr_qty > 0 THEN FLOOR(t.total_ban_luar / bl.sr_qty) * bl.sr_reward ELSE 0 END) +
-                    (CASE WHEN bd.sr_qty > 0 THEN FLOOR(t.total_ban_dalam / bd.sr_qty) * bd.sr_reward ELSE 0 END)
-                    AS total_point,
-
-                    -- sisa BD
-                    CASE WHEN bd.sr_qty > 0 THEN
-                        t.total_ban_dalam - (FLOOR(t.total_ban_dalam / bd.sr_qty) * bd.sr_qty)
-                    ELSE t.total_ban_dalam END AS sisa_bd
-
-                FROM totals t
+                    g.total_ban_luar,
+                    g.total_ban_dalam,
+                    -- Point BL: hitung ulang dari aggregate (seperti di customer aggregate)
+                    -- Menggunakan MAX untuk konsistensi dengan customer aggregate
+                    CASE
+                        WHEN COALESCE(bl.sr_qty, 0) > 0 AND g.total_ban_luar > 0
+                        THEN FLOOR(g.total_ban_luar::numeric / bl.sr_qty::numeric)::int * COALESCE(bl.sr_reward, 0)
+                        ELSE 0
+                    END AS point_bl,
+                    -- Point BD: hitung ulang dari aggregate (seperti di customer aggregate)
+                    CASE
+                        WHEN COALESCE(bd.sr_qty, 0) > 0 AND g.total_ban_dalam > 0
+                        THEN FLOOR(g.total_ban_dalam::numeric / bd.sr_qty::numeric)::int * COALESCE(bd.sr_reward, 0)
+                        ELSE 0
+                    END AS point_bd,
+                    -- Total point
+                    (CASE
+                        WHEN COALESCE(bl.sr_qty, 0) > 0 AND g.total_ban_luar > 0
+                        THEN FLOOR(g.total_ban_luar::numeric / bl.sr_qty::numeric)::int * COALESCE(bl.sr_reward, 0)
+                        ELSE 0
+                    END) +
+                    (CASE
+                        WHEN COALESCE(bd.sr_qty, 0) > 0 AND g.total_ban_dalam > 0
+                        THEN FLOOR(g.total_ban_dalam::numeric / bd.sr_qty::numeric)::int * COALESCE(bd.sr_reward, 0)
+                        ELSE 0
+                    END) AS total_point,
+                    -- Sisa BD
+                    CASE
+                        WHEN COALESCE(bd.sr_qty, 0) > 0 AND g.total_ban_dalam > 0 THEN
+                            g.total_ban_dalam - (FLOOR(g.total_ban_dalam::numeric / bd.sr_qty::numeric)::int * bd.sr_qty)
+                        ELSE g.total_ban_dalam
+                    END AS sisa_bd
+                FROM grand_total g
                 LEFT JOIN bl_rule bl ON TRUE
                 LEFT JOIN bd_rule bd ON TRUE;
             ";
