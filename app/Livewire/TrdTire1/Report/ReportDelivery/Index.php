@@ -19,11 +19,17 @@ class Index extends BaseComponent
         'DropdownSelected' => 'DropdownSelected'
     ];
     public $ddPartner = [
-        'placeHolder' => "Ketik untuk cari customer ...",
+        'placeHolder' => "Ketik untuk cari supplier ...",
         'optionLabel' => "code,name",
         'query' => "SELECT id,code,name,address,city
                     FROM partners
-                    WHERE deleted_at IS NULL AND grp = 'C'",
+                    WHERE deleted_at IS NULL AND grp = 'V'",
+    ];
+
+    public $ddBrand = [
+        'placeHolder' => "Ketik untuk cari brand ...",
+        'optionLabel' => "{brand}",
+        'query' => "SELECT DISTINCT brand FROM materials WHERE brand IS NOT NULL AND brand != '' AND deleted_at IS NULL ORDER BY brand",
     ];
 
     protected function onPreRender()
@@ -33,6 +39,8 @@ class Index extends BaseComponent
 
     public function search()
     {
+        $this->results = [];
+
         // Validasi: minimal harus ada salah satu filter (tanggal, partner, atau brand)
         if (isNullOrEmptyNumber($this->startCode) && empty($this->filterPartner) && empty($this->filterBrand)) {
             $this->dispatch('notify-swal', [
@@ -62,7 +70,8 @@ class Index extends BaseComponent
 
         $query = "
             SELECT
-                dh.tr_date AS tgl_kirim,
+                dh.reff_date AS tgl_sj,
+                dh.tr_date AS tgl_terima,
                 dh.tr_code AS no_nota,
                 p.name AS nama_supplier,
                 dp.tr_seq,
@@ -72,19 +81,21 @@ class Index extends BaseComponent
                 od.price,
                 od.disc_pct,
                 od.amt AS total,
-                od.amt_tax AS ppn
+                od.amt_tax AS ppn,
+                m.brand,
+                m.category
             FROM deliv_hdrs dh
             JOIN deliv_packings dp ON dp.trhdr_id = dh.id AND dp.tr_type = dh.tr_type
             JOIN partners p ON p.id = dh.partner_id
             LEFT JOIN order_dtls od ON od.id = dp.reffdtl_id
             LEFT JOIN materials m ON m.code = od.matl_code AND m.deleted_at IS NULL
             WHERE dh.tr_type = 'PD'
-                AND dh.tr_date BETWEEN '{$startDate}' AND '{$endDate}'
+                AND dh.reff_date BETWEEN '{$startDate}' AND '{$endDate}'
                 {$partnerFilter}
                 {$brandFilter}
                 AND dh.deleted_at IS NULL
                 AND dp.deleted_at IS NULL
-            ORDER BY dh.tr_code, dp.tr_seq
+            ORDER BY dh.reff_date, dp.tr_seq
         ";
 
         // Execute query
@@ -106,7 +117,8 @@ class Index extends BaseComponent
                 $currentNota = $row->no_nota;
                 $notaData = [
                     'no_nota' => $row->no_nota,
-                    'tgl_kirim' => $row->tgl_kirim,
+                    'tgl_sj' => $row->tgl_sj,
+                    'tgl_terima' => $row->tgl_terima,
                     'nama_supplier' => $row->nama_supplier,
                     'items' => []
                 ];
@@ -121,6 +133,8 @@ class Index extends BaseComponent
                 'disc' => $row->disc_pct,
                 'total' => $row->total,
                 'ppn' => $row->ppn,
+                'brand' => $row->brand ?? '',
+                'category' => $row->category ?? '',
             ];
         }
 

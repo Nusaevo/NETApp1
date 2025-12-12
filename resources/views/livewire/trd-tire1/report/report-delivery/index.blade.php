@@ -1,11 +1,8 @@
 <div>
     @php
     @endphp
-
-    {{-- ============================ PAGE WRAPPER ============================ --}}
     <x-ui-page-card title="{!! $menuName !!}" status="{{ $status }}">
 
-        {{-- ============================ FILTERS ============================ --}}
         <div class="card mb-4 no-print">
             <div class="card-body">
                 <div class="container mb-2 mt-2">
@@ -16,14 +13,15 @@
                         <div class="col-md-2">
                             <x-ui-text-field label="Tanggal Akhir:" model="endCode" type="date" action="Edit" />
                         </div>
-                        <div class="col-md-2">
-                            <x-ui-dropdown-search label="Customer" model="filterPartner"
-                                optionValue="id" :query="$ddPartner['query']" :optionLabel="$ddPartner['optionLabel']" :placeHolder="$ddPartner['placeHolder']"
-                                :selectedValue="$filterPartner" required="false" action="Edit" enabled="true"
-                                type="int" onChanged="onPartnerChanged"/>
+                        <div class="col-md-3">
+                            <x-ui-dropdown-search label="Supplier" model="filterPartner" optionValue="id"
+                                :query="$ddPartner['query']" :optionLabel="$ddPartner['optionLabel']" :placeHolder="$ddPartner['placeHolder']" :selectedValue="$filterPartner" required="false"
+                                action="Edit" enabled="true" type="int" onChanged="onPartnerChanged" />
                         </div>
-                        <div class="col-md-2">
-                            <x-ui-dropdown-select label="Brand" model="filterBrand" :options="$this->getBrandOptions()" action="Edit" />
+                        <div class="col-md-3">
+                            <x-ui-dropdown-search label="Brand" model="filterBrand" optionValue="brand"
+                                :query="$ddBrand['query']" optionLabel="{brand}" :placeHolder="$ddBrand['placeHolder']" :selectedValue="$filterBrand"
+                                required="false" action="Edit" enabled="true" type="string" searchOnSpace="true" />
                         </div>
                         <div class="col-md-2">
                             <x-ui-button clickEvent="search" button-name="View" loading="true" action="Edit"
@@ -37,12 +35,8 @@
                 </div>
             </div>
         </div>
-        {{-- ============================ /FILTERS ============================ --}}
-
-        {{-- ============================ REPORT AREA ============================ --}}
         <div id="print">
             <style>
-                /* ---------- BASE (SCREEN) ---------- */
                 #print {
                     font-family: 'Calibri', Arial, sans-serif;
                     color: #000;
@@ -69,13 +63,13 @@
 
                 #print .period {
                     text-align: left;
-                    /* margin-bottom: 6px; */
+                    margin-bottom: 6px;
                     font-size: 12px;
                 }
 
                 #print .filters-line {
                     text-align: left;
-                    /* margin-bottom: 16px; */
+                    margin-bottom: 4px;
                     font-size: 12px;
                 }
 
@@ -85,9 +79,9 @@
                 }
 
                 #print table {
-                    /* border-collapse: collapse; */
+                    border-collapse: collapse;
                     width: 100%;
-                    /* border: 1px solid #000; */
+                    border: 1px solid #000;
                 }
 
                 #print th,
@@ -95,7 +89,7 @@
                     padding: 6px 8px;
                     font-size: 11px;
                     vertical-align: middle;
-                    /* border: 1px solid #ddd; */
+                    border: 1px solid #000;
                 }
 
                 #print .head-yellow.value {
@@ -115,7 +109,6 @@
                     text-align: left;
                 }
 
-                /* ---------- PRINT STYLES ---------- */
                 @media print {
                     body {
                         background: #fff !important;
@@ -151,9 +144,15 @@
                     #print td {
                         /* padding: 4px 6px !important; */
                         font-size: 11px !important;
-                        border: none !important;
+                        border: 1px solid #000 !important;
                         vertical-align: middle !important;
                     }
+
+                    #print th:not([style*="text-align: right"]),
+                    #print td:not([style*="text-align: right"]) {
+                        text-align: left !important;
+                    }
+
                     #print h3,
                     #print h4 {
                         /* margin: 10px 0 !important; */
@@ -165,7 +164,7 @@
                     }
 
                     @page {
-                        /* margin: 1cm 1cm 2cm 1cm; */
+                        margin: 1cm 0cm 1cm 0cm;
                         /* size: F4 landscape; */
                     }
                 }
@@ -173,8 +172,7 @@
 
             <div class="report-container">
                 <div class="report-title">
-                    <h3>Laporan Pembelian per Nota</h3>
-                    <span style="font-size:12px;color:#666;">Page 1 of 1</span>
+                    <h3>{!! $menuName !!}</h3>
                 </div>
 
                 <p class="period">
@@ -202,7 +200,6 @@
                 @endif
 
                 @php
-                    // Formatter tanggal sesuai contoh "30-Dec-2024"
                     function formatDate($date)
                     {
                         if (!$date) {
@@ -211,95 +208,102 @@
                         return \Carbon\Carbon::parse($date)->format('d-M-Y');
                     }
                 @endphp
-
-                {{-- ============================ TABLE REPORT ============================ --}}
-                <table style="width: 100%; border-collapse: collapse;">
+                <table style="width: 100%; border-collapse: collapse; border: 1px solid #000;">
                     <thead>
-                        <tr style="border-bottom: 1px solid #000;">
-                            <th style="padding: 6px 8px; font-weight: bold; text-align: left;">Tgl. Kirim</th>
-                            <th style="padding: 6px 8px; font-weight: bold; text-align: left;">No. Nota</th>
-                            <th style="padding: 6px 8px; font-weight: bold; text-align: left;">Nama Supplier</th>
-                            <th style="padding: 6px 8px; font-weight: bold; text-align: left;">Kode Brg.</th>
-                            <th style="padding: 6px 8px; font-weight: bold; text-align: left;">Nama Barang</th>
-                            <th style="padding: 6px 8px; font-weight: bold; text-align: right;">Qty</th>
-                            <th style="padding: 6px 8px; font-weight: bold; text-align: right;">Harga</th>
-                            <th style="padding: 6px 8px; font-weight: bold; text-align: right;">Disc.</th>
-                            <th style="padding: 6px 8px; font-weight: bold; text-align: right;">Total</th>
-                            <th style="padding: 6px 8px; font-weight: bold; text-align: right;">Ppn</th>
+                        <tr>
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: left; border: 1px solid #000;">Tgl. SJ</th>
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: left; border: 1px solid #000;">Tgl. Terima</th>
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: left; border: 1px solid #000;">No. Surat Jalan</th>
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: left; border: 1px solid #000;">Nama Supplier</th>
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: left; border: 1px solid #000;">Kode Brg.</th>
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: left; border: 1px solid #000;">Nama Barang</th>
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: right; border: 1px solid #000;">Qty</th>
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: right; border: 1px solid #000;">Qty BD</th>
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: right; border: 1px solid #000;">Qty BL</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($results ?? [] as $nota)
                         @php
-                            $subTotalAmount = 0;
-                            $totalPpn = 0;
-                            foreach ($nota['items'] ?? [] as $it) {
-                                $subTotalAmount += $it['total'] ?? 0;
-                                $totalPpn += $it['ppn'] ?? 0;
-                            }
-                            $grand = $subTotalAmount + $totalPpn;
+                            $totalQty = 0;
+                            $totalQtyBD = 0;
+                            $totalQtyBL = 0;
                         @endphp
+                        @foreach ($results ?? [] as $nota)
+                            @foreach ($nota['items'] ?? [] as $index => $item)
+                                @php
+                                    $isIRC = isset($item['brand']) && strtoupper($item['brand']) === 'IRC';
+                                    $qtyBD = 0;
+                                    $qtyBL = 0;
 
-                        @foreach ($nota['items'] ?? [] as $index => $item)
-                            <tr>
-                                @if($index == 0)
-                                    <td style="padding: 6px 8px; vertical-align: top;" rowspan="{{ count($nota['items']) }}">
-                                        {{ isset($nota['tgl_kirim']) ? formatDate($nota['tgl_kirim']) : '' }}
+                                    if ($isIRC) {
+                                        if (isset($item['category']) && stripos($item['category'], 'BAN DALAM') !== false) {
+                                            $qtyBD = $item['qty'] ?? 0;
+                                        }
+                                        if (isset($item['category']) && stripos($item['category'], 'BAN LUAR') !== false) {
+                                            $qtyBL = $item['qty'] ?? 0;
+                                        }
+                                    } else {
+                                        $totalQty += $item['qty'] ?? 0;
+                                    }
+
+                                    $totalQtyBD += $qtyBD;
+                                    $totalQtyBL += $qtyBL;
+                                @endphp
+                                <tr>
+                                    @if ($index == 0)
+                                        <td style="padding: 6px 8px; vertical-align: top; border: 1px solid #000; text-align: left;"
+                                            rowspan="{{ count($nota['items']) }}">
+                                            {{ isset($nota['tgl_sj']) ? formatDate($nota['tgl_sj']) : '' }}
+                                        </td>
+                                        <td style="padding: 6px 8px; vertical-align: top; border: 1px solid #000; text-align: left;"
+                                            rowspan="{{ count($nota['items']) }}">
+                                            {{ isset($nota['tgl_terima']) ? formatDate($nota['tgl_terima']) : '' }}
+                                        </td>
+                                        <td style="padding: 6px 8px; vertical-align: top; border: 1px solid #000; text-align: left;"
+                                            rowspan="{{ count($nota['items']) }}">
+                                            {{ $nota['no_nota'] ?? '-' }}
+                                        </td>
+                                        <td style="padding: 6px 8px; vertical-align: top; border: 1px solid #000; text-align: left;"
+                                            rowspan="{{ count($nota['items']) }}">
+                                            {{ $nota['nama_supplier'] ?? '-' }}
+                                        </td>
+                                    @endif
+                                    <td style="padding: 6px 8px; border: 1px solid #000; text-align: left;">{{ $item['kode_brg'] ?? '' }}</td>
+                                    <td style="padding: 6px 8px; border: 1px solid #000; text-align: left;">{{ $item['nama_barang'] ?? '' }}</td>
+                                    <td style="padding: 6px 8px; text-align: right; border: 1px solid #000;">
+                                        {{ $isIRC ? '' : number_format($item['qty'] ?? 0, 0, ',', '.') }}
                                     </td>
-                                    <td style="padding: 6px 8px; vertical-align: top;" rowspan="{{ count($nota['items']) }}">
-                                        {{ $nota['no_nota'] ?? '-' }}
+                                    <td style="padding: 6px 8px; text-align: right; border: 1px solid #000;">
+                                        {{ $qtyBD > 0 ? number_format($qtyBD, 0, ',', '.') : '' }}
                                     </td>
-                                    <td style="padding: 6px 8px; vertical-align: top;" rowspan="{{ count($nota['items']) }}">
-                                        {{ $nota['nama_supplier'] ?? '-' }}
+                                    <td style="padding: 6px 8px; text-align: right; border: 1px solid #000;">
+                                        {{ $qtyBL > 0 ? number_format($qtyBL, 0, ',', '.') : '' }}
                                     </td>
-                                @endif
-                                <td style="padding: 6px 8px;">{{ $item['kode_brg'] ?? '' }}</td>
-                                <td style="padding: 6px 8px;">{{ $item['nama_barang'] ?? '' }}</td>
-                                <td style="padding: 6px 8px; text-align: right;">{{ number_format($item['qty'] ?? 0, 0, ',', '.') }}</td>
-                                <td style="padding: 6px 8px; text-align: right;">{{ number_format($item['harga'] ?? 0, 0, ',', '.') }}</td>
-                                <td style="padding: 6px 8px; text-align: right;">{{ number_format($item['disc'] ?? 0, 2, ',', '.') }}</td>
-                                <td style="padding: 6px 8px; text-align: right;">{{ number_format($item['total'] ?? 0, 0, ',', '.') }}</td>
-                                <td style="padding: 6px 8px; text-align: right;">{{ number_format($item['ppn'] ?? 0, 0, ',', '.') }}</td>
-                            </tr>
+                                </tr>
+                            @endforeach
+
                         @endforeach
-
-                        {{-- Baris subtotal untuk setiap nota --}}
-                        <tr style="font-weight: bold; background-color: #f8f9fa;">
-                            <td style="padding: 6px 8px;"></td>
-                            <td style="padding: 6px 8px;"></td>
-                            <td style="padding: 6px 8px;"></td>
-                            <td style="padding: 6px 8px;"></td>
-                            <td style="padding: 6px 8px; text-align: right;">Subtotal:</td>
-                            <td style="padding: 6px 8px;"></td>
-                            <td style="padding: 6px 8px;"></td>
-                            <td style="padding: 6px 8px;"></td>
-                            <td style="padding: 6px 8px; text-align: right;">{{ number_format($subTotalAmount, 0, ',', '.') }}</td>
-                            <td style="padding: 6px 8px; text-align: right;">{{ number_format($totalPpn, 0, ',', '.') }}</td>
+                        {{-- Baris Total --}}
+                        <tr style="font-weight: bold; background-color: #f8f9fa; border-top: 2px solid #000;">
+                            <td style="padding: 6px 8px; border: 1px solid #000;" colspan="6">TOTAL</td>
+                            <td style="padding: 6px 8px; text-align: right; border: 1px solid #000;">
+                                {{ $totalQty > 0 ? number_format($totalQty, 0, ',', '.') : '' }}
+                            </td>
+                            <td style="padding: 6px 8px; text-align: right; border: 1px solid #000;">
+                                {{ $totalQtyBD > 0 ? number_format($totalQtyBD, 0, ',', '.') : '' }}
+                            </td>
+                            <td style="padding: 6px 8px; text-align: right; border: 1px solid #000;">
+                                {{ $totalQtyBL > 0 ? number_format($totalQtyBL, 0, ',', '.') : '' }}
+                            </td>
                         </tr>
-                        @endforeach
                     </tbody>
                 </table>
-                {{-- ============================ /TABLE REPORT ============================ --}}
-
-                {{-- Footer Crystal Report style (opsional) --}}
-                {{--
-                <div style="margin-top: 20px; font-size: 10px; color: #666;">
-                    <div style="float: left;">E:\Users\...\RptJualPerNota.rpt</div>
-                    <div style="text-align: center;">Hal: 1</div>
-                    <div style="float: right;">{{ now()->format('m/d/Y') }}</div>
-                    <div style="clear: both;"></div>
-                </div>
-                --}}
             </div>
         </div>
-        {{-- ============================ /REPORT AREA ============================ --}}
     </x-ui-page-card>
-
-    {{-- ============================ SCRIPTS ============================ --}}
     <script>
         function printReport() {
             window.print();
         }
     </script>
-    {{-- ============================ /SCRIPTS ============================ --}}
 </div>
