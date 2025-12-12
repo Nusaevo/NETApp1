@@ -3,7 +3,6 @@
 namespace App\Services\TrdTire1;
 
 use Exception;
-use Illuminate\Support\Facades\Log;
 use App\Models\TrdTire1\Master\{Material, Partner};
 use App\Models\TrdTire1\Inventories\{IvtBal, IvtLog};
 
@@ -380,8 +379,7 @@ class DeliveryService
             }
         }
 
-        // 2. Buat DelivPacking dan DelivPicking untuk setiap detail
-        // Ambil semua OrderDtl yang sudah tersimpan untuk header ini
+        // 2. Ambil semua OrderDtl yang sudah tersimpan untuk header ini
         $orderDetails = OrderDtl::where('trhdr_id', $headerData['id'])
             ->where('tr_type', $headerData['tr_type'])
             ->orderBy('tr_seq')
@@ -391,30 +389,35 @@ class DeliveryService
             return $delivHdr;
         }
 
-        foreach ($orderDetails as $orderDtl) {
-            // Buat DelivPacking
-            $packingData = [
-                'trhdr_id' => $delivHdr->id,
-                'tr_type' => 'SRD',
-                'tr_code' => $headerData['tr_code'],
-                'tr_seq' => DelivPacking::getNextTrSeq($delivHdr->id),
-                'reffdtl_id' => $orderDtl->id,
-                'reffhdr_id' => $headerData['id'],
-                'reffhdrtr_type' => 'SR',
-                'reffhdrtr_code' => $headerData['tr_code'],
-                'reffdtltr_seq' => $orderDtl->tr_seq,
-                'matl_id' => $orderDtl->matl_id,
-                'matl_code' => $orderDtl->matl_code,
-                'matl_uom' => $orderDtl->matl_uom,
-                'matl_descr' => $orderDtl->matl_descr,
-                'qty' => $orderDtl->qty,
-            ];
+        // 3. Ambil warehouse tujuan dari header
+        $whIdTujuan = $headerData['wh_id'] ?? null;
+        $whCodeTujuan = $headerData['wh_code'] ?? '';
 
-            // Cek apakah sudah ada packing
-            $packing = DelivPacking::where('trhdr_id', $delivHdr->id)
-                ->where('reffdtl_id', $orderDtl->id)
-                ->where('tr_type', 'SRD')
-                ->first();
+        // 4. Buat DelivPacking dan DelivPicking untuk setiap OrderDtl
+        foreach ($orderDetails as $orderDtl) {
+            // Buat DelivPacking (1:1 dengan OrderDtl)
+                $packingData = [
+                    'trhdr_id' => $delivHdr->id,
+                    'tr_type' => 'SRD',
+                    'tr_code' => $headerData['tr_code'],
+                    'tr_seq' => DelivPacking::getNextTrSeq($delivHdr->id),
+                    'reffdtl_id' => $orderDtl->id, // Reference ke OrderDtl SR
+                    'reffhdr_id' => $headerData['id'],
+                    'reffhdrtr_type' => 'SR',
+                    'reffhdrtr_code' => $headerData['tr_code'],
+                    'reffdtltr_seq' => $orderDtl->tr_seq,
+                    'matl_id' => $orderDtl->matl_id,
+                    'matl_code' => $orderDtl->matl_code,
+                    'matl_uom' => $orderDtl->matl_uom,
+                    'matl_descr' => $orderDtl->matl_descr,
+                    'qty' => $orderDtl->qty, // Total qty per material
+                ];
+
+                // Cek apakah sudah ada packing
+                $packing = DelivPacking::where('trhdr_id', $delivHdr->id)
+                    ->where('reffdtl_id', $orderDtl->id)
+                    ->where('tr_type', 'SRD')
+                    ->first();
 
             if (!$packing) {
                 $packing = DelivPacking::create($packingData);
@@ -425,74 +428,83 @@ class DeliveryService
                 }
             }
 
-            // 3. Buat DelivPicking
-            // Untuk Sales Return, ambil warehouse dan batch dari detail atau dari inventory
-            // Cari detail yang sesuai dari detailData berdasarkan matl_id atau tr_seq
-            $matchingDetail = collect($detailData)->first(function ($d) use ($orderDtl) {
-                return ($d['matl_id'] ?? null) == $orderDtl->matl_id ||
-                       ($d['tr_seq'] ?? null) == $orderDtl->tr_seq;
+            // 5. Buat DelivPicking per batch dari detailData
+            // Filter detailData berdasarkan matl_id dan qty_return > 0
+            $batchDetails = collect($detailData)->filter(function ($d) use ($orderDtl) {
+                $matlId = $d['matl_id'] ?? null;
+                $qtyReturn = floatval($d['qty_return'] ?? 0);
+                return $matlId == $orderDtl->matl_id && $qtyReturn > 0;
             });
 
-            $whId = $matchingDetail['wh_id'] ?? null;
-            $whCode = $matchingDetail['wh_code'] ?? '';
-            $batchCode = $matchingDetail['batch_code'] ?? '';
+            foreach ($batchDetails as $batchDetail) {
+                $batchCode = $batchDetail['batch_code'] ?? '';
+                $qtyReturn = floatval($batchDetail['qty_return'] ?? 0);
 
-            // Jika tidak ada wh_id, cari dari inventory balance atau set default
-            if (!$whId) {
-                // Cari dari IvtBal jika ada
-                $ivtBal = IvtBal::where('matl_id', $orderDtl->matl_id)
-                    ->where('qty_oh', '>', 0)
-                    ->orderBy('batch_code')
-                    ->first();
+                if (empty($batchCode) || $qtyReturn <= 0) {
+                    continue;
+                }
 
-                if ($ivtBal) {
-                    $whId = $ivtBal->wh_id;
-                    $whCode = $ivtBal->wh_code;
-                    $batchCode = $ivtBal->batch_code;
+                // Gunakan warehouse tujuan dari header, bukan dari detail
+                $whId = $whIdTujuan ?? $batchDetail['wh_id'] ?? 0;
+                $whCode = $whCodeTujuan ?: ($batchDetail['wh_code'] ?? '');
+
+                // Jika tidak ada warehouse, cari dari IvtBal atau set default
+                if (!$whId) {
+                    $ivtBal = IvtBal::where('matl_id', $orderDtl->matl_id)
+                        ->where('batch_code', $batchCode)
+                        ->where('qty_oh', '>', 0)
+                        ->first();
+
+                    if ($ivtBal) {
+                        $whId = $ivtBal->wh_id;
+                        $whCode = $ivtBal->wh_code;
+                    } else {
+                        // Set default jika tidak ada inventory
+                        $whId = 0;
+                        $whCode = '';
+                    }
+                }
+
+                        $pickingData = [
+                            'trpacking_id' => $packing->id,
+                            'trhdr_id' => $delivHdr->id,
+                            'tr_type' => 'SRD',
+                            'tr_code' => $headerData['tr_code'],
+                            'trpacking_seq' => $packing->tr_seq,
+                            'tr_seq' => DelivPicking::getNextTrSeq($packing->id),
+                            'tr_seq2' => DelivPicking::getNextTrSeq($packing->id),
+                            'matl_id' => $orderDtl->matl_id,
+                            'matl_code' => $orderDtl->matl_code,
+                            'matl_uom' => $orderDtl->matl_uom,
+                            'wh_id' => $whId,
+                            'wh_code' => $whCode,
+                            'batch_code' => $batchCode, // Batch code dari picking asal
+                            'qty' => $qtyReturn, // Qty return per batch
+                            'ivt_id' => null, // Akan di-set setelah create ivt_logs
+                            'reffpicking_id' => $batchDetail['reffpicking_id'] ?? null, // Reference ke picking asal
+                        ];
+
+                        // Cek apakah sudah ada picking dengan batch_code yang sama
+                        $picking = DelivPicking::where('trpacking_id', $packing->id)
+                            ->where('batch_code', $batchCode)
+                            ->where('wh_id', $whId)
+                            ->first();
+
+                if (!$picking) {
+                    $picking = DelivPicking::create($pickingData);
                 } else {
-                    // Set default jika tidak ada inventory
-                    $whId = 0;
-                    $whCode = '';
-                    $batchCode = date('ymd'); // Default batch code dengan format tanggal
+                    $picking->fill($pickingData);
+                    if ($picking->isDirty()) {
+                        $picking->save();
+                    }
                 }
+
+                // 6. Buat ivt_logs dari DelivPicking menggunakan InventoryService
+                $this->inventoryService->createIvtLogFromDeliveryPicking($delivHdr, $picking, $orderDtl);
             }
-
-            $pickingData = [
-                'trpacking_id' => $packing->id,
-                'trhdr_id' => $delivHdr->id,
-                'tr_type' => 'SRD',
-                'tr_code' => $headerData['tr_code'],
-                'trpacking_seq' => $packing->tr_seq,
-                'tr_seq' => DelivPicking::getNextTrSeq($packing->id),
-                'tr_seq2' => DelivPicking::getNextTrSeq($packing->id),
-                'matl_id' => $orderDtl->matl_id,
-                'matl_code' => $orderDtl->matl_code,
-                'matl_uom' => $orderDtl->matl_uom,
-                'wh_id' => $whId ?? 0,
-                'wh_code' => $whCode,
-                'batch_code' => $batchCode,
-                'qty' => $orderDtl->qty,
-                'ivt_id' => null, // Akan di-set setelah create ivt_logs
-            ];
-
-            // Cek apakah sudah ada picking
-            $picking = DelivPicking::where('trpacking_id', $packing->id)
-                ->first();
-
-            if (!$picking) {
-                $picking = DelivPicking::create($pickingData);
-            } else {
-                $picking->fill($pickingData);
-                if ($picking->isDirty()) {
-                    $picking->save();
-                }
-            }
-
-            // 4. Buat ivt_logs dari DelivPicking menggunakan InventoryService
-            $this->inventoryService->createIvtLogFromDeliveryPicking($delivHdr, $picking, $orderDtl);
         }
 
-        // 5. Buat billing data (BillingHdr, BillingDeliv, BillingOrder) dan partner logs/balances
+        // 7. Buat billing data (BillingHdr, BillingDeliv, BillingOrder) dan partner logs/balances
         $orderHdr = OrderHdr::find($headerData['id']);
         if ($orderHdr) {
             // Gunakan app() untuk avoid circular dependency

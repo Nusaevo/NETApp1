@@ -110,7 +110,7 @@ class InventoryService
         $price = 0;
         $qty = 0;
         $trDesc = '';
-        if ($headerData['tr_type'] === 'PD' || $headerData['tr_type'] === 'SD') {
+        if ($headerData['tr_type'] === 'PD' || $headerData['tr_type'] === 'SD' || $headerData['tr_type'] === 'SRD') {
             $orderDtl = OrderDtl::find($detailData['reffdtl_id']);
             if (!$orderDtl) {
                 throw new Exception('Order detail tidak ditemukan: ' . $detailData['reffdtl_id']);
@@ -128,6 +128,10 @@ class InventoryService
                 $qty = -$detailData['qty'];
                 // $amt = $price * $qty;
                 $trDesc = 'DELIVERY OUT ' . ($detailData['wh_code'] ?? '') . ' ' . $headerData['tr_code'];
+                break;
+            case 'SRD': // Sales Return Delivery: Tambah OH (return stock)
+                $qty = $detailData['qty']; // POSITIF - menambah stok
+                $trDesc = 'DELIVERY RETURN ' . ($detailData['wh_code'] ?? '') . ' ' . $headerData['tr_code'];
                 break;
             case 'TW':
                 $qty = $detailData['qty'];

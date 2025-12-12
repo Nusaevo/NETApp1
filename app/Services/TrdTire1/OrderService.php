@@ -183,7 +183,7 @@ class OrderService
     }
 
 
-    public function saveOrderSalesReturn(array $headerData, array $detailData)
+    public function saveOrderSalesReturn(array $headerData, array $detailData, array $originalDetailData = [])
     {
         // 1. Simpan Sales Return order tanpa membuat ivt_logs
         $header = $this->saveHeader($headerData);
@@ -194,7 +194,8 @@ class OrderService
         }
 
         // 2. Buat delivery data (DelivHdr, DelivPacking, DelivPicking) menggunakan DeliveryService
-        $delivHdr = $this->deliveryService->saveDeliverySalesReturn($headerData, $detailData);
+        // Pass originalDetailData (per batch) untuk delivery, bukan detailData yang sudah di-group
+        $delivHdr = $this->deliveryService->saveDeliverySalesReturn($headerData, $originalDetailData ?: $detailData);
 
         return [
             'header' => $header,
@@ -205,6 +206,7 @@ class OrderService
 
     /**
      * Simpan order details tanpa membuat reservation/ivt_logs
+     * DetailData sudah di-group by material dari prepareDetailData()
      */
     private function saveDetailsSalesReturn(array $headerData, array $detailData)
     {
@@ -223,6 +225,9 @@ class OrderService
 
         // Update atau create detail yang tersisa
         foreach ($detailData as $detail) {
+            // Hapus batch_details karena tidak perlu disimpan di OrderDtl
+            unset($detail['batch_details']);
+            
             $detail['trhdr_id'] = $headerData['id'];
             $detail['tr_type'] = $headerData['tr_type'];
             $detail['tr_code'] = $headerData['tr_code'];

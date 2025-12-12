@@ -3,7 +3,7 @@
 namespace App\Livewire\TrdTire1\Transaction\SalesReturn;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl, DelivHdr, DelivDtl, BillingHdr, BillingDtl};
+use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl, DelivHdr, DelivDtl, DelivPacking, DelivPicking, BillingHdr, BillingDtl};
 use App\Models\TrdTire1\Master\{Partner, Material, MatlUom};
 use App\Models\SysConfig1\{ConfigConst, ConfigSnum};
 use App\Enums\Status;
@@ -65,12 +65,12 @@ class Detail extends BaseComponent
                     WHERE deleted_at IS NULL AND grp = 'C'",
     ];
 
-    public $ddSalesOrder = [
-        'placeHolder' => "Ketik untuk cari sales order ...",
+    public $ddDelivery = [
+        'placeHolder' => "Ketik untuk cari delivery ...",
         'optionLabel' => "tr_code",
         'query' => "SELECT tr_code, partner_code, tr_date
-                    FROM order_hdrs
-                    WHERE deleted_at IS NULL AND tr_type = 'SO' AND status_code IN ('O', 'P', 'S','T')
+                    FROM deliv_hdrs
+                    WHERE deleted_at IS NULL AND tr_type = 'SD'
                     ORDER BY tr_date DESC, tr_code DESC",
     ];
 
@@ -99,7 +99,7 @@ class Detail extends BaseComponent
         'inputs.payment_term_id' => 'required',
         'inputs.payment_due_days' => 'required',
         'input_details.*.matl_id' => 'required',
-        'input_details.*.qty' => 'required',
+        'input_details.*.qty_return' => 'required',
         'input_details.*.price' => 'required',
 
     ];
@@ -258,7 +258,7 @@ class Detail extends BaseComponent
         $this->SOTax = $this->masterService->getSOTaxData();
         $this->SOSend = $this->masterService->getSOSendData();
         $this->paymentTerms = $this->masterService->getPaymentTerm();
-        // $this->warehouses = $this->masterService->getWarehouse();
+        $this->warehouses = $this->masterService->getWarehouse();
 
         // Load partner options untuk dropdown
         $this->loadPartnerOptions();
@@ -274,11 +274,9 @@ class Detail extends BaseComponent
                 $this->dispatch('error', 'Data tidak ditemukan');
             }
         } else if ($this->actionValue === 'Edit' && !empty($this->inputs['tr_code'])) {
-            // Untuk mode edit tanpa objectIdValue, cari berdasarkan tr_code
             $existingOrder = OrderHdr::where('tr_code', $this->inputs['tr_code'])
                 ->where('tr_type', $this->trType)
                 ->first();
-
             if ($existingOrder) {
                 $this->object = $existingOrder;
                 $this->objectIdValue = $existingOrder->id;
@@ -341,6 +339,8 @@ class Detail extends BaseComponent
 
         $this->salesTypeOnChanged();
         $this->loadDetails();
+        // Update material query setelah load details untuk include existing materials
+        $this->updateMaterialQuery();
         $this->updateAfterPrintPermission();
         $this->updateButtonStatesByCounter();
         $this->isPanelEnabled = "false"; // Disable panel karena sudah ada data
@@ -475,7 +475,6 @@ class Detail extends BaseComponent
         if (!$this->orderService) {
             $this->orderService = app(OrderService::class);
         }
-
         $this->validate();
 
         // Validasi tr_code sesuai dengan yang di-generate
@@ -487,8 +486,8 @@ class Detail extends BaseComponent
         // Validasi duplikasi tr_code
         $this->validateTrCodeDuplicate();
 
-        // Validasi duplikasi matl_id dalam detail
-        $this->validateMatlIdDuplicate();
+        // Validasi duplikasi matl_id dalam detail (skip untuk Sales Return karena akan di-group)
+        // $this->validateMatlIdDuplicate(); // Tidak perlu karena akan di-group by material
 
         // Pastikan detail tidak kosong dan setiap baris terisi
         $this->validateDetailFilled();
@@ -551,7 +550,7 @@ class Detail extends BaseComponent
 
         // Recalculate semua item sebelum save untuk memastikan semua field terisi dengan benar
         foreach ($this->input_details as $key => $detail) {
-            if (!empty($detail['matl_id']) && !empty($detail['qty']) && !empty($detail['price'])) {
+            if (!empty($detail['matl_id']) && !empty($detail['qty_return']) && !empty($detail['price'])) {
                 $this->calcItemAmount($key);
             }
         }
@@ -566,8 +565,12 @@ class Detail extends BaseComponent
         $headerData['amt_adjustdtl'] = $totals['amt_adjustdtl'];
          // dd($headerData, $detailData);
         if ($this->actionValue === 'Create') {
+            // Simpan original input_details untuk delivery (per batch)
+            $originalDetailData = $this->input_details;
+
             // Gunakan method baru untuk Sales Return yang membuat delivery data
-            $result = $this->orderService->saveOrderSalesReturn($headerData, $detailData);
+            // Pass detailData (grouped) untuk Order, originalDetailData (per batch) untuk Delivery
+            $result = $this->orderService->saveOrderSalesReturn($headerData, $detailData, $originalDetailData);
             if (!$result) {
                 throw new Exception('Gagal membuat Nota penjualan');
             }
@@ -624,21 +627,122 @@ class Detail extends BaseComponent
 
     private function prepareDetailData()
     {
-        $detailData = $this->input_details;
+        // Untuk Sales Return, group by material dan sum qty_return
+        // Simpan detail per batch untuk digunakan di delivery
+        $detailDataPerBatch = $this->input_details;
 
-        $trSeq = 1;
-        foreach ($detailData as $i => &$detail) {
-            $detail['tr_seq'] = $trSeq++;
-            $detail['qty_uom'] = 'PCS';
-            $detail['price_uom'] = 'PCS';
-            $detail['price_curr'] = $detail['price'];
-            $detail['price_base'] = 1;
-            $detail['qty_base'] = 1;
-            if ($this->actionValue === 'Create') {
-                $detail['status_code'] = Status::OPEN;
+        // Group by matl_id dan sum qty_return
+        $groupedDetails = [];
+        foreach ($detailDataPerBatch as $detail) {
+            // Skip jika qty_return kosong atau 0
+            $qtyReturn = floatval($detail['qty_return'] ?? 0);
+            if ($qtyReturn <= 0) {
+                continue;
             }
+
+            $matlId = $detail['matl_id'] ?? null;
+            if (empty($matlId)) {
+                continue;
+            }
+
+            // Ambil price dari OrderDtl asal (SO) jika ada reffdtl_id
+            $price = 0;
+            $priceBeforeTax = 0;
+            $discPct = 0;
+            $discAmt = 0;
+            $matlCode = $detail['matl_code'] ?? '';
+            $matlUom = $detail['matl_uom'] ?? 'PCS';
+            $matlDescr = $detail['matl_descr'] ?? '';
+
+            if (!empty($detail['reffdtl_id'])) {
+                $orderDtlAsal = OrderDtl::find($detail['reffdtl_id']);
+                if ($orderDtlAsal) {
+                    $price = $orderDtlAsal->price_afterdisc ?? $orderDtlAsal->price ?? 0;
+                    $priceBeforeTax = $orderDtlAsal->price_beforetax ?? $price;
+                    $discPct = $orderDtlAsal->disc_pct ?? 0;
+                    $discAmt = $orderDtlAsal->disc_amt ?? 0;
+                    $matlCode = $orderDtlAsal->matl_code ?? $matlCode;
+                    $matlUom = $orderDtlAsal->matl_uom ?? $matlUom;
+                    $matlDescr = $orderDtlAsal->matl_descr ?? $matlDescr;
+                }
+            } else {
+                // Fallback ke price dari detail jika tidak ada reffdtl_id
+                $price = floatval($detail['price'] ?? 0);
+                $priceBeforeTax = floatval($detail['price_beforetax'] ?? $price);
+                $discPct = floatval($detail['disc_pct'] ?? 0);
+                $discAmt = floatval($detail['disc_amt'] ?? 0);
+            }
+
+            if (!isset($groupedDetails[$matlId])) {
+                $groupedDetails[$matlId] = [
+                    'matl_id' => $matlId,
+                    'matl_code' => $matlCode,
+                    'matl_uom' => $matlUom,
+                    'matl_descr' => $matlDescr,
+                    'qty' => 0,
+                    'qty_return' => 0,
+                    'price' => $price,
+                    'price_beforetax' => $priceBeforeTax,
+                    'price_afterdisc' => $price,
+                    'disc_pct' => $discPct,
+                    'disc_amt' => $discAmt,
+                    'qty_uom' => 'PCS',
+                    'price_uom' => 'PCS',
+                    'price_curr' => $price,
+                    'price_base' => 1,
+                    'qty_base' => 1,
+                    'reffdtl_id' => $detail['reffdtl_id'] ?? null,
+                    'reffhdr_id' => $detail['reffhdr_id'] ?? null,
+                    'reff_code' => $detail['reff_code'] ?? '',
+                    'status_code' => $this->actionValue === 'Create' ? Status::OPEN : null,
+                    // Preserve batch details untuk digunakan di delivery
+                    'batch_details' => [],
+                ];
+            }
+
+            // Sum qty_return
+            $groupedDetails[$matlId]['qty'] += $qtyReturn;
+            $groupedDetails[$matlId]['qty_return'] += $qtyReturn;
+
+            // Simpan detail batch untuk digunakan di delivery
+            $groupedDetails[$matlId]['batch_details'][] = [
+                'batch_code' => $detail['batch_code'] ?? '',
+                'ivt_id' => $detail['ivt_id'] ?? null,
+                'wh_id' => $detail['wh_id'] ?? null,
+                'wh_code' => $detail['wh_code'] ?? '',
+                'qty_return' => $qtyReturn,
+                'qty' => floatval($detail['qty'] ?? 0), // qty asli dari picking
+                'reffpicking_id' => $detail['reffpicking_id'] ?? null,
+            ];
         }
-        unset($detail);
+
+        // Convert ke array dengan tr_seq
+        $detailData = [];
+        $trSeq = 1;
+        foreach ($groupedDetails as $matlId => $detail) {
+            $detail['tr_seq'] = $trSeq++;
+            // Calculate amounts
+            $qty = $detail['qty'];
+            $taxPct = floatval($this->inputs['tax_pct'] ?? 0);
+            $taxValue = $taxPct / 100;
+
+            $taxCode = $this->inputs['tax_code'] ?? 'N';
+            if ($taxCode === 'I') {
+                $detail['amt_beforetax'] = round($detail['price_beforetax'] * $qty, 0);
+                $detail['amt_tax'] = round($detail['amt_beforetax'] * $taxValue, 0);
+            } else if ($taxCode === 'E') {
+                $detail['amt_beforetax'] = round($detail['price'] * $qty, 0);
+                $detail['amt_tax'] = round($detail['amt_beforetax'] * $taxValue, 0);
+            } else {
+                $detail['amt_beforetax'] = round($detail['price'] * $qty, 0);
+                $detail['amt_tax'] = 0;
+            }
+            $detail['amt'] = round($detail['price'] * $qty, 0);
+            $detail['amt_adjustdtl'] = round($detail['amt'] - $detail['amt_beforetax'] - $detail['amt_tax'], 0);
+
+            $detailData[] = $detail;
+        }
+
         return $detailData;
     }
 
@@ -750,6 +854,8 @@ class Detail extends BaseComponent
         // Load related data
         $this->salesTypeOnChanged();
         $this->loadDetails();
+        // Update material query setelah load details untuk include existing materials
+        $this->updateMaterialQuery();
         $this->updateAfterPrintPermission();
         $this->updateButtonStatesByCounter();
         $this->isPanelEnabled = "false"; // Disable panel karena sudah ada data
@@ -988,14 +1094,36 @@ class Detail extends BaseComponent
             return;
         }
 
-        $categories = ConfigConst::where('const_group', 'MMATL_CATEGORY')
-            ->where('str1', $salesType)
-            ->pluck('str2') // Category names
-            ->map(function ($val) {
-                return "'" . trim($val) . "'";
-            })->toArray();
+        $this->updateMaterialQuery($salesType);
+    }
 
-        $categoryList = implode(',', $categories); // 'BAN DALAM MOBIL','BAN DALAM MOTOR'
+    /**
+     * Update material query dengan include existing materials
+     */
+    private function updateMaterialQuery($salesType = null)
+    {
+        // Ambil sales_type dari parameter atau dari inputs
+        $salesType = $salesType ?? $this->inputs['sales_type'] ?? null;
+
+        // Ambil semua matl_id yang sudah ada di input_details
+        $existingMatlIds = array_filter(array_column($this->input_details ?? [], 'matl_id'));
+
+        if ($salesType) {
+            $categories = ConfigConst::where('const_group', 'MMATL_CATEGORY')
+                ->where('str1', $salesType)
+                ->pluck('str2')
+                ->map(fn($val) => "'" . trim($val) . "'")
+                ->toArray();
+            $categoryList = implode(',', $categories);
+            $categoryFilter = "m.category IN ($categoryList)";
+        } else {
+            $categoryFilter = "1=1"; // No category filter
+        }
+
+        // Include existing materials jika ada
+        $existingFilter = !empty($existingMatlIds)
+            ? " OR m.id IN (" . implode(',', $existingMatlIds) . ")"
+            : "";
 
         $this->materialQuery = "
             SELECT m.id, m.code, m.name, coalesce(b.qty_oh,0) qty_oh, coalesce(b.qty_fgi,0) qty_fgi
@@ -1007,7 +1135,7 @@ class Detail extends BaseComponent
                 ) b on b.matl_id = m.id
             WHERE m.status_code = 'A'
             AND m.deleted_at IS NULL
-            AND m.category IN ($categoryList)
+            AND ($categoryFilter $existingFilter)
         ";
     }
 
@@ -1129,23 +1257,24 @@ class Detail extends BaseComponent
             return;
         }
 
-        if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
-            // Calculate basic amount with discount
-            $qty = floatval($this->input_details[$key]['qty'] ?? 0);
-            $price = floatval($this->input_details[$key]['price'] ?? 0);
-            $discount = floatval($this->input_details[$key]['disc_pct'] ?? 0) / 100;
+        // Gunakan qty_return untuk perhitungan amount (bukan qty)
+        $qtyReturn = floatval($this->input_details[$key]['qty_return'] ?? 0);
+        $price = floatval($this->input_details[$key]['price'] ?? 0);
+
+        if ($qtyReturn > 0 && $price > 0) {
+            // Untuk Sales Return: Amount = price × qty_return (tanpa discount)
             $taxPct = floatval($this->inputs['tax_pct'] ?? 0);
             $taxValue = $taxPct / 100;
-            $priceAfterDisc = round($price * (1 - $discount), 0);
 
-            // Initialize priceBeforeTax to avoid undefined variable error
-            $priceBeforeTax = $priceAfterDisc; // Default value
+            // Set discount = 0 untuk sales return
+            $this->input_details[$key]['disc_pct'] = 0;
+            $this->input_details[$key]['disc_amt'] = 0;
+
+            // Initialize priceBeforeTax
+            $priceBeforeTax = $price; // Default value
             if ($taxValue > 0 && (1 + $taxValue) != 0) {
-                $priceBeforeTax = round($priceAfterDisc / (1 + $taxValue), 0);
+                $priceBeforeTax = round($price / (1 + $taxValue), 0);
             }
-
-            // dd($this->inputs['tax_code'], $price, $priceAfterDisc, $priceBeforeTax, $taxValue);
-            $this->input_details[$key]['disc_amt'] = round($qty * $price * $discount, 0);
 
             $this->input_details[$key]['amt'] = 0;
             $this->input_details[$key]['amt_beforetax'] = 0;
@@ -1154,28 +1283,27 @@ class Detail extends BaseComponent
             $taxCode = $this->inputs['tax_code'] ?? 'N';
             if ($taxCode === 'I') {
                 $this->input_details[$key]['price_beforetax'] = $priceBeforeTax;
-                // Catatan: khusus untuk yang include PPN
-                // DPP dihitung dari harga setelah disc dikurangi PPN dibulatkan ke rupiah * qty
-                $this->input_details[$key]['amt_beforetax'] = round($priceBeforeTax * $qty, 0);
+                // DPP dihitung dari harga dikurangi PPN dibulatkan ke rupiah * qty_return
+                $this->input_details[$key]['amt_beforetax'] = round($priceBeforeTax * $qtyReturn, 0);
                 // PPN dihitung dari DPP * PPN dibulatkan ke rupiah
                 $this->input_details[$key]['amt_tax'] = round($this->input_details[$key]['amt_beforetax'] * $taxValue, 0);
             } else if ($taxCode === 'E') {
-                $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
-                $this->input_details[$key]['amt_beforetax'] = round($priceAfterDisc * $qty, 0);
-                $this->input_details[$key]['amt_tax'] = round($priceAfterDisc * $qty * $taxValue, 0);
+                $this->input_details[$key]['price_beforetax'] = $price;
+                $this->input_details[$key]['amt_beforetax'] = round($price * $qtyReturn, 0);
+                $this->input_details[$key]['amt_tax'] = round($price * $qtyReturn * $taxValue, 0);
             } else if ($taxCode === 'N') {
-                $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
-                $this->input_details[$key]['amt_beforetax'] = round($priceAfterDisc * $qty, 0);
+                $this->input_details[$key]['price_beforetax'] = $price;
+                $this->input_details[$key]['amt_beforetax'] = round($price * $qtyReturn, 0);
                 $this->input_details[$key]['amt_tax'] = 0;
             } else {
                 // Default case: treat as 'N' (Non PPN)
-                $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
-                $this->input_details[$key]['amt_beforetax'] = round($priceAfterDisc * $qty, 0);
+                $this->input_details[$key]['price_beforetax'] = $price;
+                $this->input_details[$key]['amt_beforetax'] = round($price * $qtyReturn, 0);
                 $this->input_details[$key]['amt_tax'] = 0;
             }
-            // amt selalu dihitung tanpa dipengaruhi tax_code: (price after discount) * qty
-            $this->input_details[$key]['amt'] = round($priceAfterDisc * $qty, 0);
-            $this->input_details[$key]['price_afterdisc'] = $priceAfterDisc;
+            // amt = price × qty_return (tanpa discount)
+            $this->input_details[$key]['amt'] = round($price * $qtyReturn, 0);
+            $this->input_details[$key]['price_afterdisc'] = $price;
             $this->input_details[$key]['amt_adjustdtl'] = round($this->input_details[$key]['amt'] - $this->input_details[$key]['amt_beforetax'] - $this->input_details[$key]['amt_tax'], 0);
 
             $this->total_amount = 0;
@@ -1224,7 +1352,7 @@ class Detail extends BaseComponent
 
             // Recalculate amounts untuk semua items yang tersisa
             foreach ($this->input_details as $key => $detail) {
-                if (!empty($detail['matl_id']) && !empty($detail['qty']) && !empty($detail['price'])) {
+                if (!empty($detail['matl_id']) && !empty($detail['qty_return']) && !empty($detail['price'])) {
                     $this->calcItemAmount($key);
                 }
             }
@@ -1237,32 +1365,124 @@ class Detail extends BaseComponent
 
     protected function loadDetails()
     {
-        if (!empty($this->object)) {
+        if (empty($this->object)) {
+            return;
+        }
+
+        // Cari DelivHdr untuk Sales Return (load dari DelivPicking per batch)
+        $delivHdr = DelivHdr::where('tr_code', $this->object->tr_code)
+            ->where('tr_type', 'SRD')
+            ->first();
+
+        if ($delivHdr) {
+            // Load dari DelivPicking (per batch)
+            $delivPackings = DelivPacking::where('trhdr_id', $delivHdr->id)
+                ->where('tr_type', 'SRD')
+                ->orderBy('tr_seq')
+                ->get();
+
+            $this->input_details = [];
+            $baseModel = populateArrayFromModel(new OrderDtl());
+            $reffHdrId = $delivHdr->reff_code
+                ? DelivHdr::where('tr_code', $delivHdr->reff_code)->where('tr_type', 'SD')->value('id')
+                : null;
+
+            foreach ($delivPackings as $packing) {
+                $orderDtl = $packing->reffdtl_id ? OrderDtl::find($packing->reffdtl_id) : null;
+                $delivPickings = DelivPicking::where('trpacking_id', $packing->id)->orderBy('tr_seq')->get();
+
+                foreach ($delivPickings as $picking) {
+                    $matlId = $orderDtl ? $orderDtl->matl_id : $picking->matl_id;
+                    $material = Material::find($matlId);
+
+                    if (!$material) {
+                        continue;
+                    }
+
+                    // Get material data
+                    $matlCode = $orderDtl ? ($orderDtl->matl_code ?? $material->code) : ($picking->matl_code ?? $material->code);
+                    $matlUom = $orderDtl ? ($orderDtl->matl_uom ?? $material->uom) : ($picking->matl_uom ?? $material->uom);
+                    $matlDescr = $orderDtl ? ($orderDtl->matl_descr ?? $material->name) : $material->name;
+
+                    // Get price data
+                    $price = $orderDtl ? ($orderDtl->price_afterdisc ?? $orderDtl->price ?? 0) : 0;
+                    $discPct = $orderDtl ? ($orderDtl->disc_pct ?? 0) : 0;
+                    $discAmt = $orderDtl ? ($orderDtl->disc_amt ?? 0) : 0;
+
+                    // Get original qty dari picking asal
+                    $qtyAsli = $picking->qty;
+                    if ($picking->reffpicking_id) {
+                        $reffPicking = DelivPicking::find($picking->reffpicking_id);
+                        if ($reffPicking) {
+                            $qtyAsli = $reffPicking->qty ?? $picking->qty;
+                        }
+                    }
+
+                    $this->input_details[] = array_merge($baseModel, [
+                        'matl_id' => $matlId,
+                        'matl_code' => $matlCode,
+                        'matl_uom' => $matlUom,
+                        'matl_descr' => $matlDescr,
+                        'qty' => $qtyAsli,
+                        'qty_return' => $picking->qty,
+                        'price' => $price,
+                        'disc_pct' => $discPct,
+                        'disc_amt' => $discAmt,
+                        'batch_code' => $picking->batch_code ?? '',
+                        'ivt_id' => $picking->ivt_id ?? null,
+                        'wh_id' => $picking->wh_id ?? null,
+                        'wh_code' => $picking->wh_code ?? '',
+                        'reff_code' => $delivHdr->reff_code ?? $this->object->reff_code ?? '',
+                        'reffhdr_id' => $reffHdrId,
+                        'reffdtl_id' => $packing->reffdtl_id ?? ($orderDtl->reffdtl_id ?? null),
+                        'reffpicking_id' => $picking->reffpicking_id ?? null,
+                    ]);
+                }
+            }
+
+            // Set warehouse dari details jika belum ada di header
+            if (empty($this->inputs['wh_id']) && !empty($this->input_details)) {
+                $firstWhId = $this->input_details[0]['wh_id'] ?? null;
+                if ($firstWhId) {
+                    $warehouse = ConfigConst::find($firstWhId);
+                    if ($warehouse) {
+                        $this->inputs['wh_id'] = $warehouse->id;
+                        $this->inputs['wh_code'] = $warehouse->str1;
+                    }
+                }
+            }
+
+            if (!empty($delivHdr->reff_code)) {
+                $this->inputs['reff_code'] = $delivHdr->reff_code;
+            }
+        } else {
+            // Fallback: load dari OrderDtl (untuk data baru yang belum ada delivery)
             $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id, $this->object->tr_type)
                 ->orderBy('tr_seq')
                 ->get();
 
             $this->input_details = $this->object_detail->toArray();
+            $reffCode = $this->object_detail->first()->reff_code ?? null;
 
-            // Ambil reff_code dari detail pertama jika ada (semua detail biasanya punya reff_code yang sama)
-            $reffCode = null;
-            if (!empty($this->object_detail) && !empty($this->object_detail->first()->reff_code)) {
-                $reffCode = $this->object_detail->first()->reff_code;
+            if ($reffCode) {
                 $this->inputs['reff_code'] = $reffCode;
             }
 
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key]['matl_id'] = $detail->matl_id;
-                // Pastikan reff_code ada di input_details
-                if (!empty($detail->reff_code)) {
-                    $this->input_details[$key]['reff_code'] = $detail->reff_code;
-                } elseif (!empty($reffCode)) {
-                    $this->input_details[$key]['reff_code'] = $reffCode;
+                if (!isset($this->input_details[$key]['qty_return'])) {
+                    $this->input_details[$key]['qty_return'] = $detail->qty ?? 0;
                 }
-                $this->calcItemAmount($key);
+                $this->input_details[$key]['reff_code'] = $detail->reff_code ?? $reffCode;
             }
-            $this->checkDeliveryStatus();
         }
+
+        // Recalculate amounts untuk semua items
+        foreach ($this->input_details as $key => $detail) {
+            $this->calcItemAmount($key);
+        }
+
+        $this->checkDeliveryStatus();
     }
 
     private function calcTotalFromDetails($detailData)
@@ -1561,29 +1781,29 @@ class Detail extends BaseComponent
         }
     }
 
-    public function onSalesOrderChanged($value)
+    public function onDeliveryChanged($value)
     {
-        // Reset input_details jika sales order berubah
+        // Reset input_details jika delivery berubah
         if (empty($value)) {
             $this->input_details = [];
             return;
         }
 
         try {
-            // Cari sales order berdasarkan tr_code
-            $salesOrder = OrderHdr::where('tr_code', $value)
-                ->where('tr_type', 'SO')
+            // Cari delivery berdasarkan tr_code
+            $delivery = DelivHdr::where('tr_code', $value)
+                ->where('tr_type', 'SD')
                 ->first();
 
-            if (!$salesOrder) {
-                $this->dispatch('error', 'Sales Order dengan kode ' . $value . ' tidak ditemukan.');
+            if (!$delivery) {
+                $this->dispatch('error', 'Delivery dengan kode ' . $value . ' tidak ditemukan.');
                 return;
             }
 
-            // Update partner info otomatis dari sales order
-            if (!empty($salesOrder->partner_id)) {
+            // Update partner info otomatis dari delivery
+            if (!empty($delivery->partner_id)) {
                 // Set partner_id terlebih dahulu
-                $this->inputs['partner_id'] = $salesOrder->partner_id;
+                $this->inputs['partner_id'] = $delivery->partner_id;
 
                 // Pastikan partner ada di options
                 $selectedPartnerId = $this->inputs['partner_id'];
@@ -1611,70 +1831,133 @@ class Detail extends BaseComponent
                 $this->onPartnerChanged();
             }
 
-            // Set sales_type dari sales order jika belum diisi
-            if (empty($this->inputs['sales_type']) && !empty($salesOrder->sales_type)) {
-                $this->inputs['sales_type'] = $salesOrder->sales_type;
-                $this->salesTypeOnChanged(); // Ini akan set materialQuery
+            // Load OrderHdr dari delivery untuk mendapatkan tax settings dan sales_type
+            $orderHdr = OrderHdr::where('tr_code', $delivery->reff_code ?? $value)
+                ->where('tr_type', 'SO')
+                ->first();
+
+            // Simpan tr_code sebelum memanggil salesTypeOnChanged karena method tersebut akan me-reset tr_code
+            $savedTrCode = $this->inputs['tr_code'] ?? '';
+
+            if ($orderHdr) {
+                // Set sales_type dari order jika belum diisi
+                if (empty($this->inputs['sales_type']) && !empty($orderHdr->sales_type)) {
+                    $this->inputs['sales_type'] = $orderHdr->sales_type;
+                }
+
+                // Copy tax settings dari order untuk memastikan calcItemAmount bisa menghitung dengan benar
+                if (empty($this->inputs['tax_code']) && !empty($orderHdr->tax_code)) {
+                    $this->inputs['tax_code'] = $orderHdr->tax_code;
+                }
+                if (empty($this->inputs['tax_pct']) && !empty($orderHdr->tax_pct)) {
+                    $this->inputs['tax_pct'] = $orderHdr->tax_pct;
+                }
             }
 
-            // Copy tax settings dari sales order untuk memastikan calcItemAmount bisa menghitung dengan benar
-            if (empty($this->inputs['tax_code']) && !empty($salesOrder->tax_code)) {
-                $this->inputs['tax_code'] = $salesOrder->tax_code;
-            }
-            if (empty($this->inputs['tax_pct']) && !empty($salesOrder->tax_pct)) {
-                $this->inputs['tax_pct'] = $salesOrder->tax_pct;
+            // Restore tr_code setelah semua proses
+            if (!empty($savedTrCode)) {
+                $this->inputs['tr_code'] = $savedTrCode;
             }
 
             // Set reff_code di inputs SETELAH semua proses yang mungkin me-reset
             $this->inputs['reff_code'] = $value;
 
-            // Load order details
-            $orderDetails = OrderDtl::where('trhdr_id', $salesOrder->id)
-                ->where('tr_type', 'SO')
+            // Load DelivPacking dari delivery
+            $delivPackings = DelivPacking::where('trhdr_id', $delivery->id)
+                ->where('tr_type', 'SD')
                 ->orderBy('tr_seq')
                 ->get();
 
-            if ($orderDetails->isEmpty()) {
-                $this->dispatch('error', 'Tidak ada detail order yang ditemukan untuk sales order ini.');
+            if ($delivPackings->isEmpty()) {
+                $this->dispatch('error', 'Tidak ada packing yang ditemukan untuk delivery ini.');
                 return;
             }
 
-            // Populate input_details dari order details
+            // Load semua DelivPicking dari DelivPacking
             $this->input_details = [];
             $baseModel = populateArrayFromModel(new OrderDtl());
 
-            foreach ($orderDetails as $detail) {
-                // Verifikasi material masih ada dan valid
-                $material = Material::find($detail->matl_id);
-                if (!$material) {
-                    // Skip material yang sudah tidak ada
-                    continue;
+            foreach ($delivPackings as $packing) {
+                // Ambil OrderDtl terlebih dahulu untuk mendapatkan harga dan data material
+                $orderDtl = null;
+                if ($packing->reffdtl_id) {
+                    $orderDtl = OrderDtl::find($packing->reffdtl_id);
                 }
 
-                // Pastikan data material lengkap
-                $matlCode = $detail->matl_code ?? $material->code;
-                $matlDescr = $detail->matl_descr ?? $material->name;
-                $matlUom = $detail->matl_uom ?? $material->uom;
+                // Load DelivPicking untuk setiap packing
+                $delivPickings = DelivPicking::where('trpacking_id', $packing->id)
+                    ->orderBy('tr_seq')
+                    ->get();
 
-                $this->input_details[] = array_merge($baseModel, [
-                    'matl_id' => $detail->matl_id,
-                    'matl_code' => $matlCode,
-                    'matl_uom' => $matlUom,
-                    'matl_descr' => $matlDescr,
-                    'qty' => $detail->qty,
-                    'price' => $detail->price,
-                    'disc_pct' => $detail->disc_pct ?? 0,
-                    'disc_amt' => $detail->disc_amt ?? 0,
-                    'reff_code' => $value, // Set reff_code dengan tr_code sales order
-                    'reffhdr_id' => $salesOrder->id,
-                    'reffdtl_id' => $detail->id,
-                ]);
+                foreach ($delivPickings as $picking) {
+                    // Gunakan matl_id dari OrderDtl jika ada, jika tidak gunakan dari DelivPicking
+                    $matlId = $orderDtl ? $orderDtl->matl_id : $picking->matl_id;
+
+                    // Verifikasi material masih ada dan valid
+                    $material = Material::find($matlId);
+                    if (!$material) {
+                        // Skip material yang sudah tidak ada
+                        continue;
+                    }
+
+                    // Ambil harga dari OrderDtl (gunakan price_afterdisc)
+                    $price = 0;
+                    $disc_pct = 0;
+                    $disc_amt = 0;
+
+                    if ($orderDtl) {
+                        // Gunakan price_afterdisc sebagai harga satuan
+                        $price = $orderDtl->price_afterdisc ?? 0;
+                        $disc_pct = $orderDtl->disc_pct ?? 0;
+                        $disc_amt = $orderDtl->disc_amt ?? 0;
+                    }
+
+                    // Pastikan data material lengkap dari OrderDtl atau Material
+                    $matlCode = $orderDtl ? ($orderDtl->matl_code ?? $material->code) : ($picking->matl_code ?? $material->code);
+                    $matlDescr = $orderDtl ? ($orderDtl->matl_descr ?? $material->name) : $material->name;
+                    $matlUom = $orderDtl ? ($orderDtl->matl_uom ?? $material->uom) : ($picking->matl_uom ?? $material->uom);
+
+                    $this->input_details[] = array_merge($baseModel, [
+                        'matl_id' => $matlId,
+                        'matl_code' => $matlCode,
+                        'matl_uom' => $matlUom,
+                        'matl_descr' => $matlDescr,
+                        'qty' => $picking->qty,
+                        'qty_return' => 0,
+                        'price' => $price,
+                        'disc_pct' => $disc_pct,
+                        'disc_amt' => $disc_amt,
+                        'batch_code' => $picking->batch_code ?? '',
+                        'ivt_id' => $picking->ivt_id ?? null,
+                        'wh_id' => $picking->wh_id ?? null,
+                        'wh_code' => $picking->wh_code ?? '',
+                        'reff_code' => $value,
+                        'reffhdr_id' => $delivery->id,
+                        'reffdtl_id' => $packing->reffdtl_id ?? null,
+                        'reffpicking_id' => $picking->id,
+                    ]);
+                }
             }
 
             if (empty($this->input_details)) {
-                $this->dispatch('warning', 'Tidak ada item yang valid untuk dimuat dari sales order ini.');
+                $this->dispatch('warning', 'Tidak ada item yang valid untuk dimuat dari delivery ini.');
                 return;
             }
+
+            // Set default warehouse dari DelivPicking jika belum ada
+            if (empty($this->inputs['wh_id']) && !empty($this->input_details)) {
+                $firstWhId = $this->input_details[0]['wh_id'] ?? null;
+                if ($firstWhId) {
+                    $warehouse = ConfigConst::find($firstWhId);
+                    if ($warehouse) {
+                        $this->inputs['wh_id'] = $warehouse->id;
+                        $this->inputs['wh_code'] = $warehouse->str1;
+                    }
+                }
+            }
+
+            // Update materialQuery untuk include material yang sudah di-load
+            $this->updateMaterialQuery();
 
             // Recalculate amounts untuk semua items
             foreach ($this->input_details as $key => $detail) {
@@ -1689,10 +1972,40 @@ class Detail extends BaseComponent
                 'reff_code' => $this->inputs['reff_code']
             ]);
 
-            $this->dispatch('success', 'Berhasil memuat ' . count($this->input_details) . ' item dari sales order ' . $value);
+            $this->dispatch('success', 'Berhasil memuat ' . count($this->input_details) . ' item dari delivery ' . $value);
         } catch (Exception $e) {
-            $this->dispatch('error', 'Gagal memuat sales order: ' . $e->getMessage());
+            $this->dispatch('error', 'Gagal memuat delivery: ' . $e->getMessage());
         }
+    }
+
+    public function onWarehouseChanged($whCode)
+    {
+        if (empty($whCode)) {
+            $this->inputs['wh_id'] = null;
+            $this->inputs['wh_code'] = '';
+            return;
+        }
+
+        // Cari warehouse dari ConfigConst berdasarkan str1 (code)
+        $warehouse = ConfigConst::where('const_group', 'TRX_WAREHOUSE')
+            ->where('str1', $whCode)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (!$warehouse) {
+            $this->dispatch('error', 'Warehouse tidak ditemukan.');
+            return;
+        }
+
+        $this->inputs['wh_id'] = $warehouse->id;
+        $this->inputs['wh_code'] = $warehouse->str1;
+
+        // Update input_details dengan wh_id dan wh_code
+        foreach ($this->input_details as &$detail) {
+            $detail['wh_id'] = $warehouse->id;
+            $detail['wh_code'] = $warehouse->str1;
+        }
+        unset($detail);
     }
 
     public function onTaxPayerChanged()
@@ -2068,15 +2381,33 @@ class Detail extends BaseComponent
 
         foreach ($this->input_details as $index => $detail) {
             $matlId = $detail['matl_id'] ?? null;
-            $qty = $detail['qty'] ?? null;
+            $qtyReturn = $detail['qty_return'] ?? null;
             $price = $detail['price'] ?? null;
+            $qtyAsli = floatval($detail['qty'] ?? 0);
 
-            $qtyIsEmpty = !array_key_exists('qty', $detail) || $qty === null || $qty === '';
+            $qtyReturnIsEmpty = !array_key_exists('qty_return', $detail) || $qtyReturn === null || $qtyReturn === '';
             $priceIsEmpty = !array_key_exists('price', $detail) || $price === null || $price === '';
 
-            if (empty($matlId) || $qtyIsEmpty || $priceIsEmpty) {
+            if (empty($matlId) || $qtyReturnIsEmpty || $priceIsEmpty) {
                 $lineNumber = $index + 1;
-                throw new Exception("Detail baris {$lineNumber} belum lengkap. Pastikan material, qty, dan harga terisi.");
+                throw new Exception("Detail baris {$lineNumber} belum lengkap. Pastikan material, qty return, dan harga terisi.");
+            }
+
+            // Validasi qty_return tidak boleh melebihi qty asli
+            $qtyReturnFloat = floatval($qtyReturn);
+            if ($qtyReturnFloat > $qtyAsli) {
+                $lineNumber = $index + 1;
+                $matlCode = $detail['matl_code'] ?? 'Material';
+                $batchCode = $detail['batch_code'] ?? '';
+                throw new Exception("Detail baris {$lineNumber} ({$matlCode}" . ($batchCode ? " - Batch: {$batchCode}" : '') . "): Qty return ({$qtyReturnFloat}) tidak boleh melebihi qty asli ({$qtyAsli}).");
+            }
+
+            // Validasi qty_return harus positif
+            if ($qtyReturnFloat <= 0) {
+                $lineNumber = $index + 1;
+                $matlCode = $detail['matl_code'] ?? 'Material';
+                $batchCode = $detail['batch_code'] ?? '';
+                throw new Exception("Detail baris {$lineNumber} ({$matlCode}" . ($batchCode ? " - Batch: {$batchCode}" : '') . "): Qty return harus lebih besar dari 0.");
             }
         }
     }

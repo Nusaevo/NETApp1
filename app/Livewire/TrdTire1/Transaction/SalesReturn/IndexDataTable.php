@@ -50,7 +50,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("No. Return"), "tr_code")
                 ->format(function ($value, $row) {
                     if ($row->partner_id) {
-                        return '<a href="' . route($this->redirectAppCode . '.Transaction.SalesOrder.Detail', [
+                        return '<a href="' . route($this->redirectAppCode . '.Transaction.SalesReturn.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->id)
                         ]) . '">' . $row->tr_code . '</a>';
@@ -89,17 +89,17 @@ class IndexDataTable extends BaseDataTableComponent
                     return rupiah($row->amt, false);
                 })
                 ->sortable(),
-            Column::make($this->trans("Status"), "status_code")
-                ->format(function ($value, $row) {
-                    $statusMap = [
-                        Status::OPEN => 'Belum Cetak',
-                        Status::PRINT => 'Tercetak',
-                        Status::SHIP => 'Terkirim',
-                        Status::CANCEL => 'Batal',
-                        Status::BILL => 'Lunas',
-                    ];
-                    return $statusMap[$value] ?? 'Unknown';
-                }),
+            // Column::make($this->trans("Status"), "status_code")
+            //     ->format(function ($value, $row) {
+            //         $statusMap = [
+            //             Status::OPEN => 'Belum Cetak',
+            //             Status::PRINT => 'Tercetak',
+            //             Status::SHIP => 'Terkirim',
+            //             Status::CANCEL => 'Batal',
+            //             Status::BILL => 'Lunas',
+            //         ];
+            //         return $statusMap[$value] ?? 'Unknown';
+            //     }),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
