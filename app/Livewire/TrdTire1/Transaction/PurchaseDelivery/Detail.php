@@ -220,19 +220,14 @@ class Detail extends BaseComponent
         $trCode = trim($this->inputs['tr_code'] ?? '');
 
         if (empty($trCode)) {
-            // Jika tr_code kosong, reset ke mode create tanpa object
             $this->resetToCreateModeInternal();
-            // Pastikan reffhdrtr_code benar-benar ter-reset
             $this->inputs['reffhdrtr_code'] = '';
             $this->inputs['reffhdr_id'] = null;
             $this->inputs['partner_id'] = null;
             $this->inputs['partner_name'] = null;
             $this->inputs['partner_code'] = null;
-
-            // Reset public property juga
             $this->reffhdrtr_code = '';
 
-            // Panggil onPurchaseOrderChanged dengan nilai kosong untuk reset partner
             $this->onPurchaseOrderChanged('');
 
             // Dispatch event khusus untuk refresh dropdown reffhdrtr_code
@@ -242,22 +237,21 @@ class Detail extends BaseComponent
         }
 
         try {
-            // Cari DelivHdr berdasarkan tr_code dan tr_type
             $existingDelivery = DelivHdr::where('tr_code', $trCode)
                 ->where('tr_type', $this->trType)
                 ->first();
 
             if ($existingDelivery) {
-                // Jika delivery ditemukan, load data untuk edit tanpa redirect
                 $this->loadDeliveryByTrCode($existingDelivery);
                 $this->dispatch('info', "Purchase Delivery {$trCode} ditemukan. Data telah dimuat untuk edit.");
             } else {
-                // Jika tidak ditemukan, biarkan tr_code tetap di field untuk koreksi user
+                $savedTrCode = $this->inputs['tr_code'] ?? '';
+                $this->resetToCreateModeInternal();
+                $this->inputs['tr_code'] = $savedTrCode;
                 $this->dispatch('warning', "Nomor surat jalan '{$trCode}' tidak ditemukan. Silakan periksa kembali atau gunakan nomor lain.");
             }
         } catch (Exception $e) {
             $this->dispatch('error', 'Terjadi kesalahan saat mencari surat jalan: ' . $e->getMessage());
-            // Jangan hapus tr_code, biarkan user bisa perbaiki
         }
     }
 
@@ -270,7 +264,6 @@ class Detail extends BaseComponent
 
         $this->versionNumber = $this->object->version_number ?? 1;
 
-        // Load semua data delivery menggunakan method yang sama
         $this->loadDeliveryData();
     }
 
